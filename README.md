@@ -30,18 +30,21 @@ CBCHackathon/
 
 ```bash
 # Clone the repo
-git clone https://github.com/Domross3/aspera.git
+git clone -b aspera https://github.com/Domross3/aspera.git
 cd aspera/aspera
 
-# Install dependencies
+# Install dependencies (use Node 20 — run `node -v` to verify)
 npm install
 
-# Create environment file with your Claude API key
+# (Optional) Create environment file with your Claude API key
+# AI features work without this — the app loads mock data automatically
 echo "EXPO_PUBLIC_CLAUDE_KEY=your-api-key-here" > .env
 
 # Start the dev server
 npx expo start
 ```
+
+> **Troubleshooting:** If `npx expo start` fails, verify you're on Node 20 (`node -v`). Install via `brew install node@20 && brew link --overwrite node@20` on macOS or use [nvm](https://github.com/nvm-sh/nvm).
 
 Scan the QR code with **Expo Go** (iOS: Camera app, Android: Expo Go app).
 
