@@ -50,12 +50,19 @@ async function syncToFirebase(dayKey, dayData) {
   };
 
   try {
-    await fetch(`${FIREBASE_URL}/browsing/${dayKey}.json`, {
+    const res = await fetch(`${FIREBASE_URL}/browsing/${dayKey}.json`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-  } catch { /* offline — will sync next flush */ }
+    if (res.ok) {
+      console.log('[Aspera] Synced to Firebase:', dayKey);
+    } else {
+      console.warn('[Aspera] Firebase sync failed:', res.status, await res.text());
+    }
+  } catch (err) {
+    console.warn('[Aspera] Firebase unreachable:', err.message);
+  }
 }
 
 // ── State ───────────────────────────────────────────────────────
