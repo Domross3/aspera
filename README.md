@@ -64,11 +64,22 @@ The app ships with 7 days of mock data so you can explore immediately without lo
 
 The extension immediately begins tracking browsing activity. Click the icon to see your focus score.
 
-### 3. Firebase Bridge (Optional)
+### 3. Firebase Realtime Bridge
 
-The extension syncs browsing data to Firebase so the mobile app can display live stats. This works out of the box with our hosted database — no setup required.
+The Chrome extension syncs browsing telemetry to a Firebase Realtime Database every 30 seconds. This enables cross-device intelligence — browsing data collected on desktop flows into the mobile app's AI context window.
 
-To verify the connection: browse a few sites for 30+ seconds, then check the Browsing Focus card on the app's Today tab. A green **LIVE** badge means real data is flowing.
+**How it works:**
+- Extension `PUT`s sanitized site data to `https://aspera-bridge-default-rtdb.firebaseio.com/browsing/{YYYY-MM-DD}.json`
+- Payload includes: per-site time tracking, category totals, computed focus score (0-100), Big Rock state
+- No SDK required — both sides use plain `fetch()` against Firebase's REST API
+- No authentication needed (database rules open for demo period)
+
+**To verify the sync:**
+1. Load the extension, browse a few sites for 30+ seconds
+2. Visit `https://aspera-bridge-default-rtdb.firebaseio.com/browsing.json` in your browser
+3. You should see your browsing data with sanitized hostname keys (e.g. `github_com`)
+
+> **Note:** The mobile app currently displays mock browsing data by default. The Firebase reader is implemented (`src/lib/firebase.ts`) and can be toggled on in `src/components/today/BrowsingFocus.tsx` to show live data with a green LIVE badge.
 
 ---
 

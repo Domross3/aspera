@@ -21,8 +21,8 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 function firebaseToLocal(fb: FirebaseBrowsingDay): BrowsingDay {
-  const sites = Object.entries(fb.sites).map(([hostname, info]) => ({
-    hostname,
+  const sites = Object.entries(fb.sites).map(([key, info]) => ({
+    hostname: info.hostname || key.replace(/_/g, '.'),
     time: info.time,
     category: info.category,
     visits: info.visits,
@@ -34,14 +34,15 @@ export default function BrowsingFocus() {
   const [liveData, setLiveData] = useState<BrowsingDay | null>(null);
   const [isLive, setIsLive] = useState(false);
 
-  useEffect(() => {
-    fetchBrowsingFromFirebase().then(results => {
-      if (results.length > 0) {
-        setLiveData(firebaseToLocal(results[0]));
-        setIsLive(true);
-      }
-    });
-  }, []);
+  // Firebase live fetch — disabled for demo stability, enable to show LIVE badge
+  // useEffect(() => {
+  //   fetchBrowsingFromFirebase().then(results => {
+  //     if (results.length > 0) {
+  //       setLiveData(firebaseToLocal(results[0]));
+  //       setIsLive(true);
+  //     }
+  //   });
+  // }, []);
 
   const today = isLive ? liveData : BROWSING_DATA[0];
   if (!today) return null;
