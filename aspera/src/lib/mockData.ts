@@ -126,6 +126,104 @@ export const MOOD_DATA: MoodEntry[] = [
   { date: dateStr(0), mood_score: 8, anxiety_score: 2, energy_score: 8 },
 ];
 
+// ── Browsing Activity (mirrors Chrome extension data) ─────────────────
+
+export interface BrowsingSite {
+  hostname: string;
+  time: number; // milliseconds
+  category: 'productive' | 'neutral' | 'distracting';
+  visits: number;
+}
+
+export interface BrowsingDay {
+  date: string;
+  sites: BrowsingSite[];
+  totals: { productive: number; neutral: number; distracting: number };
+  focusScore: number; // 0–100
+}
+
+export const BROWSING_DATA: BrowsingDay[] = [
+  {
+    date: dateStr(0),
+    focusScore: 78,
+    totals: { productive: 14400000, neutral: 3600000, distracting: 1800000 },
+    sites: [
+      { hostname: 'github.com',        time: 7200000,  category: 'productive',  visits: 12 },
+      { hostname: 'stackoverflow.com',  time: 3600000,  category: 'productive',  visits: 8 },
+      { hostname: 'docs.expo.dev',      time: 3600000,  category: 'productive',  visits: 5 },
+      { hostname: 'reddit.com',         time: 1200000,  category: 'distracting', visits: 4 },
+      { hostname: 'youtube.com',        time: 600000,   category: 'distracting', visits: 2 },
+      { hostname: 'google.com',         time: 3600000,  category: 'neutral',     visits: 15 },
+    ],
+  },
+  {
+    date: dateStr(1),
+    focusScore: 62,
+    totals: { productive: 10800000, neutral: 5400000, distracting: 3600000 },
+    sites: [
+      { hostname: 'github.com',    time: 5400000, category: 'productive',  visits: 9 },
+      { hostname: 'figma.com',     time: 5400000, category: 'productive',  visits: 3 },
+      { hostname: 'twitter.com',   time: 2400000, category: 'distracting', visits: 7 },
+      { hostname: 'reddit.com',    time: 1200000, category: 'distracting', visits: 5 },
+      { hostname: 'google.com',    time: 5400000, category: 'neutral',     visits: 18 },
+    ],
+  },
+];
+
+// ── Cohort Telemetry (anonymized, fake "social proof" nudges) ─────────
+
+export interface CohortTelemetry {
+  missedBigRockCount: number;     // "3,247 other users also missed a Big Rock today"
+  similarFocusPercentile: number; // "You're in the 62nd percentile for focus this week"
+  commonStruggle: string;         // "43% of users with your sleep pattern also report low energy"
+  streakContext: string;          // "2,891 users also have a 4-day streak right now"
+}
+
+export function generateCohortTelemetry(userState: {
+  missedBigRock: boolean;
+  avgFocus: number;
+  avgSleep: number;
+  streak: number;
+  avgEnergy: number;
+}): CohortTelemetry {
+  const { missedBigRock, avgFocus, avgSleep, streak, avgEnergy } = userState;
+
+  // Missed Big Rock count
+  const missedBigRockCount = missedBigRock
+    ? Math.floor(Math.random() * 500) + 3000
+    : 0;
+
+  // Focus percentile based on avgFocus (1-10 scale)
+  let similarFocusPercentile: number;
+  if (avgFocus < 5) {
+    similarFocusPercentile = Math.floor(Math.random() * 21) + 30; // 30-50
+  } else if (avgFocus <= 7) {
+    similarFocusPercentile = Math.floor(Math.random() * 26) + 50; // 50-75
+  } else {
+    similarFocusPercentile = Math.floor(Math.random() * 21) + 75; // 75-95
+  }
+
+  // Common struggle string
+  let commonStruggle: string;
+  if (avgSleep < 7) {
+    commonStruggle = `${Math.floor(Math.random() * 15) + 38}% of users with your sleep pattern also report low energy`;
+  } else if (avgEnergy < 5) {
+    commonStruggle = `${Math.floor(Math.random() * 15) + 38}% of users with your energy level also report difficulty focusing`;
+  } else {
+    commonStruggle = `Most users with your profile report feeling strong and focused — you're on track`;
+  }
+
+  // Streak context
+  const streakContext = `${Math.floor(Math.random() * 800) + 2000} users also have a ${streak}-day streak right now`;
+
+  return {
+    missedBigRockCount,
+    similarFocusPercentile,
+    commonStruggle,
+    streakContext,
+  };
+}
+
 // ── Assembled Context ──────────────────────────────────────────────────
 
 export interface MockContext {
@@ -135,6 +233,7 @@ export interface MockContext {
   calendar: CalendarEvent[];
   tasks: GoogleTask[];
   mood: MoodEntry[];
+  browsing: BrowsingDay[];
 }
 
 export function getMockContext(): MockContext {
@@ -145,5 +244,6 @@ export function getMockContext(): MockContext {
     calendar: CALENDAR_EVENTS,
     tasks: GOOGLE_TASKS,
     mood: MOOD_DATA,
+    browsing: BROWSING_DATA,
   };
 }

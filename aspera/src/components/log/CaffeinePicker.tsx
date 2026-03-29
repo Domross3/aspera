@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { CaffeineType } from '../../types';
@@ -13,15 +13,30 @@ interface Props {
 }
 
 export default function CaffeinePicker({ value, amount, onChange }: Props) {
+  const [showInput, setShowInput] = useState(false);
+  const [customText, setCustomText] = useState('');
+
+  const isCustom = value !== 'none' && !CAFFEINE_OPTIONS.some(o => o.type === value);
+
   const handleType = (type: CaffeineType) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const option = CAFFEINE_OPTIONS.find(o => o.type === type)!;
-    onChange(type, type === 'none' ? 0 : option.defaultMg);
+    const option = CAFFEINE_OPTIONS.find(o => o.type === type);
+    onChange(type, type === 'none' ? 0 : (option?.defaultMg ?? 100));
   };
 
   const handleAmount = (mg: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onChange(value, mg);
+  };
+
+  const addCustom = () => {
+    const trimmed = customText.trim();
+    if (trimmed) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onChange(trimmed, 100);
+    }
+    setCustomText('');
+    setShowInput(false);
   };
 
   return (
@@ -48,6 +63,48 @@ export default function CaffeinePicker({ value, amount, onChange }: Props) {
           );
         })}
       </View>
+
+      {/* Custom type row */}
+      <View style={[styles.row, { marginTop: SPACING.xs }]}>
+        {isCustom && (
+          <TouchableOpacity
+            style={[styles.tile, styles.tileSelected, { flex: 1 }]}
+            onPress={() => handleType('none')}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="create-outline" size={22} color={COLORS.accent} />
+            <Text style={[styles.tileLabel, styles.tileLabelSelected]}>{value}</Text>
+          </TouchableOpacity>
+        )}
+        {!isCustom && (
+          <TouchableOpacity
+            style={[styles.tile, styles.addTile]}
+            onPress={() => setShowInput(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="add" size={20} color={COLORS.accent} />
+            <Text style={[styles.tileLabel, { color: COLORS.accent }]}>Custom</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {showInput && (
+        <View style={styles.inputRow}>
+          <TextInput
+            value={customText}
+            onChangeText={setCustomText}
+            placeholder="e.g. Yerba Mate, Tea..."
+            placeholderTextColor={COLORS.textMuted}
+            style={styles.input}
+            autoFocus
+            onSubmitEditing={addCustom}
+            returnKeyType="done"
+          />
+          <TouchableOpacity style={styles.addBtn} onPress={addCustom}>
+            <Text style={{ color: COLORS.text, fontWeight: '700' }}>Add</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {value !== 'none' && (
         <View style={styles.amountsRow}>
@@ -88,6 +145,12 @@ const styles = StyleSheet.create({
     borderColor: COLORS.accent,
     backgroundColor: COLORS.accentGlow,
   },
+  addTile: {
+    borderColor: COLORS.borderAccent,
+    borderStyle: 'dashed',
+    flexDirection: 'row',
+    paddingVertical: SPACING.sm,
+  },
   tileLabel: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textMuted,
@@ -119,5 +182,27 @@ const styles = StyleSheet.create({
   } as object,
   amountLabelSelected: {
     color: COLORS.accent,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    color: COLORS.text,
+    ...TYPOGRAPHY.body as object,
+  },
+  addBtn: {
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    justifyContent: 'center',
   },
 });

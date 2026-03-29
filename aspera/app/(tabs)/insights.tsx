@@ -144,7 +144,9 @@ export default function InsightsScreen() {
               {/* Correlation cards */}
               <SectionLabel label={`${insights.correlations.length} Patterns Found`} style={{ marginTop: SPACING.xl }} />
               <View style={styles.cards}>
-                {insights.correlations.map((c, i) => (
+                {[...insights.correlations]
+                  .sort((a, b) => (b.isKeystone ? 1 : 0) - (a.isKeystone ? 1 : 0))
+                  .map((c, i) => (
                   <CorrelationCard key={c.id} correlation={c} index={i} />
                 ))}
               </View>

@@ -107,3 +107,46 @@ async function render() {
 }
 
 render();
+
+// ── Big Rock / Deep Work ────────────────────────────────────────
+(function () {
+  const taskInput = document.getElementById('bigrock-input');
+  const deepToggle = document.getElementById('deepwork-toggle');
+  const statusEl = document.getElementById('bigrock-status');
+
+  // Load current state on popup open
+  chrome.storage.sync.get('aspera_big_rock', (result) => {
+    const state = result.aspera_big_rock;
+    if (state) {
+      taskInput.value = state.task || '';
+      deepToggle.checked = !!state.isDeepWork;
+      updateStatus(state);
+    }
+  });
+
+  function persist() {
+    const state = {
+      task: taskInput.value.trim(),
+      isDeepWork: deepToggle.checked,
+    };
+    chrome.storage.sync.set({ aspera_big_rock: state });
+    updateStatus(state);
+  }
+
+  function updateStatus(state) {
+    if (state.isDeepWork && state.task) {
+      statusEl.textContent = 'Friction active — distracting sites will be blocked';
+      statusEl.classList.add('active');
+    } else if (state.task) {
+      statusEl.textContent = 'Big Rock set — enable Deep Work to block distractions';
+      statusEl.classList.remove('active');
+    } else {
+      statusEl.textContent = '';
+      statusEl.classList.remove('active');
+    }
+  }
+
+  // Save on every change
+  taskInput.addEventListener('input', persist);
+  deepToggle.addEventListener('change', persist);
+})();

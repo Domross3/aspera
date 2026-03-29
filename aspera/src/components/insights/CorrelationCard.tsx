@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Correlation } from '../../types';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
 import GradientCard from '../common/GradientCard';
@@ -45,9 +46,27 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
   const deltaPositive = c.delta >= 0;
   const metricColor = METRIC_COLORS[c.outputMetric] ?? COLORS.accent;
 
+  const cardColors = c.isKeystone
+    ? ['#1A1040', '#0F0A2A'] as [string, string]  // deeper purple for keystone
+    : undefined;
+
   return (
     <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-      <GradientCard style={styles.card}>
+      <GradientCard style={[styles.card, c.isKeystone && styles.keystoneCard]} colors={cardColors}>
+        {/* Keystone banner */}
+        {c.isKeystone && (
+          <LinearGradient
+            colors={COLORS.gradients.accent as [string, string]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.keystoneBanner}
+          >
+            <Text style={styles.keystoneIcon}>🔑</Text>
+            <Text style={styles.keystoneLabel}>KEYSTONE HABIT</Text>
+            <Text style={styles.keystoneHint}>Cascading positive effects detected</Text>
+          </LinearGradient>
+        )}
+
         <View style={styles.topRow}>
           <Text style={styles.emoji}>{c.emoji}</Text>
           <View style={styles.badgeRow}>
@@ -74,8 +93,8 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
 
         <View style={styles.factorsRow}>
           {c.inputFactors.map(f => (
-            <View key={f} style={styles.factor}>
-              <Text style={styles.factorText}>{f}</Text>
+            <View key={f} style={[styles.factor, c.isKeystone && styles.keystoneFactor]}>
+              <Text style={[styles.factorText, c.isKeystone && { color: COLORS.accent }]}>{f}</Text>
             </View>
           ))}
         </View>
@@ -86,6 +105,32 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
 
 const styles = StyleSheet.create({
   card: { gap: SPACING.sm },
+  keystoneCard: {
+    borderWidth: 1,
+    borderColor: COLORS.borderAccent,
+  },
+  keystoneBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.xs + 2,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: RADIUS.sm,
+    marginBottom: SPACING.xs,
+  },
+  keystoneIcon: { fontSize: 12 },
+  keystoneLabel: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.text,
+    fontSize: 9,
+  } as object,
+  keystoneHint: {
+    ...TYPOGRAPHY.caption,
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 9,
+    flex: 1,
+    textAlign: 'right',
+  } as object,
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -145,6 +190,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceElevated,
     borderWidth: 1,
     borderColor: COLORS.border,
+  },
+  keystoneFactor: {
+    borderColor: COLORS.borderAccent,
+    backgroundColor: COLORS.accentGlow,
   },
   factorText: {
     ...TYPOGRAPHY.caption,

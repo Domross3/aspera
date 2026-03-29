@@ -14,26 +14,31 @@ const NUM_SEGMENTS = 10;
 
 export default function IntensitySlider({ value, disabled = false, onChange }: Props) {
   const [trackWidth, setTrackWidth] = useState(0);
+  const trackWidthRef = useRef(0);
+  const onChangeRef = useRef(onChange);
+  const disabledRef = useRef(disabled);
+
+  onChangeRef.current = onChange;
+  disabledRef.current = disabled;
+
+  const resolve = (x: number) => {
+    const w = trackWidthRef.current;
+    if (w === 0) return;
+    const ratio = Math.max(0, Math.min(1, x / w));
+    const newVal = Math.max(1, Math.min(10, Math.round(ratio * 10)));
+    onChangeRef.current(newVal);
+  };
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => !disabled,
-      onMoveShouldSetPanResponder: () => !disabled,
-      onPanResponderGrant: (evt) => {
-        handleTouch(evt.nativeEvent.locationX);
-      },
-      onPanResponderMove: (evt) => {
-        handleTouch(evt.nativeEvent.locationX);
-      },
+      onStartShouldSetPanResponder: () => !disabledRef.current,
+      onMoveShouldSetPanResponder: () => !disabledRef.current,
+      onStartShouldSetPanResponderCapture: () => !disabledRef.current,
+      onMoveShouldSetPanResponderCapture: () => !disabledRef.current,
+      onPanResponderGrant: (evt) => resolve(evt.nativeEvent.locationX),
+      onPanResponderMove: (evt) => resolve(evt.nativeEvent.locationX),
     })
   ).current;
-
-  const handleTouch = (x: number) => {
-    if (trackWidth === 0) return;
-    const ratio = Math.max(0, Math.min(1, x / trackWidth));
-    const newVal = Math.max(1, Math.min(10, Math.round(ratio * 10)));
-    onChange(newVal);
-  };
 
   const thumbOffset = trackWidth > 0 ? ((value - 1) / 9) * (trackWidth - THUMB_SIZE) : 0;
   const intensityColor = disabled ? COLORS.textMuted : COLORS.intensity[value - 1] ?? COLORS.accent;
@@ -42,7 +47,11 @@ export default function IntensitySlider({ value, disabled = false, onChange }: P
     <View style={disabled && styles.disabled}>
       <View
         style={styles.trackContainer}
-        onLayout={e => setTrackWidth(e.nativeEvent.layout.width)}
+        onLayout={e => {
+          const w = e.nativeEvent.layout.width;
+          trackWidthRef.current = w;
+          setTrackWidth(w);
+        }}
         {...panResponder.panHandlers}
       >
         {/* Segment track */}

@@ -18,6 +18,7 @@ import MusicChips from '../../src/components/log/MusicChips';
 import NutritionInput from '../../src/components/log/NutritionInput';
 import RatingSlider from '../../src/components/log/RatingSlider';
 import CustomTags from '../../src/components/log/CustomTags';
+import BigRocksInput from '../../src/components/log/BigRocksInput';
 
 function todayId(): string {
   return new Date().toISOString().split('T')[0];
@@ -33,6 +34,7 @@ function defaultLog(): DailyLog {
     nutrition: { mealQuality: 3, hydration: 6 },
     output: { tasksCompleted: 5, focusRating: 7, energyRating: 7 },
     tags: [],
+    bigRocks: [],
   };
 }
 
@@ -74,6 +76,15 @@ export default function LogScreen() {
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </Text>
 
+          {/* Big Rocks — morning intention */}
+          <SectionLabel label="Big Rocks" style={{ marginTop: SPACING.sm }} />
+          <GradientCard style={{ marginBottom: SPACING.lg }}>
+            <BigRocksInput
+              rocks={form.bigRocks ?? []}
+              onChange={rocks => patch('bigRocks', rocks)}
+            />
+          </GradientCard>
+
           {/* Caffeine */}
           <SectionLabel label="Caffeine" style={{ marginTop: SPACING.sm }} />
           <GradientCard style={{ marginBottom: SPACING.lg }}>
@@ -91,14 +102,13 @@ export default function LogScreen() {
               value={form.workout.type}
               onChange={type => patch('workout', { type, intensity: type === 'none' ? 0 : Math.max(1, form.workout.intensity) })}
             />
-            {form.workout.type !== 'none' && (
+            {form.workout.type !== 'none' as string && (
               <View style={{ marginTop: SPACING.md }}>
                 <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted, marginBottom: SPACING.sm }]}>
                   INTENSITY
                 </Text>
                 <IntensitySlider
                   value={form.workout.intensity || 5}
-                  disabled={form.workout.type === 'none'}
                   onChange={intensity => patch('workout', { ...form.workout, intensity })}
                 />
               </View>

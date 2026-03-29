@@ -1,29 +1,80 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, Animated,
+  View, Text, ScrollView, StyleSheet, Animated, TouchableOpacity,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLogs } from '../../src/hooks/useLogs';
 import { useSettings } from '../../src/hooks/useSettings';
 import { getTodayRec, saveTodayRec } from '../../src/storage/storage';
-import { getTodayRecommendation } from '../../src/api/claude';
+import { getTodayRecommendation, generateAnxiousReappraisal } from '../../src/api/claude';
+import { generateCohortTelemetry } from '../../src/lib/mockData';
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from '../../src/constants/theme';
+import SomaticInterceptor from '../../src/components/interceptor/SomaticInterceptor';
 import GradientCard from '../../src/components/common/GradientCard';
 import SummaryPill from '../../src/components/today/SummaryPill';
 import RecommendationBanner from '../../src/components/today/RecommendationBanner';
 import StreakCounter from '../../src/components/today/StreakCounter';
-import AnimatedNumber from '../../src/components/common/AnimatedNumber';
 import SectionLabel from '../../src/components/common/SectionLabel';
+import SpotifyRecent from '../../src/components/today/SpotifyRecent';
+import BrowsingFocus from '../../src/components/today/BrowsingFocus';
+import MusicGenreInsight from '../../src/components/today/MusicGenreInsight';
+import TrendLineCard, { TrendPoint } from '../../src/components/common/TrendLineCard';
 
 function todayId() { return new Date().toISOString().split('T')[0]; }
+function shortDayLabel(date: string) {
+  return new Date(`${date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
+}
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
-  const { todayLog, recentLogs, loading, streak } = useLogs();
+  const { todayLog, recentLogs, loading, streak, reservesRemaining } = useLogs();
   const { settings } = useSettings();
   const [recommendation, setRecommendation] = useState<string | null>(null);
   const [recLoading, setRecLoading] = useState(false);
+
+  // Somatic Interceptor state
+  const [interceptorVisible, setInterceptorVisible] = useState(false);
+  const [reappraisal, setReappraisal] = useState<string | null>(null);
+  const [reappraisalLoading, setReappraisalLoading] = useState(false);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 5-minute idle timer — triggers interceptor if no task activity
+  useEffect(() => {
+    const IDLE_MS = 5 * 60 * 1000;
+    const resetTimer = () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = setTimeout(() => {
+        if (!interceptorVisible) setInterceptorVisible(true);
+      }, IDLE_MS);
+    };
+    resetTimer();
+    return () => { if (idleTimerRef.current) clearTimeout(idleTimerRef.current); };
+  }, [todayLog?.output.tasksCompleted]);
+
+  const handleInterceptorFeeling = async (feeling: string) => {
+    if (!settings.claudeApiKey) {
+      setReappraisal('You are not alone in this. Stand up, walk to the nearest window, and take three slow breaths.');
+      return;
+    }
+    setReappraisalLoading(true);
+    try {
+      const bigRocks = todayLog?.bigRocks ?? [];
+      const cohort = generateCohortTelemetry({
+        missedBigRock: bigRocks.length > 0 && (todayLog?.output.tasksCompleted ?? 0) === 0,
+        avgFocus: todayLog?.output.focusRating ?? 5,
+        avgSleep: 7,
+        streak,
+        avgEnergy: todayLog?.output.energyRating ?? 5,
+      });
+      const result = await generateAnxiousReappraisal(settings.claudeApiKey, feeling, bigRocks, cohort);
+      setReappraisal(result);
+    } catch {
+      setReappraisal('What you are feeling is shared by thousands right now. Place both feet flat on the floor, press your palms together for five seconds, then release.');
+    } finally {
+      setReappraisalLoading(false);
+    }
+  };
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -71,8 +122,15 @@ export default function TodayScreen() {
     ? recentLogs.reduce((best, l) => (l.output.focusRating + l.output.energyRating) > (best.output.focusRating + best.output.energyRating) ? l : best)
     : null;
 
-  // Mini trend bars data (last 7 days)
   const trendDays = [...recentLogs].sort((a, b) => a.id.localeCompare(b.id));
+  const focusTrend: TrendPoint[] = trendDays.map(day => ({
+    label: shortDayLabel(day.date),
+    value: day.output.focusRating,
+  }));
+  const energyTrend: TrendPoint[] = trendDays.map(day => ({
+    label: shortDayLabel(day.date),
+    value: day.output.energyRating,
+  }));
 
   return (
     <LinearGradient colors={COLORS.gradients.background as [string, string]} style={styles.container}>
@@ -88,57 +146,114 @@ export default function TodayScreen() {
           <Text style={[TYPOGRAPHY.label, { color: COLORS.textMuted, marginBottom: SPACING.xs }]}>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).toUpperCase()}
           </Text>
-          <Text style={[TYPOGRAPHY.hero, { color: COLORS.text, marginBottom: SPACING.xl }]}>Today</Text>
-
-          {/* Streak */}
-          <StreakCounter streak={streak} />
-
-          {/* AI Recommendation */}
-          <View style={{ marginTop: SPACING.lg }}>
-            <RecommendationBanner
-              recommendation={recommendation}
-              isLoading={recLoading}
-              onRefresh={fetchRecommendation}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.xl }}>
+            <Text style={[TYPOGRAPHY.hero, { color: COLORS.text }]}>Today</Text>
+            {/* Hidden demo trigger for Somatic Interceptor — invisible 44x44 tap target */}
+            <TouchableOpacity
+              onLongPress={() => { setReappraisal(null); setInterceptorVisible(true); }}
+              delayLongPress={500}
+              style={{ width: 44, height: 44, opacity: 0 }}
+              activeOpacity={0}
             />
           </View>
 
-          {/* Today's stats cards */}
+          {/* AI Recommendation */}
+          <RecommendationBanner
+            recommendation={recommendation}
+            isLoading={recLoading}
+            onRefresh={fetchRecommendation}
+          />
+
+          {/* Big Rocks — shown if set */}
+          {log && log.bigRocks && log.bigRocks.length > 0 && (
+            <View style={{ marginTop: SPACING.lg }}>
+              <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.textSecondary, marginBottom: SPACING.sm }]}>
+                Today's Big Rocks
+              </Text>
+              <GradientCard>
+                {log.bigRocks.map((rock, i) => (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, paddingVertical: SPACING.xs }}>
+                    <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: COLORS.accent, alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ color: COLORS.text, fontSize: 11, fontWeight: '800' }}>{i + 1}</Text>
+                    </View>
+                    <Text style={[TYPOGRAPHY.body, { color: COLORS.text, flex: 1 }]}>{rock}</Text>
+                  </View>
+                ))}
+              </GradientCard>
+            </View>
+          )}
+
+          {/* Weekly metrics */}
+          {trendDays.length > 0 && weekAvg && (
+            <>
+              <SectionLabel label="This Week's Metrics" style={{ marginTop: SPACING.xl }} />
+              <TrendLineCard
+                title="Focus"
+                subtitle={`${trendDays.length}-day trendline with weekly average`}
+                accentColor={COLORS.accent}
+                points={focusTrend}
+                maxValue={10}
+                formatValue={value => value.toFixed(1)}
+              />
+              <TrendLineCard
+                title="Energy"
+                subtitle={`${trendDays.length}-day trendline with weekly average`}
+                accentColor={COLORS.warning}
+                points={energyTrend}
+                maxValue={10}
+                formatValue={value => value.toFixed(1)}
+              />
+            </>
+          )}
+
+          {/* Best day callout */}
+          {bestDay && (
+            <GradientCard colors={COLORS.gradients.accent} style={{ marginTop: SPACING.md }}>
+              <Text style={[TYPOGRAPHY.caption, { color: 'rgba(255,255,255,0.6)' }]}>
+                PEAK DAY THIS WEEK
+              </Text>
+              <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.text, marginTop: SPACING.xs }]}>
+                {new Date(bestDay.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+              </Text>
+              <View style={styles.peakRow}>
+                <Text style={styles.peakStat}>Focus {bestDay.output.focusRating}/10</Text>
+                <Text style={styles.peakDot}>·</Text>
+                <Text style={styles.peakStat}>Energy {bestDay.output.energyRating}/10</Text>
+                <Text style={styles.peakDot}>·</Text>
+                <Text style={styles.peakStat}>{bestDay.output.tasksCompleted} tasks</Text>
+              </View>
+              <View style={[styles.pillsWrap, { marginTop: SPACING.sm }]}>
+                {bestDay.caffeine.type !== 'none' && (
+                  <View style={styles.peakPill}>
+                    <Text style={styles.peakPillText}>☕ {bestDay.caffeine.type} {bestDay.caffeine.amount}mg</Text>
+                  </View>
+                )}
+                {bestDay.workout.type !== 'none' && (
+                  <View style={styles.peakPill}>
+                    <Text style={styles.peakPillText}>💪 {bestDay.workout.type}</Text>
+                  </View>
+                )}
+                {(bestDay.tags || []).slice(0, 3).map(t => (
+                  <View key={t} style={styles.peakPill}>
+                    <Text style={styles.peakPillText}>{t}</Text>
+                  </View>
+                ))}
+              </View>
+            </GradientCard>
+          )}
+
+          {/* Integrations */}
+          <View style={{ marginTop: SPACING.xl }}>
+            <SpotifyRecent />
+          </View>
+          <View style={{ marginTop: SPACING.lg }}>
+            <BrowsingFocus />
+          </View>
+
+          {/* Inputs go lower in the layout */}
           {log && (
             <>
-              <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.textSecondary, marginTop: SPACING.xl, marginBottom: SPACING.md }]}>
-                Today's Metrics
-              </Text>
-              <View style={styles.statsRow}>
-                <GradientCard style={styles.statCard} colors={COLORS.gradients.focus}>
-                  <Text style={styles.statLabel}>FOCUS</Text>
-                  <AnimatedNumber
-                    value={log.output.focusRating}
-                    style={[styles.statValue, { color: COLORS.accent }]}
-                  />
-                  <Text style={styles.statUnit}>/10</Text>
-                </GradientCard>
-                <GradientCard style={styles.statCard} colors={COLORS.gradients.energy}>
-                  <Text style={styles.statLabel}>ENERGY</Text>
-                  <AnimatedNumber
-                    value={log.output.energyRating}
-                    style={[styles.statValue, { color: COLORS.warning }]}
-                  />
-                  <Text style={styles.statUnit}>/10</Text>
-                </GradientCard>
-                <GradientCard style={styles.statCard} colors={COLORS.gradients.success}>
-                  <Text style={styles.statLabel}>TASKS</Text>
-                  <AnimatedNumber
-                    value={log.output.tasksCompleted}
-                    style={[styles.statValue, { color: COLORS.success }]}
-                  />
-                  <Text style={styles.statUnit}>done</Text>
-                </GradientCard>
-              </View>
-
-              {/* Input pills */}
-              <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.textSecondary, marginTop: SPACING.xl, marginBottom: SPACING.md }]}>
-                Today's Inputs
-              </Text>
+              <SectionLabel label="Today's Inputs" style={{ marginTop: SPACING.xl }} />
               <View style={styles.pillsWrap}>
                 <SummaryPill
                   icon="cafe-outline"
@@ -171,106 +286,9 @@ export default function TodayScreen() {
                   color={COLORS.success}
                 />
               </View>
-            </>
-          )}
 
-          {/* Weekly Trends Section — always shown when we have recent data */}
-          {recentLogs.length > 0 && weekAvg && (
-            <>
-              <SectionLabel label="7-Day Overview" style={{ marginTop: SPACING.xl }} />
-
-              {/* Weekly averages */}
-              <View style={styles.statsRow}>
-                <GradientCard style={styles.avgCard}>
-                  <Text style={styles.avgLabel}>AVG FOCUS</Text>
-                  <Text style={[styles.avgValue, { color: COLORS.accent }]}>{weekAvg.focus}</Text>
-                  <Text style={styles.avgUnit}>/10</Text>
-                </GradientCard>
-                <GradientCard style={styles.avgCard}>
-                  <Text style={styles.avgLabel}>AVG ENERGY</Text>
-                  <Text style={[styles.avgValue, { color: COLORS.warning }]}>{weekAvg.energy}</Text>
-                  <Text style={styles.avgUnit}>/10</Text>
-                </GradientCard>
-                <GradientCard style={styles.avgCard}>
-                  <Text style={styles.avgLabel}>AVG TASKS</Text>
-                  <Text style={[styles.avgValue, { color: COLORS.success }]}>{weekAvg.tasks}</Text>
-                  <Text style={styles.avgUnit}>/day</Text>
-                </GradientCard>
-              </View>
-
-              {/* Mini trend bars */}
-              <GradientCard style={{ marginTop: SPACING.md }}>
-                <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted, marginBottom: SPACING.md }]}>
-                  FOCUS TREND
-                </Text>
-                <View style={styles.trendRow}>
-                  {trendDays.map(day => {
-                    const pct = (day.output.focusRating / 10) * 100;
-                    const dayLabel = new Date(day.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
-                    return (
-                      <View key={day.id} style={styles.trendCol}>
-                        <View style={styles.barContainer}>
-                          <View style={[styles.bar, { height: `${pct}%`, backgroundColor: COLORS.accent }]} />
-                        </View>
-                        <Text style={styles.trendLabel}>{dayLabel}</Text>
-                      </View>
-                    );
-                  })}
-                </View>
-
-                <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted, marginBottom: SPACING.md, marginTop: SPACING.lg }]}>
-                  ENERGY TREND
-                </Text>
-                <View style={styles.trendRow}>
-                  {trendDays.map(day => {
-                    const pct = (day.output.energyRating / 10) * 100;
-                    const dayLabel = new Date(day.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2);
-                    return (
-                      <View key={day.id} style={styles.trendCol}>
-                        <View style={styles.barContainer}>
-                          <View style={[styles.bar, { height: `${pct}%`, backgroundColor: COLORS.warning }]} />
-                        </View>
-                        <Text style={styles.trendLabel}>{dayLabel}</Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </GradientCard>
-
-              {/* Best day callout */}
-              {bestDay && (
-                <GradientCard colors={COLORS.gradients.accent} style={{ marginTop: SPACING.md }}>
-                  <Text style={[TYPOGRAPHY.caption, { color: 'rgba(255,255,255,0.6)' }]}>
-                    PEAK DAY THIS WEEK
-                  </Text>
-                  <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.text, marginTop: SPACING.xs }]}>
-                    {new Date(bestDay.date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                  </Text>
-                  <View style={styles.peakRow}>
-                    <Text style={styles.peakStat}>Focus {bestDay.output.focusRating}/10</Text>
-                    <Text style={styles.peakDot}>·</Text>
-                    <Text style={styles.peakStat}>Energy {bestDay.output.energyRating}/10</Text>
-                    <Text style={styles.peakDot}>·</Text>
-                    <Text style={styles.peakStat}>{bestDay.output.tasksCompleted} tasks</Text>
-                  </View>
-                  <View style={[styles.pillsWrap, { marginTop: SPACING.sm }]}>
-                    {bestDay.caffeine.type !== 'none' && (
-                      <View style={styles.peakPill}>
-                        <Text style={styles.peakPillText}>☕ {bestDay.caffeine.type} {bestDay.caffeine.amount}mg</Text>
-                      </View>
-                    )}
-                    {bestDay.workout.type !== 'none' && (
-                      <View style={styles.peakPill}>
-                        <Text style={styles.peakPillText}>💪 {bestDay.workout.type}</Text>
-                      </View>
-                    )}
-                    {(bestDay.tags || []).slice(0, 3).map(t => (
-                      <View key={t} style={styles.peakPill}>
-                        <Text style={styles.peakPillText}>{t}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </GradientCard>
+              {log.music.some(genre => genre !== 'none') && (
+                <MusicGenreInsight currentGenres={log.music} recentLogs={recentLogs} />
               )}
             </>
           )}
@@ -287,8 +305,20 @@ export default function TodayScreen() {
               </Text>
             </GradientCard>
           )}
+
+          <View style={{ marginTop: SPACING.xl }}>
+            <StreakCounter streak={streak} reservesRemaining={reservesRemaining} />
+          </View>
         </ScrollView>
       </Animated.View>
+
+      <SomaticInterceptor
+        visible={interceptorVisible}
+        onDismiss={() => { setInterceptorVisible(false); setReappraisal(null); }}
+        onSubmitFeeling={handleInterceptorFeeling}
+        reappraisal={reappraisal}
+        reappraisalLoading={reappraisalLoading}
+      />
     </LinearGradient>
   );
 }
@@ -296,83 +326,11 @@ export default function TodayScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   content: { paddingHorizontal: SPACING.lg },
-  statsRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  statCard: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-  },
-  statLabel: {
-    ...TYPOGRAPHY.label,
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 9,
-    marginBottom: SPACING.xs,
-  } as object,
-  statValue: {
-    ...TYPOGRAPHY.hero,
-    lineHeight: 40,
-  } as object,
-  statUnit: {
-    ...TYPOGRAPHY.caption,
-    color: 'rgba(255,255,255,0.5)',
-  } as object,
   pillsWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: SPACING.sm,
   },
-  // Weekly averages
-  avgCard: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-  },
-  avgLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textMuted,
-    fontSize: 8,
-    marginBottom: SPACING.xs,
-  } as object,
-  avgValue: {
-    ...TYPOGRAPHY.title,
-    lineHeight: 28,
-  } as object,
-  avgUnit: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 10,
-  } as object,
-  // Trend bars
-  trendRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    gap: SPACING.sm,
-  },
-  trendCol: {
-    flex: 1,
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  barContainer: {
-    width: '100%',
-    height: 60,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-  },
-  bar: {
-    width: '70%',
-    borderRadius: RADIUS.sm,
-    minHeight: 4,
-  },
-  trendLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 9,
-  } as object,
   // Peak day
   peakRow: {
     flexDirection: 'row',

@@ -14,5 +14,22 @@
   "icons": {
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.reddit.com/*",
+        "*://*.twitter.com/*",
+        "*://*.x.com/*",
+        "*://*.youtube.com/*",
+        "*://*.tiktok.com/*",
+        "*://*.instagram.com/*",
+        "*://*.facebook.com/*",
+        "*://*.twitch.tv/*",
+        "*://*.discord.com/*"
+      ],
+      "js": ["friction.js"],
+      "run_at": "document_idle"
+    }
+  ]
 }

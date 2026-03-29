@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { DailyLog, InsightsResponse } from '../types';
-import { getMockContext, MockContext } from '../lib/mockData';
+import { getMockContext, MockContext, CohortTelemetry } from '../lib/mockData';
+import { getDailyIntegrationSummaries, getLatestIntegrationSummary } from '../lib/integrations';
 
 // ── Coaching Personalities ──────────────────────────────────────────────
 
@@ -25,14 +26,77 @@ You MUST respond with ONLY valid JSON matching the exact schema provided.
 Do not include markdown fences, explanations, or any text outside the JSON.`,
 };
 
+// ── Self-Compassion Layer ───────────────────────────────────────────────
+// Applied as a prefix when the user's week was rough.
+// Uses three pillars: Self-Kindness, Common Humanity, Mindfulness.
+
+function detectBadWeek(logs: DailyLog[]): boolean {
+  if (logs.length < 3) return false;
+  const avgFocus = logs.reduce((s, l) => s + l.output.focusRating, 0) / logs.length;
+  const avgEnergy = logs.reduce((s, l) => s + l.output.energyRating, 0) / logs.length;
+  return avgFocus < 5 || avgEnergy < 5;
+}
+
+const SELF_COMPASSION_PREFIX = `IMPORTANT TONE DIRECTIVE: The user's data indicates a difficult week with low energy or focus.
+Regardless of your personality style, you must apply Self-Compassion principles:
+- Self-Kindness: Acknowledge the struggle without judgment. Do NOT guilt-trip or shame.
+- Common Humanity: Remind them that difficult weeks are universal — everyone goes through them.
+- Mindfulness: Note the data patterns without catastrophizing or over-dramatizing.
+Your summary should open with acknowledgment, your recommendation should be a single small, low-effort action to rebuild momentum. Never say "you failed" or "you need to do better."
+`;
+
+const INSIGHTS_MAX_TOKENS = 2200;
+const INSIGHTS_RETRY_MAX_TOKENS = 2800;
+
 // ── Insights Generation ─────────────────────────────────────────────────
 
 function buildInsightsPrompt(logs: DailyLog[], mockContext: MockContext): string {
+  const exampleResponse = {
+    summary: "Exactly 2 concise sentences summarizing the user's patterns",
+    correlations: [
+      {
+        id: "example-slug",
+        emoji: "🎯",
+        title: "Short catchy title",
+        description: "1 concise sentence with specific numbers from the data",
+        inputFactors: ["caffeine", "music"],
+        outputMetric: "focus",
+        delta: 2.5,
+        confidence: "high",
+        isKeystone: false
+      }
+    ],
+    topRecommendation: "Single actionable sentence starting with a verb",
+    weeklyTrends: [
+      {
+        date: "2026-03-22",
+        dayLabel: "Sun",
+        focusRating: 7,
+        energyRating: 8,
+        tasksCompleted: 9
+      }
+    ],
+    generatedAt: Date.now()
+  };
+
+  // Extract Big Rocks data for analysis
+  const bigRocksContext = logs
+    .filter(l => l.bigRocks && l.bigRocks.length > 0)
+    .map(l => ({ date: l.date, bigRocks: l.bigRocks, tasksCompleted: l.output.tasksCompleted, focusRating: l.output.focusRating }));
+  const integrationSummaries = getDailyIntegrationSummaries().slice(-7);
+
   return `Analyze this user's lifestyle and performance data from multiple sources.
 Identify 3–5 correlations between their inputs and outputs.
 
 DAILY LOGS (self-reported):
 ${JSON.stringify(logs, null, 2)}
+
+${bigRocksContext.length > 0 ? `BIG ROCKS (user's stated top priorities per day):
+${JSON.stringify(bigRocksContext, null, 2)}
+
+Analyze whether the user's task output and focus scores are higher on days they set Big Rocks vs. days they didn't.
+If so, note this as a correlation.
+` : ''}
 
 SPOTIFY RECENTLY PLAYED:
 ${JSON.stringify(mockContext.spotify, null, 2)}
@@ -52,36 +116,253 @@ ${JSON.stringify(mockContext.tasks, null, 2)}
 STATE OF MIND (7 days):
 ${JSON.stringify(mockContext.mood, null, 2)}
 
+BROWSING FOCUS TELEMETRY:
+${JSON.stringify(mockContext.browsing, null, 2)}
+
+NORMALIZED INTEGRATION SUMMARIES:
+${JSON.stringify(integrationSummaries, null, 2)}
+
 IMPORTANT: One insight MUST reference the user's music listening patterns (Spotify data).
 Notice that their highest-focus sessions correlate with grunge/alt-rock (Nirvana, Alice in Chains, RHCP).
+You should also look for attention patterns across productive, neutral, and distracting time where relevant.
 
-Respond ONLY with JSON matching this exact schema:
-{
-  "summary": "string (2-3 sentences)",
-  "correlations": [
-    {
-      "id": "string (unique slug)",
-      "emoji": "string (single emoji)",
-      "title": "string (short, catchy)",
-      "description": "string (1-2 sentences with specific numbers)",
-      "inputFactors": ["string"],
-      "outputMetric": "focus" | "energy" | "tasks",
-      "delta": number,
-      "confidence": "low" | "medium" | "high"
+KEYSTONE HABIT DETECTION:
+Look for habits that create positive cascading effects across multiple outputs.
+A Keystone Habit is a single input that, when present, correlates with improvements in 2+ output metrics simultaneously.
+For example: "Morning workout" might correlate with higher focus AND higher energy AND more tasks completed.
+Mark exactly ONE correlation as a Keystone Habit by setting "isKeystone": true. The rest should be false.
+In that correlation's description, explicitly call out the cascading/spillover effects.
+
+Rules for outputMetric: must be exactly one of "focus", "energy", or "tasks".
+Rules for confidence: must be exactly one of "low", "medium", or "high".
+Rules for isKeystone: must be a boolean (true or false). Exactly one correlation should be true.
+Include 3-5 correlations and exactly 7 weeklyTrends entries (one per day of recent logs).
+Keep the response concise:
+- summary: exactly 2 sentences
+- each correlation description: exactly 1 sentence
+- no extra keys beyond the schema
+
+Respond ONLY with valid JSON. No markdown fences. No text before or after. Here is an example of the exact JSON format:
+${JSON.stringify(exampleResponse, null, 2)}`;
+}
+
+function stripCodeFences(text: string): string {
+  return text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+}
+
+function extractTextBlocks(content: ReadonlyArray<{ type: string; text?: string }>): string {
+  return content
+    .filter((block): block is { type: string; text: string } => block.type === 'text' && typeof block.text === 'string')
+    .map(block => block.text)
+    .join('\n')
+    .trim();
+}
+
+function extractBalancedJsonObject(text: string): string | null {
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let isEscaped = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+
+    if (start === -1) {
+      if (char === '{') {
+        start = i;
+        depth = 1;
+      }
+      continue;
     }
-  ],
-  "topRecommendation": "string (single actionable sentence starting with a verb)",
-  "weeklyTrends": [
-    {
-      "date": "YYYY-MM-DD",
-      "dayLabel": "Mon|Tue|Wed|Thu|Fri|Sat|Sun",
-      "focusRating": number,
-      "energyRating": number,
-      "tasksCompleted": number
+
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
     }
-  ],
-  "generatedAt": ${Date.now()}
-}`;
+
+    if (char === '\\' && inString) {
+      isEscaped = true;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (char === '{') depth += 1;
+    if (char === '}') depth -= 1;
+
+    if (depth === 0) {
+      return text.slice(start, i + 1);
+    }
+  }
+
+  return null;
+}
+
+function removeTrailingCommas(text: string): string {
+  return text.replace(/,\s*([}\]])/g, '$1');
+}
+
+function parseJsonCandidate(text: string): unknown | null {
+  const stripped = stripCodeFences(text);
+  if (!stripped) return null;
+
+  const candidates = new Set<string>();
+  candidates.add(stripped);
+
+  const balanced = extractBalancedJsonObject(stripped);
+  if (balanced) candidates.add(balanced);
+
+  const start = stripped.indexOf('{');
+  const end = stripped.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    candidates.add(stripped.slice(start, end + 1));
+  }
+
+  for (const candidate of candidates) {
+    const sanitized = removeTrailingCommas(candidate).trim();
+    try {
+      return JSON.parse(sanitized) as unknown;
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
+}
+
+function slugify(value: string, fallback: string): string {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return slug || fallback;
+}
+
+function getDayLabel(date: string): string {
+  const parsed = new Date(`${date}T12:00:00`);
+  if (Number.isNaN(parsed.getTime())) return 'Day';
+  return parsed.toLocaleDateString('en-US', { weekday: 'short' });
+}
+
+function buildWeeklyTrendsFromLogs(logs: DailyLog[]): InsightsResponse['weeklyTrends'] {
+  return [...logs]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-7)
+    .map(log => ({
+      date: log.date,
+      dayLabel: getDayLabel(log.date),
+      focusRating: log.output.focusRating,
+      energyRating: log.output.energyRating,
+      tasksCompleted: log.output.tasksCompleted,
+    }));
+}
+
+function normalizeCorrelations(raw: unknown): InsightsResponse['correlations'] {
+  if (!Array.isArray(raw)) return [];
+
+  const normalized = raw
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') return null;
+
+      const entry = item as Record<string, unknown>;
+      const title = typeof entry.title === 'string' ? entry.title.trim() : '';
+      const description = typeof entry.description === 'string' ? entry.description.trim() : '';
+
+      if (!title || !description) return null;
+
+      const outputMetric = entry.outputMetric;
+      const confidence = entry.confidence;
+      const delta = typeof entry.delta === 'number' && Number.isFinite(entry.delta) ? entry.delta : 0;
+
+      return {
+        id: typeof entry.id === 'string' && entry.id.trim() ? entry.id : slugify(title, `correlation-${index + 1}`),
+        emoji: typeof entry.emoji === 'string' && entry.emoji.trim() ? entry.emoji : '📊',
+        title,
+        description,
+        inputFactors: Array.isArray(entry.inputFactors)
+          ? entry.inputFactors.filter((factor): factor is string => typeof factor === 'string' && factor.trim().length > 0)
+          : [],
+        outputMetric: outputMetric === 'focus' || outputMetric === 'energy' || outputMetric === 'tasks'
+          ? outputMetric
+          : 'focus',
+        delta,
+        confidence: confidence === 'low' || confidence === 'medium' || confidence === 'high'
+          ? confidence
+          : 'medium',
+        isKeystone: Boolean(entry.isKeystone),
+      };
+    })
+    .filter(Boolean) as InsightsResponse['correlations'];
+
+  if (normalized.length === 0) return [];
+
+  const keystoneCount = normalized.filter(item => item.isKeystone).length;
+  if (keystoneCount === 1) return normalized;
+
+  return normalized.map((item, index) => ({ ...item, isKeystone: index === 0 }));
+}
+
+function normalizeWeeklyTrends(raw: unknown, logs: DailyLog[]): InsightsResponse['weeklyTrends'] {
+  if (!Array.isArray(raw)) return buildWeeklyTrendsFromLogs(logs);
+
+  const normalized = raw
+    .map(item => {
+      if (!item || typeof item !== 'object') return null;
+
+      const entry = item as Record<string, unknown>;
+      const date = typeof entry.date === 'string' && entry.date.trim() ? entry.date : '';
+      if (!date) return null;
+
+      return {
+        date,
+        dayLabel: typeof entry.dayLabel === 'string' && entry.dayLabel.trim() ? entry.dayLabel : getDayLabel(date),
+        focusRating: typeof entry.focusRating === 'number' && Number.isFinite(entry.focusRating) ? entry.focusRating : 0,
+        energyRating: typeof entry.energyRating === 'number' && Number.isFinite(entry.energyRating) ? entry.energyRating : 0,
+        tasksCompleted: typeof entry.tasksCompleted === 'number' && Number.isFinite(entry.tasksCompleted) ? entry.tasksCompleted : 0,
+      };
+    })
+    .filter(Boolean) as InsightsResponse['weeklyTrends'];
+
+  return normalized.length === 7 ? normalized : buildWeeklyTrendsFromLogs(logs);
+}
+
+function coerceInsightsResponse(raw: unknown, logs: DailyLog[]): InsightsResponse | null {
+  if (!raw || typeof raw !== 'object') return null;
+
+  const entry = raw as Record<string, unknown>;
+  const summary = typeof entry.summary === 'string' ? entry.summary.trim() : '';
+  const topRecommendation = typeof entry.topRecommendation === 'string' ? entry.topRecommendation.trim() : '';
+  const correlations = normalizeCorrelations(entry.correlations);
+
+  if (!summary || !topRecommendation || correlations.length === 0) {
+    return null;
+  }
+
+  return {
+    summary,
+    correlations,
+    topRecommendation,
+    weeklyTrends: normalizeWeeklyTrends(entry.weeklyTrends, logs),
+    generatedAt: typeof entry.generatedAt === 'number' && Number.isFinite(entry.generatedAt)
+      ? entry.generatedAt
+      : Date.now(),
+  };
+}
+
+function buildRetryPrompt(basePrompt: string): string {
+  return `${basePrompt}
+
+RETRY FORMAT RULES:
+- Return one JSON object only
+- Do not use markdown fences
+- Keep the JSON compact and concise
+- Keep each correlation description to one sentence`;
 }
 
 export async function generateInsights(
@@ -92,19 +373,42 @@ export async function generateInsights(
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const mockContext = getMockContext();
 
-  const message = await client.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1500,
-    temperature: personality === 'unserious' ? 0.3 : 0,
-    system: PERSONALITY_PROMPTS[personality],
-    messages: [{ role: 'user', content: buildInsightsPrompt(logs, mockContext) }],
-  });
+  // Build system prompt with optional self-compassion layer
+  let systemPrompt = PERSONALITY_PROMPTS[personality];
+  if (detectBadWeek(logs)) {
+    systemPrompt = SELF_COMPASSION_PREFIX + '\n\n' + systemPrompt;
+  }
+  const basePrompt = buildInsightsPrompt(logs, mockContext);
+  const prompts = [basePrompt, buildRetryPrompt(basePrompt)];
+  const maxTokens = [INSIGHTS_MAX_TOKENS, INSIGHTS_RETRY_MAX_TOKENS];
+  let lastRawResponse = '';
 
-  let text = (message.content[0] as { type: string; text: string }).text;
-  // Strip markdown fences if Claude wraps the JSON
-  text = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-  const parsed = JSON.parse(text) as InsightsResponse;
-  return parsed;
+  for (let attempt = 0; attempt < prompts.length; attempt += 1) {
+    const message = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: maxTokens[attempt],
+      temperature: personality === 'unserious' ? 0.2 : 0,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: prompts[attempt] }],
+    });
+
+    const rawText = extractTextBlocks(message.content);
+    lastRawResponse = rawText;
+
+    const parsed = coerceInsightsResponse(parseJsonCandidate(rawText), logs);
+    if (parsed) {
+      return parsed;
+    }
+
+    console.warn('Failed to parse Claude insights response', {
+      attempt: attempt + 1,
+      stopReason: message.stop_reason,
+      preview: rawText.slice(0, 240),
+    });
+  }
+
+  console.error('Claude insights parsing failed after retry', lastRawResponse.slice(0, 1000));
+  throw new Error('The AI returned an incomplete insights response. Please tap Generate again.');
 }
 
 // ── Today Recommendation ────────────────────────────────────────────────
@@ -116,22 +420,72 @@ export async function getTodayRecommendation(
 ): Promise<string> {
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const mockContext = getMockContext();
+  const latestIntegrationSummary = getLatestIntegrationSummary();
 
   const context = log ?? recentLogs[0];
   if (!context) return "Log your first day to get personalized recommendations.";
 
+  // Detect if we need compassion mode for the recommendation too
+  const isBadWeek = detectBadWeek(recentLogs);
+  const toneDirective = isBadWeek
+    ? "The user has had a rough stretch. Be kind and encouraging. Suggest one small, low-effort action. Do not guilt them. Acknowledge the difficulty."
+    : "Give one concrete, actionable recommendation in a single sentence. Start with a verb.";
+
+  const bigRocksInfo = context.bigRocks && context.bigRocks.length > 0
+    ? `\nToday's Big Rocks (stated priorities): ${context.bigRocks.join(', ')}`
+    : '';
+
   const message = await client.messages.create({
     model: 'claude-sonnet-4-6',
     max_tokens: 150,
-    system: "You are a terse personal performance coach. Give one concrete, actionable recommendation in a single sentence. Start with a verb. No JSON, no markdown, no preamble. Reference the user's actual data.",
+    system: `You are a terse personal performance coach. ${toneDirective} No JSON, no markdown, no preamble. Reference the user's actual data.`,
     messages: [
       {
         role: 'user',
-        content: `Today's log: ${JSON.stringify(context)}
+        content: `Today's log: ${JSON.stringify(context)}${bigRocksInfo}
 Recent sleep: ${JSON.stringify(mockContext.sleep.slice(-2))}
 Today's calendar: ${JSON.stringify(mockContext.calendar)}
 Recent mood: ${JSON.stringify(mockContext.mood.slice(-2))}
+Browsing focus: ${JSON.stringify(mockContext.browsing[0]?.focusScore ?? 'N/A')}
+Normalized attention summary: ${JSON.stringify(latestIntegrationSummary?.attention ?? null)}
 Give one sentence recommendation for maximizing performance today.`,
+      },
+    ],
+  });
+
+  return (message.content[0] as { type: string; text: string }).text.trim();
+}
+
+// ── Anxious Reappraisal ──────────────────────────────────────────────────
+
+export async function generateAnxiousReappraisal(
+  apiKey: string,
+  feeling: string,
+  bigRocks: string[],
+  cohortTelemetry: CohortTelemetry
+): Promise<string> {
+  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 150,
+    temperature: 0.3,
+    system: `You are a somatic-aware cognitive reappraisal coach. The user is stuck in a procrastination/anxiety loop.
+Your job is NOT to motivate. It is to help them NAME the feeling, then give them ONE tiny physical action to break the loop.
+Respond with exactly two sentences:
+1. A compassionate reframe of their feeling (use "Common Humanity" — remind them this is universal)
+2. A single micro-action they can do in the next 60 seconds (e.g., "Stand up, walk to the window, and take three breaths.")
+Do NOT mention productivity, goals, or optimization. This is about breaking the somatic freeze response.`,
+    messages: [
+      {
+        role: 'user',
+        content: `I'm feeling: "${feeling}"
+
+My Big Rocks for today: ${bigRocks.length > 0 ? bigRocks.join(', ') : 'None set'}
+
+Cohort context: ${cohortTelemetry.missedBigRockCount > 0 ? `${cohortTelemetry.missedBigRockCount} other users also missed a Big Rock today.` : ''} ${cohortTelemetry.commonStruggle}. ${cohortTelemetry.streakContext}.
+
+Help me break out of this loop.`,
       },
     ],
   });

@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { MusicGenre } from '../../types';
 import { MUSIC_GENRE_OPTIONS } from '../../constants/options';
@@ -11,6 +12,9 @@ interface Props {
 }
 
 export default function MusicChips({ selected, onChange }: Props) {
+  const [showInput, setShowInput] = useState(false);
+  const [customText, setCustomText] = useState('');
+
   const toggle = (genre: MusicGenre) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (genre === 'none') {
@@ -24,24 +28,82 @@ export default function MusicChips({ selected, onChange }: Props) {
     onChange(next.length === 0 ? ['none'] : next);
   };
 
+  const addCustom = () => {
+    const trimmed = customText.trim();
+    if (trimmed && !selected.includes(trimmed)) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      const without = selected.filter(g => g !== 'none');
+      onChange([...without, trimmed]);
+    }
+    setCustomText('');
+    setShowInput(false);
+  };
+
+  const presetTypes = MUSIC_GENRE_OPTIONS.map(o => o.type as string);
+
   return (
-    <View style={styles.wrap}>
-      {MUSIC_GENRE_OPTIONS.map(opt => {
-        const isSelected = selected.includes(opt.type);
-        return (
-          <TouchableOpacity
-            key={opt.type}
-            style={[styles.chip, isSelected && styles.chipSelected]}
-            onPress={() => toggle(opt.type)}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.emoji}>{opt.emoji}</Text>
-            <Text style={[styles.label, isSelected && styles.labelSelected]}>
-              {opt.label}
-            </Text>
+    <View>
+      <View style={styles.wrap}>
+        {MUSIC_GENRE_OPTIONS.map(opt => {
+          const isSelected = selected.includes(opt.type);
+          return (
+            <TouchableOpacity
+              key={opt.type}
+              style={[styles.chip, isSelected && styles.chipSelected]}
+              onPress={() => toggle(opt.type)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.emoji}>{opt.emoji}</Text>
+              <Text style={[styles.label, isSelected && styles.labelSelected]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+
+        {/* Custom genres the user added */}
+        {selected
+          .filter(g => !presetTypes.includes(g))
+          .map(g => (
+            <TouchableOpacity
+              key={g}
+              style={[styles.chip, styles.chipSelected]}
+              onPress={() => toggle(g)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.emoji}>🎶</Text>
+              <Text style={[styles.label, styles.labelSelected]}>{g}</Text>
+            </TouchableOpacity>
+          ))}
+
+        {/* Add custom button */}
+        <TouchableOpacity
+          style={[styles.chip, styles.addChip]}
+          onPress={() => setShowInput(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="add" size={14} color={COLORS.accent} />
+          <Text style={[styles.label, { color: COLORS.accent }]}>Custom</Text>
+        </TouchableOpacity>
+      </View>
+
+      {showInput && (
+        <View style={styles.inputRow}>
+          <TextInput
+            value={customText}
+            onChangeText={setCustomText}
+            placeholder="e.g. Grunge, R&B, Synthwave..."
+            placeholderTextColor={COLORS.textMuted}
+            style={styles.input}
+            autoFocus
+            onSubmitEditing={addCustom}
+            returnKeyType="done"
+          />
+          <TouchableOpacity style={styles.addBtn} onPress={addCustom}>
+            <Text style={{ color: COLORS.text, fontWeight: '700' }}>Add</Text>
           </TouchableOpacity>
-        );
-      })}
+        </View>
+      )}
     </View>
   );
 }
@@ -67,6 +129,10 @@ const styles = StyleSheet.create({
     borderColor: COLORS.accent,
     backgroundColor: COLORS.accentGlow,
   },
+  addChip: {
+    borderColor: COLORS.borderAccent,
+    borderStyle: 'dashed',
+  },
   emoji: { fontSize: 14 },
   label: {
     ...TYPOGRAPHY.caption,
@@ -74,5 +140,27 @@ const styles = StyleSheet.create({
   } as object,
   labelSelected: {
     color: COLORS.accent,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    color: COLORS.text,
+    ...TYPOGRAPHY.body as object,
+  },
+  addBtn: {
+    backgroundColor: COLORS.accent,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    justifyContent: 'center',
   },
 });
