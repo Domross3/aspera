@@ -116,7 +116,7 @@ export default function CustomTags({ selected, onChange }: Props) {
                   onPress={() => hideTag(t.label)}
                   hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 >
-                  <Ionicons name="close-circle" size={14} color={COLORS.error} />
+                  <Ionicons name="close-circle" size={14} color={COLORS.danger} />
                 </TouchableOpacity>
               )}
               <Text style={styles.emoji}>{t.emoji}</Text>
@@ -139,7 +139,7 @@ export default function CustomTags({ selected, onChange }: Props) {
                 onPress={() => removeCustomTag(t)}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
-                <Ionicons name="close-circle" size={14} color={COLORS.error} />
+                <Ionicons name="close-circle" size={14} color={COLORS.danger} />
               </TouchableOpacity>
             )}
             <Text style={styles.emoji}>🏷️</Text>

@@ -26,6 +26,38 @@ function categorize(hostname) {
   return 'neutral';
 }
 
+// ── Firebase Realtime Database ───────────────────────────────────
+const FIREBASE_URL = 'https://aspera-bridge-default-rtdb.firebaseio.com';
+
+async function syncToFirebase(dayKey, dayData) {
+  const { sites, totals } = dayData;
+  const totalMs = (totals.productive || 0) + (totals.neutral || 0) + (totals.distracting || 0);
+  const prodRatio = totalMs > 0 ? (totals.productive || 0) / totalMs : 0;
+  const distRatio = totalMs > 0 ? (totals.distracting || 0) / totalMs : 0;
+  const focusScore = Math.max(0, Math.min(100, Math.round(prodRatio * 100 - distRatio * 50)));
+
+  // Get Big Rock state
+  const bigRockData = await chrome.storage.sync.get('aspera_big_rock');
+  const bigRock = bigRockData.aspera_big_rock || { task: '', isDeepWork: false };
+
+  const payload = {
+    date: dayKey,
+    sites,
+    totals,
+    focusScore,
+    bigRock,
+    updatedAt: Date.now(),
+  };
+
+  try {
+    await fetch(`${FIREBASE_URL}/browsing/${dayKey}.json`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+  } catch { /* offline — will sync next flush */ }
+}
+
 // ── State ───────────────────────────────────────────────────────
 let activeTab = null;   // { url, hostname, category, startTime }
 
@@ -79,6 +111,9 @@ async function recordTime(hostname, category, elapsed) {
   dayData.totals[category] = (dayData.totals[category] || 0) + elapsed;
 
   await chrome.storage.local.set({ [key]: dayData });
+
+  // Sync to Firebase
+  syncToFirebase(key, dayData);
 }
 
 // ── Event Listeners ─────────────────────────────────────────────

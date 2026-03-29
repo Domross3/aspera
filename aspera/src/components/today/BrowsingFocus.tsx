@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import GradientCard from '../common/GradientCard';
 import SectionLabel from '../common/SectionLabel';
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from '../../constants/theme';
-import { BROWSING_DATA } from '../../lib/mockData';
+import { BROWSING_DATA, BrowsingDay } from '../../lib/mockData';
+import { fetchBrowsingFromFirebase, FirebaseBrowsingDay } from '../../lib/firebase';
 
 function msToLabel(ms: number): string {
   const mins = Math.round(ms / 60000);
@@ -19,8 +20,30 @@ const CATEGORY_COLORS: Record<string, string> = {
   distracting: COLORS.danger,
 };
 
+function firebaseToLocal(fb: FirebaseBrowsingDay): BrowsingDay {
+  const sites = Object.entries(fb.sites).map(([hostname, info]) => ({
+    hostname,
+    time: info.time,
+    category: info.category,
+    visits: info.visits,
+  }));
+  return { date: fb.date, sites, totals: fb.totals, focusScore: fb.focusScore };
+}
+
 export default function BrowsingFocus() {
-  const today = BROWSING_DATA[0]; // most recent day
+  const [liveData, setLiveData] = useState<BrowsingDay | null>(null);
+  const [isLive, setIsLive] = useState(false);
+
+  useEffect(() => {
+    fetchBrowsingFromFirebase().then(results => {
+      if (results.length > 0) {
+        setLiveData(firebaseToLocal(results[0]));
+        setIsLive(true);
+      }
+    });
+  }, []);
+
+  const today = isLive ? liveData : BROWSING_DATA[0];
   if (!today) return null;
 
   const { totals, focusScore, sites } = today;
@@ -39,8 +62,8 @@ export default function BrowsingFocus() {
         <View style={styles.header}>
           <Text style={styles.extensionIcon}>🌐</Text>
           <Text style={styles.headerText}>Aspera Focus</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>MOCK</Text>
+          <View style={[styles.badge, isLive && styles.badgeLive]}>
+            <Text style={[styles.badgeText, isLive && styles.badgeTextLive]}>{isLive ? 'LIVE' : 'MOCK'}</Text>
           </View>
         </View>
 
@@ -112,11 +135,17 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: RADIUS.pill,
   },
+  badgeLive: {
+    backgroundColor: 'rgba(52,211,153,0.2)',
+  },
   badgeText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.accent,
     fontSize: 9,
   } as object,
+  badgeTextLive: {
+    color: COLORS.success,
+  },
   // Score
   scoreRow: {
     flexDirection: 'row',

@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "description": "Track your browsing productivity — powered by Aspera",
   "permissions": ["tabs", "activeTab", "storage", "alarms"],
+  "host_permissions": ["https://aspera-bridge-default-rtdb.firebaseio.com/*"],
   "background": {
     "service_worker": "background.js"
   },
