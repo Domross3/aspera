@@ -224,6 +224,7 @@ export async function seedMockDataIfEmpty(): Promise<void> {
       output: { tasksCompleted: 9, focusRating: 8, energyRating: 9 },
       tags: ['Cold Shower', 'Sunlight'],
       bigRocks: ['Finish project proposal', 'Review teammate PRs'],
+      drinks: 0, sleepHours: 7.2, daylightMinutes: 65, customMetrics: [],
     },
     {
       id: dateString(5), date: dateString(5), createdAt: Date.now() - 5 * 86400000,
@@ -234,6 +235,7 @@ export async function seedMockDataIfEmpty(): Promise<void> {
       output: { tasksCompleted: 4, focusRating: 5, energyRating: 4 },
       tags: ['Alcohol', 'Poor Sleep'],
       bigRocks: [],
+      drinks: 4, sleepHours: 5.5, daylightMinutes: 12, customMetrics: [],
     },
     {
       id: dateString(4), date: dateString(4), createdAt: Date.now() - 4 * 86400000,
@@ -244,6 +246,7 @@ export async function seedMockDataIfEmpty(): Promise<void> {
       output: { tasksCompleted: 7, focusRating: 7, energyRating: 7 },
       tags: ['Meditation', 'Journaling', 'No Phone AM'],
       bigRocks: ['Deep reading session', 'Meal prep'],
+      drinks: 0, sleepHours: 8.0, daylightMinutes: 45, customMetrics: [],
     },
     {
       id: dateString(3), date: dateString(3), createdAt: Date.now() - 3 * 86400000,
@@ -254,6 +257,7 @@ export async function seedMockDataIfEmpty(): Promise<void> {
       output: { tasksCompleted: 11, focusRating: 9, energyRating: 8 },
       tags: ['Sunlight', 'Cold Shower'],
       bigRocks: ['Ship feature branch', 'Write unit tests', 'Call advisor'],
+      drinks: 1, sleepHours: 6.8, daylightMinutes: 80, customMetrics: [],
     },
     {
       id: dateString(2), date: dateString(2), createdAt: Date.now() - 2 * 86400000,
@@ -264,6 +268,7 @@ export async function seedMockDataIfEmpty(): Promise<void> {
       output: { tasksCompleted: 5, focusRating: 5, energyRating: 5 },
       tags: ['Social'],
       bigRocks: [],
+      drinks: 2, sleepHours: 7.5, daylightMinutes: 30, customMetrics: [],
     },
     {
       id: dateString(1), date: dateString(1), createdAt: Date.now() - 86400000,
@@ -274,6 +279,7 @@ export async function seedMockDataIfEmpty(): Promise<void> {
       output: { tasksCompleted: 12, focusRating: 9, energyRating: 10 },
       tags: ['Cold Shower', 'Sunlight', 'No Phone AM'],
       bigRocks: ['Hackathon sprint', 'Integrate Claude API'],
+      drinks: 0, sleepHours: 6.0, daylightMinutes: 55, customMetrics: [],
     },
     {
       id: dateString(0), date: dateString(0), createdAt: Date.now(),
@@ -284,10 +290,94 @@ export async function seedMockDataIfEmpty(): Promise<void> {
       output: { tasksCompleted: 8, focusRating: 8, energyRating: 7 },
       tags: ['Sunlight', 'No Phone AM', 'Meditation'],
       bigRocks: ['Finish hackathon MVP', 'Polish UI'],
+      drinks: 0, sleepHours: 7.8, daylightMinutes: 48, customMetrics: [],
     },
   ];
 
   for (const log of mockLogs) {
     await saveLog(log);
+  }
+
+  // Seed mood check-ins (multiple per day over 7 days)
+  await seedMockMoodData();
+}
+
+export async function seedMockMoodData(): Promise<void> {
+  // Check if we already have multi-day mood data (not just today's captures)
+  const allMood = await getRecentMoodCheckIns(7);
+  const uniqueDates = new Set(allMood.map(c => new Date(c.timestamp).toISOString().split('T')[0]));
+  if (uniqueDates.size >= 3) return; // already have enough spread
+
+  // Generate 2-4 check-ins per day for the past 7 days
+  const moodPatterns: Array<{ mood: number; energy: number; stress: number; hour: number; note?: string }[]> = [
+    // Day 6 — great day (lift + cold shower)
+    [
+      { mood: 3, energy: 2, stress: 2, hour: 7, note: 'Groggy morning' },
+      { mood: 4, energy: 4, stress: 1, hour: 10, note: 'Post-workout high' },
+      { mood: 5, energy: 5, stress: 1, hour: 14, note: 'Deep focus session, crushed it' },
+      { mood: 4, energy: 3, stress: 2, hour: 21 },
+    ],
+    // Day 5 — bad day (alcohol, poor sleep)
+    [
+      { mood: 2, energy: 1, stress: 3, hour: 9, note: 'Hangover, regret the drinks' },
+      { mood: 2, energy: 2, stress: 4, hour: 13, note: 'Can\'t focus at all' },
+      { mood: 3, energy: 2, stress: 3, hour: 18 },
+    ],
+    // Day 4 — recovery day (yoga, meditation)
+    [
+      { mood: 3, energy: 3, stress: 2, hour: 7 },
+      { mood: 4, energy: 4, stress: 1, hour: 11, note: 'Yoga really helped reset' },
+      { mood: 4, energy: 3, stress: 2, hour: 15, note: 'Productive afternoon' },
+      { mood: 5, energy: 3, stress: 1, hour: 20, note: 'Journaling before bed, feel great' },
+    ],
+    // Day 3 — high energy day (run + espresso)
+    [
+      { mood: 4, energy: 4, stress: 2, hour: 6, note: 'Early run, feeling alive' },
+      { mood: 5, energy: 5, stress: 1, hour: 10, note: 'In the zone' },
+      { mood: 4, energy: 3, stress: 3, hour: 16, note: 'Afternoon crash hit' },
+      { mood: 3, energy: 2, stress: 2, hour: 22 },
+    ],
+    // Day 2 — meh day
+    [
+      { mood: 3, energy: 3, stress: 2, hour: 8 },
+      { mood: 3, energy: 2, stress: 3, hour: 14, note: 'Sluggish, no workout' },
+      { mood: 4, energy: 3, stress: 2, hour: 19, note: 'Social plans helped' },
+    ],
+    // Day 1 — great day (HIIT)
+    [
+      { mood: 3, energy: 3, stress: 2, hour: 7 },
+      { mood: 5, energy: 5, stress: 1, hour: 10, note: 'HIIT crushed, endorphins flowing' },
+      { mood: 4, energy: 4, stress: 1, hour: 14 },
+      { mood: 4, energy: 3, stress: 2, hour: 20, note: 'Good wind-down' },
+    ],
+    // Day 0 — today
+    [
+      { mood: 3, energy: 3, stress: 2, hour: 7, note: 'Just woke up, decent sleep' },
+      { mood: 4, energy: 4, stress: 1, hour: 10, note: 'Morning run + espresso combo working' },
+      { mood: 4, energy: 4, stress: 2, hour: 14, note: 'Hackathon flow state' },
+    ],
+  ];
+
+  for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
+    const pattern = moodPatterns[6 - daysAgo];
+    const d = new Date();
+    d.setDate(d.getDate() - daysAgo);
+    const dateStr = d.toISOString().split('T')[0];
+
+    for (const entry of pattern) {
+      const ts = new Date(dateStr);
+      ts.setHours(entry.hour, Math.floor(Math.random() * 45), 0, 0);
+
+      const checkIn: MoodCheckIn = {
+        id: ts.toISOString(),
+        timestamp: ts.getTime(),
+        mood: entry.mood,
+        energy: entry.energy,
+        stress: entry.stress,
+        note: entry.note,
+      };
+
+      await saveMoodCheckIn(checkIn);
+    }
   }
 }

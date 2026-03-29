@@ -84,6 +84,23 @@ export const SLEEP_DATA: SleepEntry[] = [
   { date: dateStr(0), hours_slept: 7.8, sleep_quality: 8 },
 ];
 
+// ── HealthKit Time in Daylight ─────────────────────────────────────────
+
+export interface DaylightEntry {
+  date: string;
+  minutes: number;  // minutes of outdoor UV exposure
+}
+
+export const DAYLIGHT_DATA: DaylightEntry[] = [
+  { date: dateStr(6), minutes: 65 },
+  { date: dateStr(5), minutes: 12 },
+  { date: dateStr(4), minutes: 45 },
+  { date: dateStr(3), minutes: 80 },
+  { date: dateStr(2), minutes: 30 },
+  { date: dateStr(1), minutes: 55 },
+  { date: dateStr(0), minutes: 48 },
+];
+
 // ── HealthKit Workouts ─────────────────────────────────────────────────
 
 export const WORKOUT_DATA: WorkoutEntry[] = [
@@ -170,6 +187,73 @@ export const BROWSING_DATA: BrowsingDay[] = [
   },
 ];
 
+// ── iOS Screen Time ───────────────────────────────────────────────────
+
+export interface ScreenTimeApp {
+  name: string;
+  category: 'social' | 'productivity' | 'entertainment' | 'health' | 'education' | 'other';
+  minutes: number;
+  icon: string; // emoji
+}
+
+export interface ScreenTimeDay {
+  date: string;
+  totalMinutes: number;
+  pickups: number;
+  firstPickup: string;       // e.g. "7:12 AM"
+  longestSession: number;    // minutes
+  byCategory: { category: string; minutes: number; color: string }[];
+  topApps: ScreenTimeApp[];
+}
+
+export const SCREEN_TIME_DATA: ScreenTimeDay[] = [
+  {
+    date: dateStr(0),
+    totalMinutes: 312,
+    pickups: 47,
+    firstPickup: '7:12 AM',
+    longestSession: 84,
+    byCategory: [
+      { category: 'Productivity', minutes: 156, color: '#34D399' },
+      { category: 'Social',       minutes: 62,  color: '#F87171' },
+      { category: 'Entertainment', minutes: 38, color: '#FBBF24' },
+      { category: 'Education',    minutes: 32,  color: '#6C63FF' },
+      { category: 'Other',        minutes: 24,  color: '#4A5568' },
+    ],
+    topApps: [
+      { name: 'VS Code',    category: 'productivity',  minutes: 84, icon: '💻' },
+      { name: 'Slack',       category: 'productivity',  minutes: 42, icon: '💬' },
+      { name: 'Instagram',   category: 'social',        minutes: 34, icon: '📷' },
+      { name: 'YouTube',     category: 'entertainment', minutes: 28, icon: '▶️' },
+      { name: 'X (Twitter)', category: 'social',        minutes: 22, icon: '🐦' },
+      { name: 'Safari',      category: 'other',         minutes: 18, icon: '🧭' },
+      { name: 'Notes',       category: 'productivity',  minutes: 16, icon: '📝' },
+      { name: 'Podcast',     category: 'education',     minutes: 15, icon: '🎙️' },
+    ],
+  },
+  {
+    date: dateStr(1),
+    totalMinutes: 387,
+    pickups: 63,
+    firstPickup: '6:48 AM',
+    longestSession: 45,
+    byCategory: [
+      { category: 'Productivity', minutes: 112, color: '#34D399' },
+      { category: 'Social',       minutes: 118, color: '#F87171' },
+      { category: 'Entertainment', minutes: 72, color: '#FBBF24' },
+      { category: 'Education',    minutes: 44,  color: '#6C63FF' },
+      { category: 'Other',        minutes: 41,  color: '#4A5568' },
+    ],
+    topApps: [
+      { name: 'Instagram',   category: 'social',        minutes: 58, icon: '📷' },
+      { name: 'VS Code',    category: 'productivity',  minutes: 45, icon: '💻' },
+      { name: 'YouTube',     category: 'entertainment', minutes: 42, icon: '▶️' },
+      { name: 'X (Twitter)', category: 'social',        minutes: 38, icon: '🐦' },
+      { name: 'Slack',       category: 'productivity',  minutes: 34, icon: '💬' },
+    ],
+  },
+];
+
 // ── Cohort Telemetry (anonymized, fake "social proof" nudges) ─────────
 
 export interface CohortTelemetry {
@@ -229,21 +313,25 @@ export function generateCohortTelemetry(userState: {
 export interface MockContext {
   spotify: SpotifyTrack[];
   sleep: SleepEntry[];
+  daylight: DaylightEntry[];
   workouts: WorkoutEntry[];
   calendar: CalendarEvent[];
   tasks: GoogleTask[];
   mood: MoodEntry[];
   browsing: BrowsingDay[];
+  screenTime: ScreenTimeDay[];
 }
 
 export function getMockContext(): MockContext {
   return {
     spotify: SPOTIFY_TRACKS,
     sleep: SLEEP_DATA,
+    daylight: DAYLIGHT_DATA,
     workouts: WORKOUT_DATA,
     calendar: CALENDAR_EVENTS,
     tasks: GOOGLE_TASKS,
     mood: MOOD_DATA,
     browsing: BROWSING_DATA,
+    screenTime: SCREEN_TIME_DATA,
   };
 }

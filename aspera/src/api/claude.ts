@@ -104,6 +104,9 @@ ${JSON.stringify(mockContext.spotify, null, 2)}
 HEALTHKIT SLEEP (7 days):
 ${JSON.stringify(mockContext.sleep, null, 2)}
 
+HEALTHKIT TIME IN DAYLIGHT (7 days, minutes of outdoor UV exposure):
+${JSON.stringify(mockContext.daylight, null, 2)}
+
 HEALTHKIT WORKOUTS:
 ${JSON.stringify(mockContext.workouts, null, 2)}
 

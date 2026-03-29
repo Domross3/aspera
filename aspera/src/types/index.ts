@@ -30,6 +30,10 @@ export interface DailyLog {
     mealQuality: MealQuality;
     hydration: number; // glasses 0–12
   };
+  drinks: number;           // alcoholic drinks consumed
+  sleepHours: number;       // time in bed (from HealthKit or manual)
+  daylightMinutes: number;  // time in daylight (from HealthKit or manual)
+  customMetrics: { name: string; value: number }[];  // user-defined trackables
   output: {
     tasksCompleted: number; // 0–20
     focusRating: number;    // 1–10

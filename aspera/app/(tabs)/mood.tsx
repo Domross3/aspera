@@ -7,11 +7,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import { MoodCheckIn, MOOD_EMOJIS, ENERGY_EMOJIS, STRESS_EMOJIS } from '../../src/types';
-import { saveMoodCheckIn, getRecentMoodCheckIns } from '../../src/storage/storage';
+import { saveMoodCheckIn, getRecentMoodCheckIns, seedMockMoodData } from '../../src/storage/storage';
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from '../../src/constants/theme';
 import GradientCard from '../../src/components/common/GradientCard';
 import SectionLabel from '../../src/components/common/SectionLabel';
 import TrendLineCard, { TrendPoint } from '../../src/components/common/TrendLineCard';
+import TimeOfDayCurve from '../../src/components/mood/TimeOfDayCurve';
 
 interface DailyMoodSnapshot {
   date: string;
@@ -76,6 +77,7 @@ export default function MoodScreen() {
   const [recentCheckins, setRecentCheckins] = useState<MoodCheckIn[]>([]);
 
   const loadCheckins = useCallback(async () => {
+    await seedMockMoodData();
     const recent = await getRecentMoodCheckIns(14);
     setRecentCheckins(recent);
   }, []);
@@ -194,6 +196,9 @@ export default function MoodScreen() {
               maxValue={5}
               formatValue={value => value.toFixed(1)}
             />
+
+            <SectionLabel label="Time of Day" style={{ marginTop: SPACING.xl }} />
+            <TimeOfDayCurve checkins={recentCheckins} />
           </>
         ) : (
           <GradientCard style={styles.emptyState}>
@@ -271,8 +276,11 @@ export default function MoodScreen() {
             placeholder="What shifted?"
             placeholderTextColor={COLORS.textMuted}
             multiline
-            numberOfLines={3}
+            scrollEnabled
             textAlignVertical="top"
+            blurOnSubmit
+            returnKeyType="done"
+            onSubmitEditing={() => {}}
           />
         </GradientCard>
 
@@ -469,7 +477,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm + 2,
-    minHeight: 80,
+    height: 72,
+    maxHeight: 72,
   } as object,
   saveButton: {
     borderRadius: RADIUS.lg,

@@ -18,6 +18,7 @@ import StreakCounter from '../../src/components/today/StreakCounter';
 import SectionLabel from '../../src/components/common/SectionLabel';
 import SpotifyRecent from '../../src/components/today/SpotifyRecent';
 import BrowsingFocus from '../../src/components/today/BrowsingFocus';
+import ScreenTimeCard from '../../src/components/today/ScreenTimeCard';
 import MusicGenreInsight from '../../src/components/today/MusicGenreInsight';
 import TrendLineCard, { TrendPoint } from '../../src/components/common/TrendLineCard';
 
@@ -246,8 +247,22 @@ export default function TodayScreen() {
           <View style={{ marginTop: SPACING.xl }}>
             <SpotifyRecent />
           </View>
+
+          {/* Genre insight — derived from recent logs, always shown if music data exists */}
+          {(() => {
+            const genres = log?.music ?? recentLogs.flatMap(l => l.music).filter(g => g !== 'none');
+            const unique = [...new Set(genres)];
+            return unique.length > 0 ? (
+              <MusicGenreInsight currentGenres={unique} recentLogs={recentLogs} />
+            ) : null;
+          })()}
+
           <View style={{ marginTop: SPACING.lg }}>
             <BrowsingFocus />
+          </View>
+
+          <View style={{ marginTop: SPACING.lg }}>
+            <ScreenTimeCard />
           </View>
 
           {/* Inputs go lower in the layout */}
@@ -273,6 +288,9 @@ export default function TodayScreen() {
                   value={log.music.join(', ')}
                   color={COLORS.accentAlt}
                 />
+              </View>
+
+              <View style={styles.pillsWrap}>
                 <SummaryPill
                   icon="water-outline"
                   label="Hydration"
@@ -285,11 +303,31 @@ export default function TodayScreen() {
                   value={`Meal quality ${log.nutrition.mealQuality}/5`}
                   color={COLORS.success}
                 />
+                {(log.sleepHours ?? 0) > 0 && (
+                  <SummaryPill
+                    icon="moon-outline"
+                    label="Sleep"
+                    value={`${log.sleepHours}h`}
+                    color={COLORS.accentAlt}
+                  />
+                )}
+                {(log.daylightMinutes ?? 0) > 0 && (
+                  <SummaryPill
+                    icon="sunny-outline"
+                    label="Daylight"
+                    value={`${log.daylightMinutes}m`}
+                    color={COLORS.warning}
+                  />
+                )}
+                {(log.drinks ?? 0) > 0 && (
+                  <SummaryPill
+                    icon="wine-outline"
+                    label="Drinks"
+                    value={`${log.drinks}`}
+                    color={COLORS.danger}
+                  />
+                )}
               </View>
-
-              {log.music.some(genre => genre !== 'none') && (
-                <MusicGenreInsight currentGenres={log.music} recentLogs={recentLogs} />
-              )}
             </>
           )}
 

@@ -1,5 +1,6 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, PanResponder, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
 
 interface Props {
@@ -8,91 +9,59 @@ interface Props {
   onChange: (v: number) => void;
 }
 
-const TRACK_HEIGHT = 8;
-const THUMB_SIZE = 28;
-const NUM_SEGMENTS = 10;
-
 export default function IntensitySlider({ value, disabled = false, onChange }: Props) {
-  const [trackWidth, setTrackWidth] = useState(0);
-  const trackWidthRef = useRef(0);
-  const onChangeRef = useRef(onChange);
-  const disabledRef = useRef(disabled);
-
-  onChangeRef.current = onChange;
-  disabledRef.current = disabled;
-
-  const resolve = (x: number) => {
-    const w = trackWidthRef.current;
-    if (w === 0) return;
-    const ratio = Math.max(0, Math.min(1, x / w));
-    const newVal = Math.max(1, Math.min(10, Math.round(ratio * 10)));
-    onChangeRef.current(newVal);
+  const set = (v: number) => {
+    if (disabled) return;
+    const clamped = Math.max(1, Math.min(10, v));
+    if (clamped !== value) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onChange(clamped);
+    }
   };
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => !disabledRef.current,
-      onMoveShouldSetPanResponder: () => !disabledRef.current,
-      onStartShouldSetPanResponderCapture: () => !disabledRef.current,
-      onMoveShouldSetPanResponderCapture: () => !disabledRef.current,
-      onPanResponderGrant: (evt) => resolve(evt.nativeEvent.locationX),
-      onPanResponderMove: (evt) => resolve(evt.nativeEvent.locationX),
-    })
-  ).current;
-
-  const thumbOffset = trackWidth > 0 ? ((value - 1) / 9) * (trackWidth - THUMB_SIZE) : 0;
   const intensityColor = disabled ? COLORS.textMuted : COLORS.intensity[value - 1] ?? COLORS.accent;
 
   return (
     <View style={disabled && styles.disabled}>
-      <View
-        style={styles.trackContainer}
-        onLayout={e => {
-          const w = e.nativeEvent.layout.width;
-          trackWidthRef.current = w;
-          setTrackWidth(w);
-        }}
-        {...panResponder.panHandlers}
-      >
-        {/* Segment track */}
-        <View style={styles.track}>
-          {Array.from({ length: NUM_SEGMENTS }).map((_, i) => (
-            <View
+      {/* Tappable segments */}
+      <View style={styles.segmentRow}>
+        {Array.from({ length: 10 }).map((_, i) => {
+          const segVal = i + 1;
+          const active = segVal <= value;
+          return (
+            <TouchableOpacity
               key={i}
               style={[
                 styles.segment,
                 {
-                  backgroundColor: disabled
-                    ? COLORS.border
-                    : i < value
+                  backgroundColor: active
                     ? COLORS.intensity[i]
                     : COLORS.border,
+                  height: 12 + i * 2.5, // graduated height
                 },
               ]}
+              onPress={() => set(segVal)}
+              activeOpacity={0.7}
+              disabled={disabled}
             />
-          ))}
-        </View>
-
-        {/* Thumb — only render after layout */}
-        {trackWidth > 0 && (
-          <View
-            style={[
-              styles.thumb,
-              {
-                left: thumbOffset,
-                backgroundColor: intensityColor,
-                shadowColor: intensityColor,
-              },
-            ]}
-          />
-        )}
+          );
+        })}
       </View>
 
+      {/* Labels + value */}
       <View style={styles.labels}>
         <Text style={styles.labelText}>Low</Text>
-        <Text style={[styles.valueText, { color: intensityColor }]}>
-          {disabled ? '—' : value} / 10
-        </Text>
+        <View style={styles.valueRow}>
+          <TouchableOpacity onPress={() => set(value - 1)} disabled={disabled} style={styles.adjBtn}>
+            <Text style={[styles.adjText, { color: intensityColor }]}>−</Text>
+          </TouchableOpacity>
+          <Text style={[styles.valueText, { color: intensityColor }]}>
+            {disabled ? '—' : value} / 10
+          </Text>
+          <TouchableOpacity onPress={() => set(value + 1)} disabled={disabled} style={styles.adjBtn}>
+            <Text style={[styles.adjText, { color: intensityColor }]}>+</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.labelText}>High</Text>
       </View>
     </View>
@@ -101,34 +70,16 @@ export default function IntensitySlider({ value, disabled = false, onChange }: P
 
 const styles = StyleSheet.create({
   disabled: { opacity: 0.4 },
-  trackContainer: {
-    height: THUMB_SIZE + SPACING.sm,
-    justifyContent: 'center',
-  },
-  track: {
+  segmentRow: {
     flexDirection: 'row',
-    height: TRACK_HEIGHT,
-    borderRadius: RADIUS.pill,
-    overflow: 'hidden',
-    gap: 2,
-    marginHorizontal: THUMB_SIZE / 2,
+    alignItems: 'flex-end',
+    gap: 3,
+    paddingVertical: SPACING.sm,
   },
   segment: {
     flex: 1,
     borderRadius: RADIUS.sm,
-  },
-  thumb: {
-    position: 'absolute',
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: THUMB_SIZE / 2,
-    top: SPACING.sm / 2,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 8,
-    elevation: 6,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.3)',
+    minHeight: 12,
   },
   labels: {
     flexDirection: 'row',
@@ -140,8 +91,28 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     color: COLORS.textMuted,
   } as object,
+  valueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
   valueText: {
     ...TYPOGRAPHY.subtitle,
     fontWeight: '700',
   } as object,
+  adjBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.surfaceElevated,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  adjText: {
+    fontSize: 18,
+    fontWeight: '600',
+    lineHeight: 22,
+  },
 });

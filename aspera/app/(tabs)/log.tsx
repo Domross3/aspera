@@ -19,6 +19,10 @@ import NutritionInput from '../../src/components/log/NutritionInput';
 import RatingSlider from '../../src/components/log/RatingSlider';
 import CustomTags from '../../src/components/log/CustomTags';
 import BigRocksInput from '../../src/components/log/BigRocksInput';
+import DrinksInput from '../../src/components/log/DrinksInput';
+import SleepInput from '../../src/components/log/SleepInput';
+import DaylightInput from '../../src/components/log/DaylightInput';
+import CustomMetrics from '../../src/components/log/CustomMetrics';
 
 function todayId(): string {
   return new Date().toISOString().split('T')[0];
@@ -35,6 +39,10 @@ function defaultLog(): DailyLog {
     output: { tasksCompleted: 5, focusRating: 7, energyRating: 7 },
     tags: [],
     bigRocks: [],
+    drinks: 0,
+    sleepHours: 0,
+    daylightMinutes: 0,
+    customMetrics: [],
   };
 }
 
@@ -82,6 +90,24 @@ export default function LogScreen() {
             <BigRocksInput
               rocks={form.bigRocks ?? []}
               onChange={rocks => patch('bigRocks', rocks)}
+            />
+          </GradientCard>
+
+          {/* Sleep — auto-filled from HealthKit */}
+          <SectionLabel label="Sleep" style={{ marginTop: SPACING.sm }} />
+          <GradientCard style={{ marginBottom: SPACING.lg }}>
+            <SleepInput
+              value={form.sleepHours ?? 0}
+              onChange={v => patch('sleepHours', v)}
+            />
+          </GradientCard>
+
+          {/* Daylight — auto-filled from HealthKit */}
+          <SectionLabel label="Daylight" />
+          <GradientCard style={{ marginBottom: SPACING.lg }}>
+            <DaylightInput
+              value={form.daylightMinutes ?? 0}
+              onChange={v => patch('daylightMinutes', v)}
             />
           </GradientCard>
 
@@ -135,6 +161,15 @@ export default function LogScreen() {
             />
           </GradientCard>
 
+          {/* Drinks */}
+          <SectionLabel label="Alcohol" />
+          <GradientCard style={{ marginBottom: SPACING.lg }}>
+            <DrinksInput
+              value={form.drinks ?? 0}
+              onChange={v => patch('drinks', v)}
+            />
+          </GradientCard>
+
           {/* Output */}
           <SectionLabel label="Performance Output" />
           <GradientCard style={{ marginBottom: SPACING.lg, gap: SPACING.lg }}>
@@ -156,6 +191,15 @@ export default function LogScreen() {
               max={20}
               onChange={v => patch('output', { ...form.output, tasksCompleted: v })}
               accentColor={COLORS.success}
+            />
+          </GradientCard>
+
+          {/* Custom Metrics */}
+          <SectionLabel label="Your Metrics" />
+          <GradientCard style={{ marginBottom: SPACING.lg }}>
+            <CustomMetrics
+              metrics={form.customMetrics ?? []}
+              onChange={m => patch('customMetrics', m)}
             />
           </GradientCard>
 
