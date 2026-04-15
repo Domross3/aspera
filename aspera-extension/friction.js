@@ -3,19 +3,19 @@
 // Shows a timed overlay when the user has an active Big Rock in deep-work mode.
 
 (function () {
-  'use strict';
+  "use strict";
 
   const COUNTDOWN_SECONDS = 15;
-  const ACCENT = '#6C63FF';
-  const ACCENT_ALT = '#00D4FF';
+  const ACCENT = "#6C63FF";
+  const ACCENT_ALT = "#00D4FF";
   let overlayEl = null;
   let countdownInterval = null;
   let styleTag = null;
 
   // ── Lock the page underneath ──────────────────────────────────
   function lockPage() {
-    styleTag = document.createElement('style');
-    styleTag.id = 'aspera-friction-style';
+    styleTag = document.createElement("style");
+    styleTag.id = "aspera-friction-style";
     styleTag.textContent = `
       body.aspera-locked {
         overflow: hidden !important;
@@ -41,11 +41,11 @@
       }
     `;
     document.head.appendChild(styleTag);
-    document.body.classList.add('aspera-locked');
+    document.body.classList.add("aspera-locked");
   }
 
   function unlockPage() {
-    document.body.classList.remove('aspera-locked');
+    document.body.classList.remove("aspera-locked");
     if (styleTag && styleTag.parentNode) {
       styleTag.parentNode.removeChild(styleTag);
       styleTag = null;
@@ -58,22 +58,23 @@
 
     lockPage();
 
-    overlayEl = document.createElement('div');
-    overlayEl.id = 'aspera-friction-overlay';
+    overlayEl = document.createElement("div");
+    overlayEl.id = "aspera-friction-overlay";
 
     Object.assign(overlayEl.style, {
-      position: 'fixed',
-      inset: '0',
-      zIndex: '2147483647',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: '#000',
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
-      color: '#F0F4FF',
-      opacity: '0',
-      transition: 'opacity 0.5s ease',
+      position: "fixed",
+      inset: "0",
+      zIndex: "2147483647",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "#000",
+      fontFamily:
+        "-apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif",
+      color: "#F0F4FF",
+      opacity: "0",
+      transition: "opacity 0.5s ease",
     });
 
     overlayEl.innerHTML = `
@@ -159,17 +160,17 @@
     document.body.appendChild(overlayEl);
 
     // Wire button events
-    const backBtn = document.getElementById('aspera-back-btn');
+    const backBtn = document.getElementById("aspera-back-btn");
     if (backBtn) {
-      backBtn.addEventListener('mouseenter', () => {
-        backBtn.style.transform = 'scale(1.04)';
+      backBtn.addEventListener("mouseenter", () => {
+        backBtn.style.transform = "scale(1.04)";
         backBtn.style.boxShadow = `0 8px 40px ${ACCENT}66, 0 0 0 1px ${ACCENT}`;
       });
-      backBtn.addEventListener('mouseleave', () => {
-        backBtn.style.transform = 'scale(1)';
+      backBtn.addEventListener("mouseleave", () => {
+        backBtn.style.transform = "scale(1)";
         backBtn.style.boxShadow = `0 4px 32px ${ACCENT}44, 0 0 0 1px ${ACCENT}88`;
       });
-      backBtn.addEventListener('click', () => {
+      backBtn.addEventListener("click", () => {
         if (window.history.length > 1) {
           window.history.back();
         } else {
@@ -178,17 +179,23 @@
       });
     }
 
-    const continueBtn = document.getElementById('aspera-continue-btn');
+    const continueBtn = document.getElementById("aspera-continue-btn");
     if (continueBtn) {
-      continueBtn.addEventListener('mouseenter', () => { continueBtn.style.color = '#9BA8C4'; });
-      continueBtn.addEventListener('mouseleave', () => { continueBtn.style.color = '#4A5568'; });
-      continueBtn.addEventListener('click', () => { removeOverlay(); });
+      continueBtn.addEventListener("mouseenter", () => {
+        continueBtn.style.color = "#9BA8C4";
+      });
+      continueBtn.addEventListener("mouseleave", () => {
+        continueBtn.style.color = "#4A5568";
+      });
+      continueBtn.addEventListener("click", () => {
+        removeOverlay();
+      });
     }
 
     // Fade in
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        overlayEl.style.opacity = '1';
+        overlayEl.style.opacity = "1";
       });
     });
 
@@ -211,32 +218,33 @@
   }
 
   function escapeHtml(str) {
-    const div = document.createElement('div');
+    const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
   }
 
   function updateCountdown(seconds) {
-    const text = document.getElementById('aspera-countdown-text');
-    const bar = document.getElementById('aspera-countdown-bar');
+    const text = document.getElementById("aspera-countdown-text");
+    const bar = document.getElementById("aspera-countdown-bar");
     if (text) {
-      text.textContent = seconds > 0
-        ? `This page will be available in ${seconds}s`
-        : 'Timer complete — stay focused?';
+      text.textContent =
+        seconds > 0
+          ? `This page will be available in ${seconds}s`
+          : "Timer complete — stay focused?";
     }
     if (bar) {
       const pct = ((COUNTDOWN_SECONDS - seconds) / COUNTDOWN_SECONDS) * 100;
-      bar.style.width = pct + '%';
+      bar.style.width = pct + "%";
     }
   }
 
   function onCountdownDone() {
-    const btn = document.getElementById('aspera-continue-btn');
+    const btn = document.getElementById("aspera-continue-btn");
     if (btn) {
-      btn.style.display = 'inline-block';
+      btn.style.display = "inline-block";
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          btn.style.opacity = '1';
+          btn.style.opacity = "1";
         });
       });
     }
@@ -249,7 +257,7 @@
       countdownInterval = null;
     }
     if (overlayEl) {
-      overlayEl.style.opacity = '0';
+      overlayEl.style.opacity = "0";
       setTimeout(() => {
         if (overlayEl && overlayEl.parentNode) {
           overlayEl.parentNode.removeChild(overlayEl);
@@ -262,7 +270,7 @@
 
   // ── Check state and decide ──────────────────────────────────────
   function checkAndApply(state) {
-    if (state && state.isDeepWork && state.task && state.task.trim() !== '') {
+    if (state && state.isDeepWork && state.task && state.task.trim() !== "") {
       showOverlay(state.task);
     } else {
       removeOverlay();
@@ -270,15 +278,20 @@
   }
 
   // ── Init: read current Big Rock state ───────────────────────────
-  chrome.storage.sync.get('aspera_big_rock', (result) => {
+  chrome.storage.sync.get("aspera_big_rock", (result) => {
     checkAndApply(result.aspera_big_rock);
   });
 
   // ── React to live changes ───────────────────────────────────────
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === 'sync' && changes.aspera_big_rock) {
+    if (area === "sync" && changes.aspera_big_rock) {
       const newVal = changes.aspera_big_rock.newValue;
-      if (newVal && newVal.isDeepWork && newVal.task && newVal.task.trim() !== '') {
+      if (
+        newVal &&
+        newVal.isDeepWork &&
+        newVal.task &&
+        newVal.task.trim() !== ""
+      ) {
         if (!overlayEl) showOverlay(newVal.task);
       } else {
         removeOverlay();

@@ -1,8 +1,16 @@
-const FIREBASE_URL = 'https://aspera-bridge-default-rtdb.firebaseio.com';
+const FIREBASE_URL = "https://aspera-bridge-default-rtdb.firebaseio.com";
 
 export interface FirebaseBrowsingDay {
   date: string;
-  sites: Record<string, { time: number; category: 'productive' | 'neutral' | 'distracting'; visits: number }>;
+  sites: Record<
+    string,
+    {
+      time: number;
+      category: "productive" | "neutral" | "distracting";
+      visits: number;
+      hostname?: string;
+    }
+  >;
   totals: { productive: number; neutral: number; distracting: number };
   focusScore: number;
   bigRock?: { task: string; isDeepWork: boolean };
@@ -19,7 +27,9 @@ function yesterdayKey(): string {
   return d.toISOString().slice(0, 10);
 }
 
-export async function fetchBrowsingFromFirebase(): Promise<FirebaseBrowsingDay[]> {
+export async function fetchBrowsingFromFirebase(): Promise<
+  FirebaseBrowsingDay[]
+> {
   const keys = [todayKey(), yesterdayKey()];
   const results: FirebaseBrowsingDay[] = [];
 

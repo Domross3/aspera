@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { MusicGenre } from '../../types';
-import { MUSIC_GENRE_OPTIONS } from '../../constants/options';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { MusicGenre } from "../../types";
+import { MUSIC_GENRE_OPTIONS } from "../../constants/options";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 
 interface Props {
   selected: MusicGenre[];
@@ -13,38 +19,38 @@ interface Props {
 
 export default function MusicChips({ selected, onChange }: Props) {
   const [showInput, setShowInput] = useState(false);
-  const [customText, setCustomText] = useState('');
+  const [customText, setCustomText] = useState("");
 
   const toggle = (genre: MusicGenre) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (genre === 'none') {
-      onChange(['none']);
+    if (genre === "none") {
+      onChange(["none"]);
       return;
     }
-    const without = selected.filter(g => g !== 'none');
+    const without = selected.filter((g) => g !== "none");
     const next = without.includes(genre)
-      ? without.filter(g => g !== genre)
+      ? without.filter((g) => g !== genre)
       : [...without, genre];
-    onChange(next.length === 0 ? ['none'] : next);
+    onChange(next.length === 0 ? ["none"] : next);
   };
 
   const addCustom = () => {
     const trimmed = customText.trim();
     if (trimmed && !selected.includes(trimmed)) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const without = selected.filter(g => g !== 'none');
+      const without = selected.filter((g) => g !== "none");
       onChange([...without, trimmed]);
     }
-    setCustomText('');
+    setCustomText("");
     setShowInput(false);
   };
 
-  const presetTypes = MUSIC_GENRE_OPTIONS.map(o => o.type as string);
+  const presetTypes = MUSIC_GENRE_OPTIONS.map((o) => o.type as string);
 
   return (
     <View>
       <View style={styles.wrap}>
-        {MUSIC_GENRE_OPTIONS.map(opt => {
+        {MUSIC_GENRE_OPTIONS.map((opt) => {
           const isSelected = selected.includes(opt.type);
           return (
             <TouchableOpacity
@@ -63,8 +69,8 @@ export default function MusicChips({ selected, onChange }: Props) {
 
         {/* Custom genres the user added */}
         {selected
-          .filter(g => !presetTypes.includes(g))
-          .map(g => (
+          .filter((g) => !presetTypes.includes(g))
+          .map((g) => (
             <TouchableOpacity
               key={g}
               style={[styles.chip, styles.chipSelected]}
@@ -100,7 +106,7 @@ export default function MusicChips({ selected, onChange }: Props) {
             returnKeyType="done"
           />
           <TouchableOpacity style={styles.addBtn} onPress={addCustom}>
-            <Text style={{ color: COLORS.text, fontWeight: '700' }}>Add</Text>
+            <Text style={{ color: COLORS.text, fontWeight: "700" }}>Add</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -110,13 +116,13 @@ export default function MusicChips({ selected, onChange }: Props) {
 
 const styles = StyleSheet.create({
   wrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: SPACING.sm,
   },
   chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs + 2,
@@ -131,7 +137,7 @@ const styles = StyleSheet.create({
   },
   addChip: {
     borderColor: COLORS.borderAccent,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
   },
   emoji: { fontSize: 14 },
   label: {
@@ -142,7 +148,7 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
   },
   inputRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.sm,
     marginTop: SPACING.sm,
   },
@@ -155,12 +161,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     color: COLORS.text,
-    ...TYPOGRAPHY.body as object,
+    ...(TYPOGRAPHY.body as object),
   },
   addBtn: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
 });

@@ -1,15 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
-import { DailyIntegrationSummary, IntegrationConnection } from '../types';
+import { useCallback, useEffect, useState } from "react";
+import { DailyIntegrationSummary, IntegrationConnection } from "../types";
 import {
   getIntegrationConnections,
   getIntegrationSummaries,
   saveIntegrationConnections,
   saveIntegrationSummaries,
-} from '../storage/storage';
-import { getDefaultIntegrationConnections, getDailyIntegrationSummaries } from '../lib/integrations';
+} from "../storage/storage";
+import {
+  getDefaultIntegrationConnections,
+  getDailyIntegrationSummaries,
+} from "../lib/integrations";
 
 export function useIntegrations() {
-  const [connections, setConnections] = useState<IntegrationConnection[]>(getDefaultIntegrationConnections());
+  const [connections, setConnections] = useState<IntegrationConnection[]>(
+    getDefaultIntegrationConnections(),
+  );
   const [summaries, setSummaries] = useState<DailyIntegrationSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -24,7 +29,9 @@ export function useIntegrations() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { reload(); }, [reload]);
+  useEffect(() => {
+    reload();
+  }, [reload]);
 
   const refreshFromMocks = useCallback(async () => {
     const nextConnections = getDefaultIntegrationConnections();
@@ -39,7 +46,12 @@ export function useIntegrations() {
     ]);
   }, []);
 
-  const latestSummary = summaries.length > 0 ? [...summaries].sort((left, right) => left.date.localeCompare(right.date))[summaries.length - 1] : null;
+  const latestSummary =
+    summaries.length > 0
+      ? [...summaries].sort((left, right) =>
+          left.date.localeCompare(right.date),
+        )[summaries.length - 1]
+      : null;
   const latestAttention = latestSummary?.attention ?? null;
 
   return {

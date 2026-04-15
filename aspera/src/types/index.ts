@@ -1,25 +1,37 @@
-export type CaffeineType = 'espresso' | 'drip' | 'matcha' | 'none' | (string & {});
-export type WorkoutType = 'none' | 'run' | 'lift' | 'yoga' | 'walk' | 'hiit' | (string & {});
+export type CaffeineType =
+  | "espresso"
+  | "drip"
+  | "matcha"
+  | "none"
+  | (string & {});
+export type WorkoutType =
+  | "none"
+  | "run"
+  | "lift"
+  | "yoga"
+  | "walk"
+  | "hiit"
+  | (string & {});
 export type MusicGenre =
-  | 'none'
-  | 'lofi'
-  | 'classical'
-  | 'hiphop'
-  | 'edm'
-  | 'rock'
-  | 'ambient'
-  | 'jazz'
-  | 'podcast'
+  | "none"
+  | "lofi"
+  | "classical"
+  | "hiphop"
+  | "edm"
+  | "rock"
+  | "ambient"
+  | "jazz"
+  | "podcast"
   | (string & {});
 export type MealQuality = 1 | 2 | 3 | 4 | 5;
 
 export interface DailyLog {
-  id: string;        // "YYYY-MM-DD"
+  id: string; // "YYYY-MM-DD"
   date: string;
   createdAt: number;
   caffeine: {
     type: CaffeineType;
-    amount: number;  // mg
+    amount: number; // mg
   };
   workout: {
     type: WorkoutType;
@@ -30,14 +42,15 @@ export interface DailyLog {
     mealQuality: MealQuality;
     hydration: number; // glasses 0–12
   };
-  drinks: number;           // alcoholic drinks consumed
-  sleepHours: number;       // time in bed (from HealthKit or manual)
-  daylightMinutes: number;  // time in daylight (from HealthKit or manual)
-  customMetrics: { name: string; value: number }[];  // user-defined trackables
+  drinks: number; // alcoholic drinks consumed
+  sleepHours: number; // time in bed (from HealthKit or manual)
+  daylightMinutes: number; // time in daylight (from HealthKit or manual)
+  customMetrics: { name: string; value: number }[]; // legacy shape — retained for backward compatibility, new code should use customMetricValues
+  customMetricValues?: CustomMetricValue[]; // per-log values keyed by CustomMetricDef.id
   output: {
     tasksCompleted: number; // 0–20
-    focusRating: number;    // 1–10
-    energyRating: number;   // 1–10
+    focusRating: number; // 1–10
+    energyRating: number; // 1–10
   };
   tags: string[];
   bigRocks: string[]; // 1–3 most important tasks for the day
@@ -49,9 +62,9 @@ export interface Correlation {
   title: string;
   description: string;
   inputFactors: string[];
-  outputMetric: 'focus' | 'energy' | 'tasks';
+  outputMetric: "focus" | "energy" | "tasks";
   delta: number;
-  confidence: 'low' | 'medium' | 'high';
+  confidence: "low" | "medium" | "high";
   isKeystone?: boolean; // true if this habit triggers positive cascading effects
 }
 
@@ -74,58 +87,131 @@ export interface InsightsResponse {
 // ── Mood Check-ins ──────────────────────────────────────────────────────
 
 export interface MoodCheckIn {
-  id: string;          // ISO timestamp
+  id: string; // ISO timestamp
   timestamp: number;
-  mood: number;        // 1–5
-  energy: number;      // 1–5
-  stress: number;      // 1–5
+  mood: number; // 1–5
+  energy: number; // 1–5
+  stress: number; // 1–5
   note?: string;
 }
 
 export const MOOD_EMOJIS: Record<number, string> = {
-  1: '😞',
-  2: '😕',
-  3: '😐',
-  4: '🙂',
-  5: '😄',
+  1: "😞",
+  2: "😕",
+  3: "😐",
+  4: "🙂",
+  5: "😄",
 };
 
 export const ENERGY_EMOJIS: Record<number, string> = {
-  1: '🪫',
-  2: '😴',
-  3: '⚡',
-  4: '🔥',
-  5: '🚀',
+  1: "🪫",
+  2: "😴",
+  3: "⚡",
+  4: "🔥",
+  5: "🚀",
 };
 
 export const STRESS_EMOJIS: Record<number, string> = {
-  1: '😌',
-  2: '🧘',
-  3: '😤',
-  4: '😰',
-  5: '🤯',
+  1: "😌",
+  2: "🧘",
+  3: "😤",
+  4: "😰",
+  5: "🤯",
 };
 
 export interface AppSettings {
   claudeApiKey: string;
   onboardingComplete: boolean;
   moodNotificationsEnabled: boolean;
+  hiddenLogSections: LogSectionId[];
+  customMetrics: CustomMetricDef[];
 }
+
+// ── Log sections (defaults the user can hide) ───────────────────────────
+
+export type LogSectionId =
+  | "bigRocks"
+  | "sleep"
+  | "daylight"
+  | "caffeine"
+  | "workout"
+  | "music"
+  | "nutrition"
+  | "drinks"
+  | "output"
+  | "tags";
+
+export const LOG_SECTIONS: { id: LogSectionId; label: string }[] = [
+  { id: "bigRocks", label: "Big Rocks" },
+  { id: "sleep", label: "Sleep" },
+  { id: "daylight", label: "Daylight" },
+  { id: "caffeine", label: "Caffeine" },
+  { id: "workout", label: "Workout" },
+  { id: "music", label: "Music" },
+  { id: "nutrition", label: "Nutrition" },
+  { id: "drinks", label: "Alcohol" },
+  { id: "output", label: "Performance Output" },
+  { id: "tags", label: "Tags" },
+];
+
+// ── Custom Metrics ──────────────────────────────────────────────────────
+// Definitions live in AppSettings (persist across days). Values live in
+// DailyLog.customMetricValues (per-log, keyed by def id).
+
+export type CustomMetricKind = "scale" | "chips" | "counter" | "toggle";
+
+export interface CustomMetricScaleConfig {
+  min: number; // inclusive
+  max: number; // inclusive
+}
+
+export interface CustomMetricChipsConfig {
+  options: string[];
+  multi: boolean; // allow multi-select
+}
+
+export interface CustomMetricCounterConfig {
+  step: number; // e.g. 1, 15, 0.5
+  min?: number; // inclusive (default 0)
+  max?: number; // inclusive (default unbounded)
+  unit?: string; // e.g. "mg", "min"
+}
+
+export interface CustomMetricDef {
+  id: string; // stable uuid
+  name: string; // user-facing label
+  kind: CustomMetricKind;
+  createdAt: number;
+  scale?: CustomMetricScaleConfig;
+  chips?: CustomMetricChipsConfig;
+  counter?: CustomMetricCounterConfig;
+}
+
+export type CustomMetricValue =
+  | { id: string; kind: "scale"; value: number }
+  | { id: string; kind: "chips"; selected: string[] }
+  | { id: string; kind: "counter"; value: number }
+  | { id: string; kind: "toggle"; value: boolean };
 
 // ── Integrations ───────────────────────────────────────────────────────
 
 export type IntegrationId =
-  | 'claude'
-  | 'spotify'
-  | 'healthkit'
-  | 'google_calendar'
-  | 'google_tasks'
-  | 'browsing'
-  | 'screen_time';
+  | "claude"
+  | "spotify"
+  | "healthkit"
+  | "google_calendar"
+  | "google_tasks"
+  | "browsing"
+  | "screen_time";
 
-export type IntegrationStatus = 'connected' | 'mock' | 'available' | 'planned' | 'disconnected';
-export type IntegrationSource = 'cloud' | 'device' | 'manual' | 'mock';
-export type IntegrationPlatform = 'cross-platform' | 'ios';
+export type IntegrationStatus =
+  | "connected"
+  | "mock"
+  | "available"
+  | "planned"
+  | "disconnected";
+export type IntegrationSource = "cloud" | "device" | "manual" | "mock";
+export type IntegrationPlatform = "cross-platform" | "ios";
 
 export interface IntegrationConnection {
   id: IntegrationId;
@@ -140,12 +226,12 @@ export interface IntegrationConnection {
 }
 
 export type AttentionBucket =
-  | 'deep_work'
-  | 'research'
-  | 'communication'
-  | 'utility'
-  | 'recovery'
-  | 'drift';
+  | "deep_work"
+  | "research"
+  | "communication"
+  | "utility"
+  | "recovery"
+  | "drift";
 
 export interface AttentionBucketStat {
   bucket: AttentionBucket;
@@ -176,28 +262,28 @@ export interface DailyIntegrationSummary {
   calendarEvents?: number;
   calendarHighDemandBlocks?: number;
   completedTasks?: number;
-  taskLoad?: 'Low' | 'Medium' | 'High' | 'Mixed' | 'None';
+  taskLoad?: "Low" | "Medium" | "High" | "Mixed" | "None";
   moodAverage?: number;
   energyAverage?: number;
 }
 
 export const STORAGE_KEYS = {
-  LOGS_PREFIX: 'aspera_log_',
-  SETTINGS: 'aspera_settings',
-  INSIGHTS_CACHE: 'aspera_insights_cache',
-  TODAY_REC_PREFIX: 'aspera_today_rec_',
-  MOOD_PREFIX: 'aspera_mood_',
-  RESERVES: 'aspera_emergency_reserves',
-  INTEGRATION_CONNECTIONS: 'aspera_integration_connections',
-  INTEGRATION_SUMMARIES: 'aspera_integration_summaries',
+  LOGS_PREFIX: "aspera_log_",
+  SETTINGS: "aspera_settings",
+  INSIGHTS_CACHE: "aspera_insights_cache",
+  TODAY_REC_PREFIX: "aspera_today_rec_",
+  MOOD_PREFIX: "aspera_mood_",
+  RESERVES: "aspera_emergency_reserves",
+  INTEGRATION_CONNECTIONS: "aspera_integration_connections",
+  INTEGRATION_SUMMARIES: "aspera_integration_summaries",
 } as const;
 
 // ── Emergency Reserves ──────────────────────────────────────────────────
 
 export interface ReservesState {
-  weekStartDate: string;       // ISO date of Monday that starts the current tracking week
-  reservesUsed: number;        // 0–2: how many reserves spent this week
-  reserveDates: string[];      // dates when reserves were consumed
+  weekStartDate: string; // ISO date of Monday that starts the current tracking week
+  reservesUsed: number; // 0–2: how many reserves spent this week
+  reserveDates: string[]; // dates when reserves were consumed
 }
 
 export const MAX_RESERVES_PER_WEEK = 2;

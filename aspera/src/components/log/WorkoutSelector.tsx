@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { WorkoutType } from '../../types';
-import { WORKOUT_OPTIONS } from '../../constants/options';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { WorkoutType } from "../../types";
+import { WORKOUT_OPTIONS } from "../../constants/options";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 
 interface Props {
   value: WorkoutType;
@@ -13,9 +19,10 @@ interface Props {
 
 export default function WorkoutSelector({ value, onChange }: Props) {
   const [showInput, setShowInput] = useState(false);
-  const [customText, setCustomText] = useState('');
+  const [customText, setCustomText] = useState("");
 
-  const isCustom = value !== 'none' && !WORKOUT_OPTIONS.some(o => o.type === value);
+  const isCustom =
+    value !== "none" && !WORKOUT_OPTIONS.some((o) => o.type === value);
 
   const handlePress = (type: WorkoutType) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -28,14 +35,14 @@ export default function WorkoutSelector({ value, onChange }: Props) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       onChange(trimmed);
     }
-    setCustomText('');
+    setCustomText("");
     setShowInput(false);
   };
 
   return (
     <View>
       <View style={styles.grid}>
-        {WORKOUT_OPTIONS.map(opt => {
+        {WORKOUT_OPTIONS.map((opt) => {
           const selected = value === opt.type;
           return (
             <TouchableOpacity
@@ -60,7 +67,7 @@ export default function WorkoutSelector({ value, onChange }: Props) {
         {isCustom && (
           <TouchableOpacity
             style={[styles.tile, styles.tileSelected]}
-            onPress={() => handlePress('none')}
+            onPress={() => handlePress("none")}
             activeOpacity={0.7}
           >
             <Ionicons name="create-outline" size={24} color={COLORS.accent} />
@@ -94,7 +101,7 @@ export default function WorkoutSelector({ value, onChange }: Props) {
             returnKeyType="done"
           />
           <TouchableOpacity style={styles.addBtn} onPress={addCustom}>
-            <Text style={{ color: COLORS.text, fontWeight: '700' }}>Add</Text>
+            <Text style={{ color: COLORS.text, fontWeight: "700" }}>Add</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -104,13 +111,13 @@ export default function WorkoutSelector({ value, onChange }: Props) {
 
 const styles = StyleSheet.create({
   grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: SPACING.sm,
   },
   tile: {
-    width: '30%',
-    alignItems: 'center',
+    width: "30%",
+    alignItems: "center",
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,
     borderWidth: 1,
@@ -124,7 +131,7 @@ const styles = StyleSheet.create({
   },
   addTile: {
     borderColor: COLORS.borderAccent,
-    borderStyle: 'dashed',
+    borderStyle: "dashed",
   },
   label: {
     ...TYPOGRAPHY.caption,
@@ -134,7 +141,7 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
   },
   inputRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.sm,
     marginTop: SPACING.sm,
   },
@@ -147,12 +154,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     color: COLORS.text,
-    ...TYPOGRAPHY.body as object,
+    ...(TYPOGRAPHY.body as object),
   },
   addBtn: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
 });

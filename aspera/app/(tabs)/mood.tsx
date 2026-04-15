@@ -1,18 +1,33 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  View, Text, ScrollView, TouchableOpacity,
-  TextInput, StyleSheet,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
-import { MoodCheckIn, MOOD_EMOJIS, ENERGY_EMOJIS, STRESS_EMOJIS } from '../../src/types';
-import { saveMoodCheckIn, getRecentMoodCheckIns, seedMockMoodData } from '../../src/storage/storage';
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from '../../src/constants/theme';
-import GradientCard from '../../src/components/common/GradientCard';
-import SectionLabel from '../../src/components/common/SectionLabel';
-import TrendLineCard, { TrendPoint } from '../../src/components/common/TrendLineCard';
-import TimeOfDayCurve from '../../src/components/mood/TimeOfDayCurve';
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
+import {
+  MoodCheckIn,
+  MOOD_EMOJIS,
+  ENERGY_EMOJIS,
+  STRESS_EMOJIS,
+} from "../../src/types";
+import {
+  saveMoodCheckIn,
+  getRecentMoodCheckIns,
+  seedMockMoodData,
+} from "../../src/storage/storage";
+import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
+import GradientCard from "../../src/components/common/GradientCard";
+import SectionLabel from "../../src/components/common/SectionLabel";
+import TrendLineCard, {
+  TrendPoint,
+} from "../../src/components/common/TrendLineCard";
+import TimeOfDayCurve from "../../src/components/mood/TimeOfDayCurve";
 
 interface DailyMoodSnapshot {
   date: string;
@@ -25,7 +40,7 @@ interface DailyMoodSnapshot {
 }
 
 function todayId(): string {
-  return new Date().toISOString().split('T')[0];
+  return new Date().toISOString().split("T")[0];
 }
 
 function average(values: number[]): number {
@@ -41,7 +56,7 @@ function aggregateDailySnapshots(checkins: MoodCheckIn[]): DailyMoodSnapshot[] {
   const byDate: Record<string, MoodCheckIn[]> = {};
 
   for (const checkin of checkins) {
-    const date = new Date(checkin.timestamp).toISOString().split('T')[0];
+    const date = new Date(checkin.timestamp).toISOString().split("T")[0];
     if (!byDate[date]) byDate[date] = [];
     byDate[date].push(checkin);
   }
@@ -51,17 +66,24 @@ function aggregateDailySnapshots(checkins: MoodCheckIn[]): DailyMoodSnapshot[] {
     .slice(-14)
     .map(([date, entries]) => ({
       date,
-      dayLabel: new Date(`${date}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' }).slice(0, 2),
-      avgMood: round(average(entries.map(entry => entry.mood))),
-      avgEnergy: round(average(entries.map(entry => entry.energy))),
-      avgStress: round(average(entries.map(entry => entry.stress))),
+      dayLabel: new Date(`${date}T12:00:00`)
+        .toLocaleDateString("en-US", { weekday: "short" })
+        .slice(0, 2),
+      avgMood: round(average(entries.map((entry) => entry.mood))),
+      avgEnergy: round(average(entries.map((entry) => entry.energy))),
+      avgStress: round(average(entries.map((entry) => entry.stress))),
       count: entries.length,
-      notes: entries.map(entry => entry.note).filter((note): note is string => Boolean(note)),
+      notes: entries
+        .map((entry) => entry.note)
+        .filter((note): note is string => Boolean(note)),
     }));
 }
 
-function buildTrend(points: DailyMoodSnapshot[], key: 'avgMood' | 'avgEnergy' | 'avgStress'): TrendPoint[] {
-  return points.map(point => ({
+function buildTrend(
+  points: DailyMoodSnapshot[],
+  key: "avgMood" | "avgEnergy" | "avgStress",
+): TrendPoint[] {
+  return points.map((point) => ({
     label: point.dayLabel,
     value: point[key],
   }));
@@ -72,7 +94,7 @@ export default function MoodScreen() {
   const [mood, setMood] = useState(3);
   const [energy, setEnergy] = useState(3);
   const [stress, setStress] = useState(1);
-  const [note, setNote] = useState('');
+  const [note, setNote] = useState("");
   const [saved, setSaved] = useState(false);
   const [recentCheckins, setRecentCheckins] = useState<MoodCheckIn[]>([]);
 
@@ -82,32 +104,53 @@ export default function MoodScreen() {
     setRecentCheckins(recent);
   }, []);
 
-  useEffect(() => { loadCheckins(); }, [loadCheckins]);
+  useEffect(() => {
+    loadCheckins();
+  }, [loadCheckins]);
 
-  const snapshots = useMemo(() => aggregateDailySnapshots(recentCheckins), [recentCheckins]);
+  const snapshots = useMemo(
+    () => aggregateDailySnapshots(recentCheckins),
+    [recentCheckins],
+  );
   const summary = useMemo(() => {
     if (snapshots.length === 0) return null;
 
     return {
-      mood: round(average(snapshots.map(snapshot => snapshot.avgMood))),
-      energy: round(average(snapshots.map(snapshot => snapshot.avgEnergy))),
-      stress: round(average(snapshots.map(snapshot => snapshot.avgStress))),
+      mood: round(average(snapshots.map((snapshot) => snapshot.avgMood))),
+      energy: round(average(snapshots.map((snapshot) => snapshot.avgEnergy))),
+      stress: round(average(snapshots.map((snapshot) => snapshot.avgStress))),
     };
   }, [snapshots]);
 
   const todayCaptureCount = useMemo(
-    () => recentCheckins.filter(checkin => new Date(checkin.timestamp).toISOString().split('T')[0] === todayId()).length,
-    [recentCheckins]
+    () =>
+      recentCheckins.filter(
+        (checkin) =>
+          new Date(checkin.timestamp).toISOString().split("T")[0] === todayId(),
+      ).length,
+    [recentCheckins],
   );
 
   const recentEntries = useMemo(
-    () => [...recentCheckins].sort((left, right) => right.timestamp - left.timestamp).slice(0, 4),
-    [recentCheckins]
+    () =>
+      [...recentCheckins]
+        .sort((left, right) => right.timestamp - left.timestamp)
+        .slice(0, 4),
+    [recentCheckins],
   );
 
-  const moodTrend = useMemo(() => buildTrend(snapshots, 'avgMood'), [snapshots]);
-  const energyTrend = useMemo(() => buildTrend(snapshots, 'avgEnergy'), [snapshots]);
-  const stressTrend = useMemo(() => buildTrend(snapshots, 'avgStress'), [snapshots]);
+  const moodTrend = useMemo(
+    () => buildTrend(snapshots, "avgMood"),
+    [snapshots],
+  );
+  const energyTrend = useMemo(
+    () => buildTrend(snapshots, "avgEnergy"),
+    [snapshots],
+  );
+  const stressTrend = useMemo(
+    () => buildTrend(snapshots, "avgStress"),
+    [snapshots],
+  );
 
   const handleSave = async () => {
     const checkIn: MoodCheckIn = {
@@ -122,24 +165,43 @@ export default function MoodScreen() {
     await saveMoodCheckIn(checkIn);
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSaved(true);
-    setNote('');
+    setNote("");
     await loadCheckins();
     setTimeout(() => setSaved(false), 2500);
   };
 
   return (
-    <LinearGradient colors={COLORS.gradients.background as [string, string]} style={styles.container}>
+    <LinearGradient
+      colors={COLORS.gradients.background as [string, string]}
+      style={styles.container}
+    >
       <ScrollView
-        contentContainerStyle={[styles.content, {
-          paddingTop: insets.top + SPACING.lg,
-          paddingBottom: insets.bottom + 120,
-        }]}
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingTop: insets.top + SPACING.lg,
+            paddingBottom: insets.bottom + 120,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={[TYPOGRAPHY.hero, { color: COLORS.text, marginBottom: SPACING.xs }]}>Mood</Text>
-        <Text style={[TYPOGRAPHY.body, { color: COLORS.textSecondary, marginBottom: SPACING.xl }]}>
-          Track how you trend over time, then capture moments when something shifts.
+        <Text
+          style={[
+            TYPOGRAPHY.hero,
+            { color: COLORS.text, marginBottom: SPACING.xs },
+          ]}
+        >
+          Mood
+        </Text>
+        <Text
+          style={[
+            TYPOGRAPHY.body,
+            { color: COLORS.textSecondary, marginBottom: SPACING.xl },
+          ]}
+        >
+          Track how you trend over time, then capture moments when something
+          shifts.
         </Text>
 
         {summary ? (
@@ -148,37 +210,47 @@ export default function MoodScreen() {
               <Text style={styles.overviewEyebrow}>OVER TIME</Text>
               <Text style={styles.overviewTitle}>
                 {todayCaptureCount > 0
-                  ? `${todayCaptureCount} capture${todayCaptureCount > 1 ? 's' : ''} logged today`
-                  : 'No capture yet today'}
+                  ? `${todayCaptureCount} capture${todayCaptureCount > 1 ? "s" : ""} logged today`
+                  : "No capture yet today"}
               </Text>
               <Text style={styles.overviewBody}>
-                The averages below update from your recent check-ins so the page reads like a trend dashboard, not a one-off form.
+                The averages below update from your recent check-ins so the page
+                reads like a trend dashboard, not a one-off form.
               </Text>
 
               <View style={styles.summaryRow}>
                 <View style={styles.summaryTile}>
-                  <Text style={styles.summaryValue}>{summary.mood.toFixed(1)}</Text>
+                  <Text style={styles.summaryValue}>
+                    {summary.mood.toFixed(1)}
+                  </Text>
                   <Text style={styles.summaryLabel}>Avg mood</Text>
                 </View>
                 <View style={styles.summaryTile}>
-                  <Text style={styles.summaryValue}>{summary.energy.toFixed(1)}</Text>
+                  <Text style={styles.summaryValue}>
+                    {summary.energy.toFixed(1)}
+                  </Text>
                   <Text style={styles.summaryLabel}>Avg energy</Text>
                 </View>
                 <View style={styles.summaryTile}>
-                  <Text style={styles.summaryValue}>{summary.stress.toFixed(1)}</Text>
+                  <Text style={styles.summaryValue}>
+                    {summary.stress.toFixed(1)}
+                  </Text>
                   <Text style={styles.summaryLabel}>Avg stress</Text>
                 </View>
               </View>
             </GradientCard>
 
-            <SectionLabel label="Mood Over Time" style={{ marginTop: SPACING.xl }} />
+            <SectionLabel
+              label="Mood Over Time"
+              style={{ marginTop: SPACING.xl }}
+            />
             <TrendLineCard
               title="Mood"
               subtitle="Daily average across your recent captures"
               accentColor={COLORS.success}
               points={moodTrend}
               maxValue={5}
-              formatValue={value => value.toFixed(1)}
+              formatValue={(value) => value.toFixed(1)}
             />
             <TrendLineCard
               title="Energy"
@@ -186,7 +258,7 @@ export default function MoodScreen() {
               accentColor={COLORS.warning}
               points={energyTrend}
               maxValue={5}
-              formatValue={value => value.toFixed(1)}
+              formatValue={(value) => value.toFixed(1)}
             />
             <TrendLineCard
               title="Stress"
@@ -194,10 +266,13 @@ export default function MoodScreen() {
               accentColor={COLORS.danger}
               points={stressTrend}
               maxValue={5}
-              formatValue={value => value.toFixed(1)}
+              formatValue={(value) => value.toFixed(1)}
             />
 
-            <SectionLabel label="Time of Day" style={{ marginTop: SPACING.xl }} />
+            <SectionLabel
+              label="Time of Day"
+              style={{ marginTop: SPACING.xl }}
+            />
             <TimeOfDayCurve checkins={recentCheckins} />
           </>
         ) : (
@@ -205,28 +280,47 @@ export default function MoodScreen() {
             <Text style={styles.emptyEmoji}>📈</Text>
             <Text style={styles.emptyTitle}>No mood trend yet</Text>
             <Text style={styles.emptyBody}>
-              Add a few quick captures below and this tab will turn into a time-based dashboard.
+              Add a few quick captures below and this tab will turn into a
+              time-based dashboard.
             </Text>
           </GradientCard>
         )}
 
         {recentEntries.length > 0 && (
           <>
-            <SectionLabel label="Recent Captures" style={{ marginTop: SPACING.xl }} />
-            {recentEntries.map(entry => (
+            <SectionLabel
+              label="Recent Captures"
+              style={{ marginTop: SPACING.xl }}
+            />
+            {recentEntries.map((entry) => (
               <GradientCard key={entry.id} style={{ marginBottom: SPACING.sm }}>
                 <View style={styles.captureRow}>
                   <View style={styles.captureMoodRow}>
-                    <Text style={styles.captureEmoji}>{MOOD_EMOJIS[entry.mood]}</Text>
-                    <Text style={styles.captureEmoji}>{ENERGY_EMOJIS[entry.energy]}</Text>
-                    <Text style={styles.captureEmoji}>{STRESS_EMOJIS[entry.stress]}</Text>
+                    <Text style={styles.captureEmoji}>
+                      {MOOD_EMOJIS[entry.mood]}
+                    </Text>
+                    <Text style={styles.captureEmoji}>
+                      {ENERGY_EMOJIS[entry.energy]}
+                    </Text>
+                    <Text style={styles.captureEmoji}>
+                      {STRESS_EMOJIS[entry.stress]}
+                    </Text>
                   </View>
                   <Text style={styles.captureTime}>
-                    {new Date(entry.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{' '}
-                    · {new Date(entry.timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                    {new Date(entry.timestamp).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}{" "}
+                    ·{" "}
+                    {new Date(entry.timestamp).toLocaleTimeString("en-US", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
                   </Text>
                 </View>
-                {entry.note ? <Text style={styles.captureNote}>{entry.note}</Text> : null}
+                {entry.note ? (
+                  <Text style={styles.captureNote}>{entry.note}</Text>
+                ) : null}
               </GradientCard>
             ))}
           </>
@@ -235,7 +329,8 @@ export default function MoodScreen() {
         <SectionLabel label="Quick Capture" style={{ marginTop: SPACING.xl }} />
         <GradientCard style={{ marginBottom: SPACING.md }}>
           <Text style={styles.quickIntro}>
-            Use this to feed the timeline without treating the whole tab like a log.
+            Use this to feed the timeline without treating the whole tab like a
+            log.
           </Text>
 
           <Text style={styles.scaleSectionLabel}>Mood</Text>
@@ -243,7 +338,7 @@ export default function MoodScreen() {
             value={mood}
             onChange={setMood}
             emojis={MOOD_EMOJIS}
-            labels={['Awful', 'Low', 'Okay', 'Good', 'Great']}
+            labels={["Awful", "Low", "Okay", "Good", "Great"]}
           />
 
           <View style={styles.divider} />
@@ -253,7 +348,7 @@ export default function MoodScreen() {
             value={energy}
             onChange={setEnergy}
             emojis={ENERGY_EMOJIS}
-            labels={['Drained', 'Tired', 'Steady', 'Fired up', 'Peak']}
+            labels={["Drained", "Tired", "Steady", "Fired up", "Peak"]}
           />
 
           <View style={styles.divider} />
@@ -263,7 +358,7 @@ export default function MoodScreen() {
             value={stress}
             onChange={setStress}
             emojis={STRESS_EMOJIS}
-            labels={['Calm', 'Relaxed', 'Tense', 'Anxious', 'Overwhelmed']}
+            labels={["Calm", "Relaxed", "Tense", "Anxious", "Overwhelmed"]}
           />
 
           <View style={styles.divider} />
@@ -286,13 +381,17 @@ export default function MoodScreen() {
 
         <TouchableOpacity onPress={handleSave} activeOpacity={0.85}>
           <LinearGradient
-            colors={saved ? COLORS.gradients.success as [string, string] : COLORS.gradients.accent as [string, string]}
+            colors={
+              saved
+                ? (COLORS.gradients.success as [string, string])
+                : (COLORS.gradients.accent as [string, string])
+            }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.saveButton}
           >
             <Text style={styles.saveButtonText}>
-              {saved ? '✓ Capture Saved' : 'Save Quick Capture'}
+              {saved ? "✓ Capture Saved" : "Save Quick Capture"}
             </Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -315,7 +414,7 @@ function EmojiScale({
   return (
     <View>
       <View style={styles.scaleRow}>
-        {[1, 2, 3, 4, 5].map(option => {
+        {[1, 2, 3, 4, 5].map((option) => {
           const active = option === value;
           return (
             <TouchableOpacity
@@ -327,7 +426,9 @@ function EmojiScale({
               style={[styles.emojiButton, active && styles.emojiButtonActive]}
               activeOpacity={0.7}
             >
-              <Text style={[styles.emojiText, active && styles.emojiTextActive]}>
+              <Text
+                style={[styles.emojiText, active && styles.emojiTextActive]}
+              >
                 {emojis[option]}
               </Text>
             </TouchableOpacity>
@@ -344,7 +445,7 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: SPACING.lg },
   overviewEyebrow: {
     ...TYPOGRAPHY.label,
-    color: 'rgba(255,255,255,0.65)',
+    color: "rgba(255,255,255,0.65)",
     marginBottom: SPACING.xs,
   } as object,
   overviewTitle: {
@@ -353,12 +454,12 @@ const styles = StyleSheet.create({
   } as object,
   overviewBody: {
     ...TYPOGRAPHY.body,
-    color: 'rgba(255,255,255,0.78)',
+    color: "rgba(255,255,255,0.78)",
     marginTop: SPACING.sm,
     lineHeight: 20,
   } as object,
   summaryRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.sm,
     marginTop: SPACING.md,
   },
@@ -367,8 +468,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.sm,
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.12)",
   },
   summaryValue: {
     ...TYPOGRAPHY.title,
@@ -376,11 +477,11 @@ const styles = StyleSheet.create({
   } as object,
   summaryLabel: {
     ...TYPOGRAPHY.caption,
-    color: 'rgba(255,255,255,0.72)',
+    color: "rgba(255,255,255,0.72)",
     marginTop: 2,
   } as object,
   emptyState: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: SPACING.xl,
   },
   emptyEmoji: {
@@ -390,22 +491,22 @@ const styles = StyleSheet.create({
   emptyTitle: {
     ...TYPOGRAPHY.subtitle,
     color: COLORS.text,
-    textAlign: 'center',
+    textAlign: "center",
   } as object,
   emptyBody: {
     ...TYPOGRAPHY.body,
     color: COLORS.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: SPACING.xs,
   } as object,
   captureRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     gap: SPACING.md,
   },
   captureMoodRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.xs,
   },
   captureEmoji: {
@@ -437,13 +538,13 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.md,
   },
   scaleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     gap: SPACING.sm,
   },
   emojiButton: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: SPACING.sm + 2,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
@@ -465,7 +566,7 @@ const styles = StyleSheet.create({
   scaleLabel: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: SPACING.sm,
   } as object,
   noteInput: {
@@ -483,11 +584,11 @@ const styles = StyleSheet.create({
   saveButton: {
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md + 2,
-    alignItems: 'center',
+    alignItems: "center",
   },
   saveButtonText: {
     ...TYPOGRAPHY.subtitle,
     color: COLORS.text,
-    fontWeight: '700',
+    fontWeight: "700",
   } as object,
 });

@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 
 interface Props {
   rocks: string[];
@@ -9,13 +15,13 @@ interface Props {
 }
 
 export default function BigRocksInput({ rocks, onChange }: Props) {
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState("");
 
   const addRock = () => {
     const trimmed = draft.trim();
     if (!trimmed || rocks.length >= 3) return;
     onChange([...rocks, trimmed]);
-    setDraft('');
+    setDraft("");
   };
 
   const removeRock = (index: number) => {
@@ -30,11 +36,18 @@ export default function BigRocksInput({ rocks, onChange }: Props) {
 
       {rocks.map((rock, i) => (
         <View key={i} style={styles.rockRow}>
-          <View style={[styles.numberBadge, { backgroundColor: COLORS.accent }]}>
+          <View
+            style={[styles.numberBadge, { backgroundColor: COLORS.accent }]}
+          >
             <Text style={styles.numberText}>{i + 1}</Text>
           </View>
-          <Text style={styles.rockText} numberOfLines={2}>{rock}</Text>
-          <TouchableOpacity onPress={() => removeRock(i)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <Text style={styles.rockText} numberOfLines={2}>
+            {rock}
+          </Text>
+          <TouchableOpacity
+            onPress={() => removeRock(i)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <Ionicons name="close-circle" size={20} color={COLORS.textMuted} />
           </TouchableOpacity>
         </View>
@@ -46,7 +59,11 @@ export default function BigRocksInput({ rocks, onChange }: Props) {
             style={styles.input}
             value={draft}
             onChangeText={setDraft}
-            placeholder={rocks.length === 0 ? 'e.g. Finish hackathon MVP' : 'Add another rock...'}
+            placeholder={
+              rocks.length === 0
+                ? "e.g. Finish hackathon MVP"
+                : "Add another rock..."
+            }
             placeholderTextColor={COLORS.textMuted}
             returnKeyType="done"
             onSubmitEditing={addRock}
@@ -54,17 +71,25 @@ export default function BigRocksInput({ rocks, onChange }: Props) {
           />
           <TouchableOpacity
             onPress={addRock}
-            style={[styles.addButton, !draft.trim() && styles.addButtonDisabled]}
+            style={[
+              styles.addButton,
+              !draft.trim() && styles.addButtonDisabled,
+            ]}
             disabled={!draft.trim()}
           >
-            <Ionicons name="add" size={20} color={draft.trim() ? COLORS.text : COLORS.textMuted} />
+            <Ionicons
+              name="add"
+              size={20}
+              color={draft.trim() ? COLORS.text : COLORS.textMuted}
+            />
           </TouchableOpacity>
         </View>
       )}
 
       {rocks.length === 0 && (
         <Text style={styles.emptyHint}>
-          Research shows focusing on your top priorities ("Big Rocks") before smaller tasks leads to higher deep-work output.
+          Research shows focusing on your top priorities ("Big Rocks") before
+          smaller tasks leads to higher deep-work output.
         </Text>
       )}
     </View>
@@ -78,8 +103,8 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   } as object,
   rockRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.sm,
     paddingVertical: SPACING.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -89,13 +114,13 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: 11,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   numberText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.text,
-    fontWeight: '800',
+    fontWeight: "800",
     fontSize: 11,
   } as object,
   rockText: {
@@ -104,8 +129,8 @@ const styles = StyleSheet.create({
     flex: 1,
   } as object,
   inputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.sm,
     marginTop: SPACING.sm,
   },
@@ -125,8 +150,8 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     backgroundColor: COLORS.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   addButtonDisabled: {
     backgroundColor: COLORS.surfaceElevated,
@@ -134,7 +159,7 @@ const styles = StyleSheet.create({
   emptyHint: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textMuted,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginTop: SPACING.sm,
     lineHeight: 16,
   } as object,

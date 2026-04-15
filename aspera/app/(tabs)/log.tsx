@@ -1,40 +1,54 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  View, Text, ScrollView, TouchableOpacity,
-  KeyboardAvoidingView, Platform, StyleSheet, Alert,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
-import { useLogs } from '../../src/hooks/useLogs';
-import { DailyLog, CaffeineType, WorkoutType, MusicGenre, MealQuality } from '../../src/types';
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from '../../src/constants/theme';
-import GradientCard from '../../src/components/common/GradientCard';
-import SectionLabel from '../../src/components/common/SectionLabel';
-import CaffeinePicker from '../../src/components/log/CaffeinePicker';
-import WorkoutSelector from '../../src/components/log/WorkoutSelector';
-import IntensitySlider from '../../src/components/log/IntensitySlider';
-import MusicChips from '../../src/components/log/MusicChips';
-import NutritionInput from '../../src/components/log/NutritionInput';
-import RatingSlider from '../../src/components/log/RatingSlider';
-import CustomTags from '../../src/components/log/CustomTags';
-import BigRocksInput from '../../src/components/log/BigRocksInput';
-import DrinksInput from '../../src/components/log/DrinksInput';
-import SleepInput from '../../src/components/log/SleepInput';
-import DaylightInput from '../../src/components/log/DaylightInput';
-import CustomMetrics from '../../src/components/log/CustomMetrics';
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Alert,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
+import { useLogs } from "../../src/hooks/useLogs";
+import {
+  DailyLog,
+  CaffeineType,
+  WorkoutType,
+  MusicGenre,
+  MealQuality,
+} from "../../src/types";
+import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
+import GradientCard from "../../src/components/common/GradientCard";
+import SectionLabel from "../../src/components/common/SectionLabel";
+import CaffeinePicker from "../../src/components/log/CaffeinePicker";
+import WorkoutSelector from "../../src/components/log/WorkoutSelector";
+import IntensitySlider from "../../src/components/log/IntensitySlider";
+import MusicChips from "../../src/components/log/MusicChips";
+import NutritionInput from "../../src/components/log/NutritionInput";
+import RatingSlider from "../../src/components/log/RatingSlider";
+import CustomTags from "../../src/components/log/CustomTags";
+import BigRocksInput from "../../src/components/log/BigRocksInput";
+import DrinksInput from "../../src/components/log/DrinksInput";
+import SleepInput from "../../src/components/log/SleepInput";
+import DaylightInput from "../../src/components/log/DaylightInput";
+import CustomMetrics from "../../src/components/log/CustomMetrics";
 
 function todayId(): string {
-  return new Date().toISOString().split('T')[0];
+  return new Date().toISOString().split("T")[0];
 }
 
 function defaultLog(): DailyLog {
   const id = todayId();
   return {
-    id, date: id, createdAt: Date.now(),
-    caffeine: { type: 'espresso', amount: 150 },
-    workout: { type: 'none', intensity: 0 },
-    music: ['lofi'],
+    id,
+    date: id,
+    createdAt: Date.now(),
+    caffeine: { type: "espresso", amount: 150 },
+    workout: { type: "none", intensity: 0 },
+    music: ["lofi"],
     nutrition: { mealQuality: 3, hydration: 6 },
     output: { tasksCompleted: 5, focusRating: 7, energyRating: 7 },
     tags: [],
@@ -57,7 +71,7 @@ export default function LogScreen() {
   }, [todayLog]);
 
   const patch = <K extends keyof DailyLog>(key: K, value: DailyLog[K]) => {
-    setForm(prev => ({ ...prev, [key]: value }));
+    setForm((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSave = async () => {
@@ -69,19 +83,44 @@ export default function LogScreen() {
   };
 
   return (
-    <LinearGradient colors={COLORS.gradients.background as [string, string]} style={styles.container}>
+    <LinearGradient
+      colors={COLORS.gradients.background as [string, string]}
+      style={styles.container}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          contentContainerStyle={[styles.content, { paddingTop: insets.top + SPACING.lg, paddingBottom: insets.bottom + 120 }]}
+          contentContainerStyle={[
+            styles.content,
+            {
+              paddingTop: insets.top + SPACING.lg,
+              paddingBottom: insets.bottom + 120,
+            },
+          ]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={[TYPOGRAPHY.hero, { color: COLORS.text, marginBottom: SPACING.xs }]}>Daily Log</Text>
-          <Text style={[TYPOGRAPHY.body, { color: COLORS.textSecondary, marginBottom: SPACING.xl }]}>
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+          <Text
+            style={[
+              TYPOGRAPHY.hero,
+              { color: COLORS.text, marginBottom: SPACING.xs },
+            ]}
+          >
+            Daily Log
+          </Text>
+          <Text
+            style={[
+              TYPOGRAPHY.body,
+              { color: COLORS.textSecondary, marginBottom: SPACING.xl },
+            ]}
+          >
+            {new Date().toLocaleDateString("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            })}
           </Text>
 
           {/* Big Rocks — morning intention */}
@@ -89,7 +128,7 @@ export default function LogScreen() {
           <GradientCard style={{ marginBottom: SPACING.lg }}>
             <BigRocksInput
               rocks={form.bigRocks ?? []}
-              onChange={rocks => patch('bigRocks', rocks)}
+              onChange={(rocks) => patch("bigRocks", rocks)}
             />
           </GradientCard>
 
@@ -98,7 +137,7 @@ export default function LogScreen() {
           <GradientCard style={{ marginBottom: SPACING.lg }}>
             <SleepInput
               value={form.sleepHours ?? 0}
-              onChange={v => patch('sleepHours', v)}
+              onChange={(v) => patch("sleepHours", v)}
             />
           </GradientCard>
 
@@ -107,7 +146,7 @@ export default function LogScreen() {
           <GradientCard style={{ marginBottom: SPACING.lg }}>
             <DaylightInput
               value={form.daylightMinutes ?? 0}
-              onChange={v => patch('daylightMinutes', v)}
+              onChange={(v) => patch("daylightMinutes", v)}
             />
           </GradientCard>
 
@@ -117,7 +156,7 @@ export default function LogScreen() {
             <CaffeinePicker
               value={form.caffeine.type}
               amount={form.caffeine.amount}
-              onChange={(type, amount) => patch('caffeine', { type, amount })}
+              onChange={(type, amount) => patch("caffeine", { type, amount })}
             />
           </GradientCard>
 
@@ -126,16 +165,29 @@ export default function LogScreen() {
           <GradientCard style={{ marginBottom: SPACING.lg }}>
             <WorkoutSelector
               value={form.workout.type}
-              onChange={type => patch('workout', { type, intensity: type === 'none' ? 0 : Math.max(1, form.workout.intensity) })}
+              onChange={(type) =>
+                patch("workout", {
+                  type,
+                  intensity:
+                    type === "none" ? 0 : Math.max(1, form.workout.intensity),
+                })
+              }
             />
-            {form.workout.type !== 'none' as string && (
+            {form.workout.type !== ("none" as string) && (
               <View style={{ marginTop: SPACING.md }}>
-                <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted, marginBottom: SPACING.sm }]}>
+                <Text
+                  style={[
+                    TYPOGRAPHY.caption,
+                    { color: COLORS.textMuted, marginBottom: SPACING.sm },
+                  ]}
+                >
                   INTENSITY
                 </Text>
                 <IntensitySlider
                   value={form.workout.intensity || 5}
-                  onChange={intensity => patch('workout', { ...form.workout, intensity })}
+                  onChange={(intensity) =>
+                    patch("workout", { ...form.workout, intensity })
+                  }
                 />
               </View>
             )}
@@ -146,7 +198,7 @@ export default function LogScreen() {
           <GradientCard style={{ marginBottom: SPACING.lg }}>
             <MusicChips
               selected={form.music}
-              onChange={music => patch('music', music as MusicGenre[])}
+              onChange={(music) => patch("music", music as MusicGenre[])}
             />
           </GradientCard>
 
@@ -156,8 +208,12 @@ export default function LogScreen() {
             <NutritionInput
               mealQuality={form.nutrition.mealQuality}
               hydration={form.nutrition.hydration}
-              onChangeMeal={q => patch('nutrition', { ...form.nutrition, mealQuality: q })}
-              onChangeHydration={h => patch('nutrition', { ...form.nutrition, hydration: h })}
+              onChangeMeal={(q) =>
+                patch("nutrition", { ...form.nutrition, mealQuality: q })
+              }
+              onChangeHydration={(h) =>
+                patch("nutrition", { ...form.nutrition, hydration: h })
+              }
             />
           </GradientCard>
 
@@ -166,7 +222,7 @@ export default function LogScreen() {
           <GradientCard style={{ marginBottom: SPACING.lg }}>
             <DrinksInput
               value={form.drinks ?? 0}
-              onChange={v => patch('drinks', v)}
+              onChange={(v) => patch("drinks", v)}
             />
           </GradientCard>
 
@@ -176,20 +232,26 @@ export default function LogScreen() {
             <RatingSlider
               label="Focus Rating"
               value={form.output.focusRating}
-              onChange={v => patch('output', { ...form.output, focusRating: v })}
+              onChange={(v) =>
+                patch("output", { ...form.output, focusRating: v })
+              }
               accentColor={COLORS.accent}
             />
             <RatingSlider
               label="Energy Rating"
               value={form.output.energyRating}
-              onChange={v => patch('output', { ...form.output, energyRating: v })}
+              onChange={(v) =>
+                patch("output", { ...form.output, energyRating: v })
+              }
               accentColor={COLORS.warning}
             />
             <RatingSlider
               label="Tasks Completed"
               value={form.output.tasksCompleted}
               max={20}
-              onChange={v => patch('output', { ...form.output, tasksCompleted: v })}
+              onChange={(v) =>
+                patch("output", { ...form.output, tasksCompleted: v })
+              }
               accentColor={COLORS.success}
             />
           </GradientCard>
@@ -199,7 +261,7 @@ export default function LogScreen() {
           <GradientCard style={{ marginBottom: SPACING.lg }}>
             <CustomMetrics
               metrics={form.customMetrics ?? []}
-              onChange={m => patch('customMetrics', m)}
+              onChange={(m) => patch("customMetrics", m)}
             />
           </GradientCard>
 
@@ -208,20 +270,24 @@ export default function LogScreen() {
           <GradientCard style={{ marginBottom: SPACING.lg }}>
             <CustomTags
               selected={form.tags}
-              onChange={tags => patch('tags', tags)}
+              onChange={(tags) => patch("tags", tags)}
             />
           </GradientCard>
 
           {/* Save Button */}
           <TouchableOpacity onPress={handleSave} activeOpacity={0.85}>
             <LinearGradient
-              colors={saved ? COLORS.gradients.success as [string, string] : COLORS.gradients.accent as [string, string]}
+              colors={
+                saved
+                  ? (COLORS.gradients.success as [string, string])
+                  : (COLORS.gradients.accent as [string, string])
+              }
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.saveButton}
             >
               <Text style={styles.saveButtonText}>
-                {saved ? '✓ Saved to Log' : 'Save Today\'s Log'}
+                {saved ? "✓ Saved to Log" : "Save Today's Log"}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -237,11 +303,11 @@ const styles = StyleSheet.create({
   saveButton: {
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md + 2,
-    alignItems: 'center',
+    alignItems: "center",
   },
   saveButtonText: {
     ...TYPOGRAPHY.subtitle,
     color: COLORS.text,
-    fontWeight: '700',
+    fontWeight: "700",
   } as object,
 });

@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 
 interface Props {
   value: number;
@@ -26,7 +26,7 @@ export default function DrinksInput({ value, onChange }: Props) {
 
         <View style={styles.countWrap}>
           <Text style={styles.count}>{value}</Text>
-          <Text style={styles.unit}>{value === 1 ? 'drink' : 'drinks'}</Text>
+          <Text style={styles.unit}>{value === 1 ? "drink" : "drinks"}</Text>
         </View>
 
         <TouchableOpacity style={styles.btn} onPress={() => tap(value + 1)}>
@@ -36,14 +36,16 @@ export default function DrinksInput({ value, onChange }: Props) {
 
       {/* Quick-select chips */}
       <View style={styles.chips}>
-        {[0, 1, 2, 3, 4, 5].map(n => (
+        {[0, 1, 2, 3, 4, 5].map((n) => (
           <TouchableOpacity
             key={n}
             style={[styles.chip, value === n && styles.chipActive]}
             onPress={() => tap(n)}
           >
-            <Text style={[styles.chipText, value === n && styles.chipTextActive]}>
-              {n === 0 ? 'None' : n}
+            <Text
+              style={[styles.chipText, value === n && styles.chipTextActive]}
+            >
+              {n === 0 ? "None" : n}
             </Text>
           </TouchableOpacity>
         ))}
@@ -65,9 +67,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   } as object,
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: SPACING.lg,
   },
   btn: {
@@ -77,10 +79,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceElevated,
     borderWidth: 1,
     borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  countWrap: { alignItems: 'center', minWidth: 60 },
+  countWrap: { alignItems: "center", minWidth: 60 },
   count: {
     ...TYPOGRAPHY.hero,
     color: COLORS.warning,
@@ -91,8 +93,8 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
   } as object,
   chips: {
-    flexDirection: 'row',
-    justifyContent: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
     gap: SPACING.sm,
     marginTop: SPACING.md,
   },
@@ -111,16 +113,16 @@ const styles = StyleSheet.create({
   chipText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
-    fontWeight: '600',
+    fontWeight: "600",
   } as object,
   chipTextActive: {
-    color: '#000',
+    color: "#000",
   },
   warning: {
     ...TYPOGRAPHY.caption,
     color: COLORS.danger,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontStyle: "italic",
+    textAlign: "center",
     marginTop: SPACING.sm,
   } as object,
 });

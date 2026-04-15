@@ -30,21 +30,26 @@ CBCHackathon/
 
 ```bash
 # Clone the repo
-git clone -b aspera https://github.com/Domross3/aspera.git
-cd aspera/aspera
+git clone -b aspera https://github.com/Domross3/aspera.git CBCHackathon
+cd CBCHackathon
 
-# Install dependencies (use Node 20 — run `node -v` to verify)
-npm install
+# Use the pinned Node version
+nvm use
+
+# Install the mobile app dependencies from the repo root
+npm run mobile:install
 
 # (Optional) Create environment file with your Claude API key
 # AI features work without this — the app loads mock data automatically
-echo "EXPO_PUBLIC_CLAUDE_KEY=your-api-key-here" > .env
+echo "EXPO_PUBLIC_CLAUDE_KEY=your-api-key-here" > aspera/.env
 
 # Start the dev server
-npx expo start
+npm run mobile:start:clear
 ```
 
-> **Troubleshooting:** If `npx expo start` fails, verify you're on Node 20 (`node -v`). Install via `brew install node@20 && brew link --overwrite node@20` on macOS or use [nvm](https://github.com/nvm-sh/nvm).
+If you prefer working inside the app folder directly, use `cd aspera && npm ci && npm start -- --clear`.
+
+> **Troubleshooting:** If Expo fails with `Cannot find module .../@expo/cli/build/bin/cli`, the local install is corrupted. `npm start` now auto-repairs that by running `npm ci` when needed. The durable fix is to keep this repo outside iCloud-synced folders like `~/Documents`; iCloud can evict pieces of `node_modules` and cause this exact error. Moving the repo to a non-synced folder such as `~/Developer/CBCHackathon` is the permanent solution.
 
 Scan the QR code with **Expo Go** (iOS: Camera app, Android: Expo Go app).
 
@@ -69,12 +74,14 @@ The extension immediately begins tracking browsing activity. Click the icon to s
 The Chrome extension syncs browsing telemetry to a Firebase Realtime Database every 30 seconds. This enables cross-device intelligence — browsing data collected on desktop flows into the mobile app's AI context window.
 
 **How it works:**
+
 - Extension `PUT`s sanitized site data to `https://aspera-bridge-default-rtdb.firebaseio.com/browsing/{YYYY-MM-DD}.json`
 - Payload includes: per-site time tracking, category totals, computed focus score (0-100), Big Rock state
 - No SDK required — both sides use plain `fetch()` against Firebase's REST API
 - No authentication needed (database rules open for demo period)
 
 **To verify the sync:**
+
 1. Load the extension, browse a few sites for 30+ seconds
 2. Visit `https://aspera-bridge-default-rtdb.firebaseio.com/browsing.json` in your browser
 3. You should see your browsing data with sanitized hostname keys (e.g. `github_com`)
@@ -118,14 +125,14 @@ The Chrome extension syncs browsing telemetry to a Firebase Realtime Database ev
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Mobile | React Native 0.81, Expo SDK 54, expo-router v6 |
-| AI | Claude Sonnet (claude-sonnet-4-6) via @anthropic-ai/sdk |
-| Storage | AsyncStorage (local-first, per-day keys) |
-| Sync | Firebase Realtime Database (REST API, no SDK) |
-| Extension | Chrome Manifest V3, service worker |
-| Design | Dark theme (#090C14), haptic feedback, animated transitions |
+| Layer     | Technology                                                  |
+| --------- | ----------------------------------------------------------- |
+| Mobile    | React Native 0.81, Expo SDK 54, expo-router v6              |
+| AI        | Claude Sonnet (claude-sonnet-4-6) via @anthropic-ai/sdk     |
+| Storage   | AsyncStorage (local-first, per-day keys)                    |
+| Sync      | Firebase Realtime Database (REST API, no SDK)               |
+| Extension | Chrome Manifest V3, service worker                          |
+| Design    | Dark theme (#090C14), haptic feedback, animated transitions |
 
 ---
 

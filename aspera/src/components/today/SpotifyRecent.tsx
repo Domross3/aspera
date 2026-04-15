@@ -1,13 +1,13 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import GradientCard from '../common/GradientCard';
-import SectionLabel from '../common/SectionLabel';
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from '../../constants/theme';
-import { SPOTIFY_TRACKS, SpotifyTrack } from '../../lib/mockData';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import GradientCard from "../common/GradientCard";
+import SectionLabel from "../common/SectionLabel";
+import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
+import { SPOTIFY_TRACKS, SpotifyTrack } from "../../lib/mockData";
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
 
 function TrackRow({ track }: { track: SpotifyTrack }) {
@@ -15,17 +15,26 @@ function TrackRow({ track }: { track: SpotifyTrack }) {
     <View style={styles.trackRow}>
       <View style={styles.albumArt}>
         <Text style={styles.albumEmoji}>
-          {track.artist.includes('Nirvana') ? '🎸' :
-           track.artist.includes('Alice') ? '⛓️' :
-           track.artist.includes('Chili') ? '🌶️' :
-           track.artist.includes('Soundgarden') ? '☀️' :
-           track.artist.includes('Satie') ? '🎹' :
-           '🎵'}
+          {track.artist.includes("Nirvana")
+            ? "🎸"
+            : track.artist.includes("Alice")
+              ? "⛓️"
+              : track.artist.includes("Chili")
+                ? "🌶️"
+                : track.artist.includes("Soundgarden")
+                  ? "☀️"
+                  : track.artist.includes("Satie")
+                    ? "🎹"
+                    : "🎵"}
         </Text>
       </View>
       <View style={styles.trackInfo}>
-        <Text style={styles.trackName} numberOfLines={1}>{track.name}</Text>
-        <Text style={styles.trackArtist} numberOfLines={1}>{track.artist}</Text>
+        <Text style={styles.trackName} numberOfLines={1}>
+          {track.name}
+        </Text>
+        <Text style={styles.trackArtist} numberOfLines={1}>
+          {track.artist}
+        </Text>
       </View>
       <Text style={styles.trackTime}>{formatTime(track.played_at)}</Text>
     </View>
@@ -33,13 +42,14 @@ function TrackRow({ track }: { track: SpotifyTrack }) {
 }
 
 export default function SpotifyRecent() {
-  const todayTracks = SPOTIFY_TRACKS.filter(t => {
-    const played = new Date(t.played_at).toISOString().split('T')[0];
-    const today = new Date().toISOString().split('T')[0];
+  const todayTracks = SPOTIFY_TRACKS.filter((t) => {
+    const played = new Date(t.played_at).toISOString().split("T")[0];
+    const today = new Date().toISOString().split("T")[0];
     return played === today;
   });
 
-  const displayTracks = todayTracks.length > 0 ? todayTracks : SPOTIFY_TRACKS.slice(0, 4);
+  const displayTracks =
+    todayTracks.length > 0 ? todayTracks : SPOTIFY_TRACKS.slice(0, 4);
 
   return (
     <View>
@@ -62,8 +72,8 @@ export default function SpotifyRecent() {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: SPACING.md,
     gap: SPACING.xs,
   },
@@ -74,7 +84,7 @@ const styles = StyleSheet.create({
     flex: 1,
   } as object,
   badge: {
-    backgroundColor: 'rgba(108,99,255,0.2)',
+    backgroundColor: "rgba(108,99,255,0.2)",
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: RADIUS.pill,
@@ -85,8 +95,8 @@ const styles = StyleSheet.create({
     fontSize: 9,
   } as object,
   trackRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: SPACING.xs + 2,
     gap: SPACING.sm,
   },
@@ -95,8 +105,8 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: RADIUS.sm,
     backgroundColor: COLORS.surfaceElevated,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   albumEmoji: { fontSize: 16 },
   trackInfo: {
@@ -106,7 +116,7 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body,
     color: COLORS.text,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   } as object,
   trackArtist: {
     ...TYPOGRAPHY.caption,

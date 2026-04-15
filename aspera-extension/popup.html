@@ -1,302 +1,331 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    body {
-      width: 340px;
-      min-height: 420px;
-      background: #090C14;
-      color: #F0F4FF;
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', sans-serif;
-      padding: 20px;
-    }
+      body {
+        width: 340px;
+        min-height: 420px;
+        background: #090c14;
+        color: #f0f4ff;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "SF Pro", "Segoe UI", sans-serif;
+        padding: 20px;
+      }
 
-    /* ── Header ─── */
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .header .logo {
-      width: 28px;
-      height: 28px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #6C63FF, #00D4FF);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-    }
-    .header h1 {
-      font-size: 17px;
-      font-weight: 700;
-      letter-spacing: -0.3px;
-    }
-    .header .subtitle {
-      margin-left: auto;
-      font-size: 11px;
-      color: #9BA8C4;
-      font-weight: 500;
-    }
+      /* ── Header ─── */
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .header .logo {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #6c63ff, #00d4ff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+      }
+      .header h1 {
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+      }
+      .header .subtitle {
+        margin-left: auto;
+        font-size: 11px;
+        color: #9ba8c4;
+        font-weight: 500;
+      }
 
-    /* ── Focus Score Ring ─── */
-    .score-section {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    .score-ring {
-      position: relative;
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 12px;
-    }
-    .score-ring svg {
-      transform: rotate(-90deg);
-    }
-    .score-ring .value {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 32px;
-      font-weight: 800;
-      letter-spacing: -1px;
-    }
-    .score-label {
-      font-size: 12px;
-      font-weight: 500;
-      color: #9BA8C4;
-      letter-spacing: 0.3px;
-    }
+      /* ── Focus Score Ring ─── */
+      .score-section {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+      .score-ring {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        margin: 0 auto 12px;
+      }
+      .score-ring svg {
+        transform: rotate(-90deg);
+      }
+      .score-ring .value {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 32px;
+        font-weight: 800;
+        letter-spacing: -1px;
+      }
+      .score-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: #9ba8c4;
+        letter-spacing: 0.3px;
+      }
 
-    /* ── Time Bars ─── */
-    .time-bars {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-    .time-bar {
-      flex: 1;
-      background: #111827;
-      border-radius: 12px;
-      padding: 12px;
-      text-align: center;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .time-bar .label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 6px;
-    }
-    .time-bar .label.productive { color: #34D399; }
-    .time-bar .label.neutral { color: #9BA8C4; }
-    .time-bar .label.distracting { color: #F87171; }
-    .time-bar .time {
-      font-size: 18px;
-      font-weight: 700;
-    }
+      /* ── Time Bars ─── */
+      .time-bars {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+      .time-bar {
+        flex: 1;
+        background: #111827;
+        border-radius: 12px;
+        padding: 12px;
+        text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .time-bar .label {
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      .time-bar .label.productive {
+        color: #34d399;
+      }
+      .time-bar .label.neutral {
+        color: #9ba8c4;
+      }
+      .time-bar .label.distracting {
+        color: #f87171;
+      }
+      .time-bar .time {
+        font-size: 18px;
+        font-weight: 700;
+      }
 
-    /* ── Top Sites ─── */
-    .section-title {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
-      color: #9BA8C4;
-      margin-bottom: 10px;
-    }
-    .site-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
-    .site-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 12px;
-      background: #111827;
-      border-radius: 10px;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-    .site-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      flex-shrink: 0;
-    }
-    .site-dot.productive { background: #34D399; }
-    .site-dot.neutral { background: #9BA8C4; }
-    .site-dot.distracting { background: #F87171; }
-    .site-name {
-      flex: 1;
-      font-size: 13px;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .site-time {
-      font-size: 12px;
-      color: #9BA8C4;
-      font-weight: 600;
-      flex-shrink: 0;
-    }
+      /* ── Top Sites ─── */
+      .section-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: #9ba8c4;
+        margin-bottom: 10px;
+      }
+      .site-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        margin-bottom: 16px;
+      }
+      .site-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background: #111827;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .site-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .site-dot.productive {
+        background: #34d399;
+      }
+      .site-dot.neutral {
+        background: #9ba8c4;
+      }
+      .site-dot.distracting {
+        background: #f87171;
+      }
+      .site-name {
+        flex: 1;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .site-time {
+        font-size: 12px;
+        color: #9ba8c4;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
 
-    /* ── Empty State ─── */
-    .empty {
-      text-align: center;
-      padding: 40px 20px;
-      color: #4A5568;
-    }
-    .empty .icon { font-size: 32px; margin-bottom: 12px; }
-    .empty p { font-size: 13px; line-height: 1.5; }
+      /* ── Empty State ─── */
+      .empty {
+        text-align: center;
+        padding: 40px 20px;
+        color: #4a5568;
+      }
+      .empty .icon {
+        font-size: 32px;
+        margin-bottom: 12px;
+      }
+      .empty p {
+        font-size: 13px;
+        line-height: 1.5;
+      }
 
-    /* ── Divider ─── */
-    .divider {
-      height: 1px;
-      background: rgba(255,255,255,0.08);
-      margin: 16px 0;
-    }
+      /* ── Divider ─── */
+      .divider {
+        height: 1px;
+        background: rgba(255, 255, 255, 0.08);
+        margin: 16px 0;
+      }
 
-    /* ── Big Rock / Deep Work ─── */
-    .bigrock-section {
-      margin-top: 4px;
-    }
-    .bigrock-input {
-      width: 100%;
-      padding: 10px 12px;
-      font-size: 13px;
-      font-weight: 500;
-      color: #F0F4FF;
-      background: #111827;
-      border: 1px solid rgba(255,255,255,0.10);
-      border-radius: 10px;
-      outline: none;
-      margin-bottom: 10px;
-      font-family: inherit;
-      transition: border-color 0.15s ease;
-    }
-    .bigrock-input::placeholder { color: #4A5568; }
-    .bigrock-input:focus { border-color: #6C63FF; }
+      /* ── Big Rock / Deep Work ─── */
+      .bigrock-section {
+        margin-top: 4px;
+      }
+      .bigrock-input {
+        width: 100%;
+        padding: 10px 12px;
+        font-size: 13px;
+        font-weight: 500;
+        color: #f0f4ff;
+        background: #111827;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        outline: none;
+        margin-bottom: 10px;
+        font-family: inherit;
+        transition: border-color 0.15s ease;
+      }
+      .bigrock-input::placeholder {
+        color: #4a5568;
+      }
+      .bigrock-input:focus {
+        border-color: #6c63ff;
+      }
 
-    .deepwork-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: #111827;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
-    }
-    .deepwork-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #F0F4FF;
-    }
-    .deepwork-sublabel {
-      font-size: 10px;
-      color: #9BA8C4;
-      font-weight: 400;
-    }
+      .deepwork-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: #111827;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+      }
+      .deepwork-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #f0f4ff;
+      }
+      .deepwork-sublabel {
+        font-size: 10px;
+        color: #9ba8c4;
+        font-weight: 400;
+      }
 
-    /* Toggle switch */
-    .toggle {
-      position: relative;
-      width: 40px;
-      height: 22px;
-      flex-shrink: 0;
-    }
-    .toggle input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .toggle .slider {
-      position: absolute;
-      inset: 0;
-      background: #1C2535;
-      border-radius: 11px;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
-    .toggle .slider::before {
-      content: '';
-      position: absolute;
-      top: 3px;
-      left: 3px;
-      width: 16px;
-      height: 16px;
-      background: #9BA8C4;
-      border-radius: 50%;
-      transition: transform 0.2s ease, background 0.2s ease;
-    }
-    .toggle input:checked + .slider {
-      background: #6C63FF;
-    }
-    .toggle input:checked + .slider::before {
-      transform: translateX(18px);
-      background: #fff;
-    }
+      /* Toggle switch */
+      .toggle {
+        position: relative;
+        width: 40px;
+        height: 22px;
+        flex-shrink: 0;
+      }
+      .toggle input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggle .slider {
+        position: absolute;
+        inset: 0;
+        background: #1c2535;
+        border-radius: 11px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+      .toggle .slider::before {
+        content: "";
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 16px;
+        height: 16px;
+        background: #9ba8c4;
+        border-radius: 50%;
+        transition:
+          transform 0.2s ease,
+          background 0.2s ease;
+      }
+      .toggle input:checked + .slider {
+        background: #6c63ff;
+      }
+      .toggle input:checked + .slider::before {
+        transform: translateX(18px);
+        background: #fff;
+      }
 
-    .bigrock-status {
-      font-size: 11px;
-      color: #9BA8C4;
-      text-align: center;
-      margin-top: 8px;
-      min-height: 16px;
-    }
-    .bigrock-status.active {
-      color: #6C63FF;
-      font-weight: 600;
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="logo">⚡</div>
-    <h1>Aspera Focus</h1>
-    <span class="subtitle" id="date"></span>
-  </div>
-
-  <div id="content">
-    <div class="empty">
-      <div class="icon">🔍</div>
-      <p>Tracking your focus...<br>Browse a bit and check back!</p>
+      .bigrock-status {
+        font-size: 11px;
+        color: #9ba8c4;
+        text-align: center;
+        margin-top: 8px;
+        min-height: 16px;
+      }
+      .bigrock-status.active {
+        color: #6c63ff;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="logo">⚡</div>
+      <h1>Aspera Focus</h1>
+      <span class="subtitle" id="date"></span>
     </div>
-  </div>
 
-  <div class="divider"></div>
-
-  <div class="bigrock-section">
-    <div class="section-title">Big Rock</div>
-    <input
-      type="text"
-      id="bigrock-input"
-      class="bigrock-input"
-      placeholder="What's your #1 priority right now?"
-      maxlength="120"
-    />
-    <div class="deepwork-row">
-      <div>
-        <div class="deepwork-label">Deep Work mode</div>
-        <div class="deepwork-sublabel">Block distracting sites</div>
+    <div id="content">
+      <div class="empty">
+        <div class="icon">🔍</div>
+        <p>Tracking your focus...<br />Browse a bit and check back!</p>
       </div>
-      <label class="toggle">
-        <input type="checkbox" id="deepwork-toggle" />
-        <span class="slider"></span>
-      </label>
     </div>
-    <div class="bigrock-status" id="bigrock-status"></div>
-  </div>
 
-  <script src="popup.js"></script>
-</body>
+    <div class="divider"></div>
+
+    <div class="bigrock-section">
+      <div class="section-title">Big Rock</div>
+      <input
+        type="text"
+        id="bigrock-input"
+        class="bigrock-input"
+        placeholder="What's your #1 priority right now?"
+        maxlength="120"
+      />
+      <div class="deepwork-row">
+        <div>
+          <div class="deepwork-label">Deep Work mode</div>
+          <div class="deepwork-sublabel">Block distracting sites</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="deepwork-toggle" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="bigrock-status" id="bigrock-status"></div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
 </html>

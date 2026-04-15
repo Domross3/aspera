@@ -1,0 +1,11 @@
+{
+  "name": "cbchackathon",
+  "private": true,
+  "scripts": {
+    "mobile:doctor": "npm --prefix aspera run doctor:expo",
+    "mobile:install": "npm --prefix aspera ci",
+    "mobile:start": "npm --prefix aspera run start --",
+    "mobile:start:clear": "npm --prefix aspera run start -- --clear",
+    "mobile:typecheck": "npm --prefix aspera run typecheck"
+  }
+}

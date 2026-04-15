@@ -1,15 +1,19 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
+import React from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import * as Haptics from "expo-haptics";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 
 interface Props {
-  value: number;  // 1–10
+  value: number; // 1–10
   disabled?: boolean;
   onChange: (v: number) => void;
 }
 
-export default function IntensitySlider({ value, disabled = false, onChange }: Props) {
+export default function IntensitySlider({
+  value,
+  disabled = false,
+  onChange,
+}: Props) {
   const set = (v: number) => {
     if (disabled) return;
     const clamped = Math.max(1, Math.min(10, v));
@@ -19,7 +23,9 @@ export default function IntensitySlider({ value, disabled = false, onChange }: P
     }
   };
 
-  const intensityColor = disabled ? COLORS.textMuted : COLORS.intensity[value - 1] ?? COLORS.accent;
+  const intensityColor = disabled
+    ? COLORS.textMuted
+    : (COLORS.intensity[value - 1] ?? COLORS.accent);
 
   return (
     <View style={disabled && styles.disabled}>
@@ -34,9 +40,7 @@ export default function IntensitySlider({ value, disabled = false, onChange }: P
               style={[
                 styles.segment,
                 {
-                  backgroundColor: active
-                    ? COLORS.intensity[i]
-                    : COLORS.border,
+                  backgroundColor: active ? COLORS.intensity[i] : COLORS.border,
                   height: 12 + i * 2.5, // graduated height
                 },
               ]}
@@ -52,13 +56,21 @@ export default function IntensitySlider({ value, disabled = false, onChange }: P
       <View style={styles.labels}>
         <Text style={styles.labelText}>Low</Text>
         <View style={styles.valueRow}>
-          <TouchableOpacity onPress={() => set(value - 1)} disabled={disabled} style={styles.adjBtn}>
+          <TouchableOpacity
+            onPress={() => set(value - 1)}
+            disabled={disabled}
+            style={styles.adjBtn}
+          >
             <Text style={[styles.adjText, { color: intensityColor }]}>−</Text>
           </TouchableOpacity>
           <Text style={[styles.valueText, { color: intensityColor }]}>
-            {disabled ? '—' : value} / 10
+            {disabled ? "—" : value} / 10
           </Text>
-          <TouchableOpacity onPress={() => set(value + 1)} disabled={disabled} style={styles.adjBtn}>
+          <TouchableOpacity
+            onPress={() => set(value + 1)}
+            disabled={disabled}
+            style={styles.adjBtn}
+          >
             <Text style={[styles.adjText, { color: intensityColor }]}>+</Text>
           </TouchableOpacity>
         </View>
@@ -71,8 +83,8 @@ export default function IntensitySlider({ value, disabled = false, onChange }: P
 const styles = StyleSheet.create({
   disabled: { opacity: 0.4 },
   segmentRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
     gap: 3,
     paddingVertical: SPACING.sm,
   },
@@ -82,9 +94,9 @@ const styles = StyleSheet.create({
     minHeight: 12,
   },
   labels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: SPACING.xs,
   },
   labelText: {
@@ -92,13 +104,13 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
   } as object,
   valueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.sm,
   },
   valueText: {
     ...TYPOGRAPHY.subtitle,
-    fontWeight: '700',
+    fontWeight: "700",
   } as object,
   adjBtn: {
     width: 28,
@@ -107,12 +119,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceElevated,
     borderWidth: 1,
     borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   adjText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     lineHeight: 22,
   },
 });

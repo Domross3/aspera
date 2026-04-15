@@ -1,7 +1,13 @@
-import React, { useRef } from 'react';
-import { View, Text, PanResponder, StyleSheet, TouchableOpacity } from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
+import React, { useRef } from "react";
+import {
+  View,
+  Text,
+  PanResponder,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
+import * as Haptics from "expo-haptics";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 
 interface Props {
   label: string;
@@ -11,7 +17,13 @@ interface Props {
   accentColor?: string;
 }
 
-export default function RatingSlider({ label, value, max = 10, onChange, accentColor = COLORS.accent }: Props) {
+export default function RatingSlider({
+  label,
+  value,
+  max = 10,
+  onChange,
+  accentColor = COLORS.accent,
+}: Props) {
   const adjustValue = (delta: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onChange(Math.max(1, Math.min(max, value + delta)));
@@ -21,7 +33,9 @@ export default function RatingSlider({ label, value, max = 10, onChange, accentC
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.label}>{label}</Text>
-        <Text style={[styles.value, { color: accentColor }]}>{value}/{max}</Text>
+        <Text style={[styles.value, { color: accentColor }]}>
+          {value}/{max}
+        </Text>
       </View>
 
       {/* Tap-to-select dots */}
@@ -31,8 +45,14 @@ export default function RatingSlider({ label, value, max = 10, onChange, accentC
           return (
             <TouchableOpacity
               key={i}
-              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onChange(i + 1); }}
-              style={[styles.dot, { backgroundColor: filled ? accentColor : COLORS.border }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onChange(i + 1);
+              }}
+              style={[
+                styles.dot,
+                { backgroundColor: filled ? accentColor : COLORS.border },
+              ]}
             />
           );
         })}
@@ -43,7 +63,15 @@ export default function RatingSlider({ label, value, max = 10, onChange, accentC
           <Text style={styles.btnText}>−</Text>
         </TouchableOpacity>
         <View style={styles.barContainer}>
-          <View style={[styles.bar, { width: `${(value / max) * 100}%`, backgroundColor: accentColor }]} />
+          <View
+            style={[
+              styles.bar,
+              {
+                width: `${(value / max) * 100}%`,
+                backgroundColor: accentColor,
+              },
+            ]}
+          />
         </View>
         <TouchableOpacity style={styles.btn} onPress={() => adjustValue(1)}>
           <Text style={styles.btnText}>+</Text>
@@ -56,9 +84,9 @@ export default function RatingSlider({ label, value, max = 10, onChange, accentC
 const styles = StyleSheet.create({
   container: { gap: SPACING.sm },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   label: {
     ...TYPOGRAPHY.body,
@@ -66,10 +94,10 @@ const styles = StyleSheet.create({
   } as object,
   value: {
     ...TYPOGRAPHY.title,
-    fontWeight: '700',
+    fontWeight: "700",
   } as object,
   dotsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.xs - 2,
   },
   dot: {
@@ -78,8 +106,8 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.pill,
   },
   controls: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.sm,
   },
   btn: {
@@ -89,8 +117,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   btnText: {
     fontSize: 20,
@@ -102,10 +130,10 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: RADIUS.pill,
     backgroundColor: COLORS.border,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   bar: {
-    height: '100%',
+    height: "100%",
     borderRadius: RADIUS.pill,
   },
 });

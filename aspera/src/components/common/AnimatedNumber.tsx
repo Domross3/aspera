@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Text, TextStyle } from 'react-native';
+import React, { useEffect, useRef } from "react";
+import { Animated, Text, TextStyle } from "react-native";
 
 interface Props {
   value: number;
@@ -7,7 +7,11 @@ interface Props {
   duration?: number;
 }
 
-export default function AnimatedNumber({ value, style, duration = 800 }: Props) {
+export default function AnimatedNumber({
+  value,
+  style,
+  duration = 800,
+}: Props) {
   const animVal = useRef(new Animated.Value(0)).current;
   const displayRef = useRef(0);
   const [display, setDisplay] = React.useState(0);

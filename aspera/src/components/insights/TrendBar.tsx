@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet } from 'react-native';
-import { COLORS, RADIUS, TYPOGRAPHY } from '../../constants/theme';
+import React, { useEffect, useRef } from "react";
+import { View, Text, Animated, StyleSheet } from "react-native";
+import { COLORS, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 
 interface Props {
   label: string;
@@ -38,25 +38,25 @@ export default function TrendBar({ label, value, maxValue, color }: Props) {
 const styles = StyleSheet.create({
   col: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 4,
   },
   track: {
-    width: '70%',
+    width: "70%",
     height: MAX_BAR_HEIGHT,
     backgroundColor: COLORS.border,
     borderRadius: RADIUS.sm,
-    justifyContent: 'flex-end',
-    overflow: 'hidden',
+    justifyContent: "flex-end",
+    overflow: "hidden",
   },
   fill: {
-    width: '100%',
+    width: "100%",
     borderRadius: RADIUS.sm,
   },
   val: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
-    fontWeight: '700',
+    fontWeight: "700",
   } as object,
   label: {
     ...TYPOGRAPHY.caption,

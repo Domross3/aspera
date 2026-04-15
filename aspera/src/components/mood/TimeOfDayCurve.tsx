@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { MoodCheckIn } from '../../types';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
-import GradientCard from '../common/GradientCard';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { MoodCheckIn } from "../../types";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import GradientCard from "../common/GradientCard";
 
 interface Props {
   checkins: MoodCheckIn[];
@@ -17,9 +17,23 @@ interface HourBucket {
 }
 
 const HOUR_LABELS: Record<number, string> = {
-  6: '6a', 7: '7a', 8: '8a', 9: '9a', 10: '10a', 11: '11a',
-  12: '12p', 13: '1p', 14: '2p', 15: '3p', 16: '4p', 17: '5p',
-  18: '6p', 19: '7p', 20: '8p', 21: '9p', 22: '10p',
+  6: "6a",
+  7: "7a",
+  8: "8a",
+  9: "9a",
+  10: "10a",
+  11: "11a",
+  12: "12p",
+  13: "1p",
+  14: "2p",
+  15: "3p",
+  16: "4p",
+  17: "5p",
+  18: "6p",
+  19: "7p",
+  20: "8p",
+  21: "9p",
+  22: "10p",
 };
 
 function bucketByHour(checkins: MoodCheckIn[]): HourBucket[] {
@@ -42,7 +56,8 @@ function bucketByHour(checkins: MoodCheckIn[]): HourBucket[] {
         hour,
         label: HOUR_LABELS[hour] || `${hour}`,
         avgMood: data.moods.reduce((s, v) => s + v, 0) / data.moods.length,
-        avgEnergy: data.energies.reduce((s, v) => s + v, 0) / data.energies.length,
+        avgEnergy:
+          data.energies.reduce((s, v) => s + v, 0) / data.energies.length,
         count: data.moods.length,
       };
     })
@@ -58,8 +73,12 @@ export default function TimeOfDayCurve({ checkins }: Props) {
   const chartHeight = 100;
 
   // Find peak and trough
-  const peakBucket = buckets.reduce((best, b) => b.avgMood > best.avgMood ? b : best);
-  const troughBucket = buckets.reduce((worst, b) => b.avgMood < worst.avgMood ? b : worst);
+  const peakBucket = buckets.reduce((best, b) =>
+    b.avgMood > best.avgMood ? b : best,
+  );
+  const troughBucket = buckets.reduce((worst, b) =>
+    b.avgMood < worst.avgMood ? b : worst,
+  );
 
   return (
     <GradientCard style={{ marginTop: SPACING.sm }}>
@@ -73,10 +92,13 @@ export default function TimeOfDayCurve({ checkins }: Props) {
       {/* Chart area */}
       <View style={[styles.chart, { height: chartHeight + 30 }]}>
         {/* Horizontal grid lines */}
-        {[1, 2, 3, 4, 5].map(v => (
+        {[1, 2, 3, 4, 5].map((v) => (
           <View
             key={v}
-            style={[styles.gridLine, { bottom: ((v - 1) / (maxVal - 1)) * chartHeight + 20 }]}
+            style={[
+              styles.gridLine,
+              { bottom: ((v - 1) / (maxVal - 1)) * chartHeight + 20 },
+            ]}
           />
         ))}
 
@@ -92,24 +114,34 @@ export default function TimeOfDayCurve({ checkins }: Props) {
               <View key={bucket.hour} style={styles.barCol}>
                 <View style={styles.barArea}>
                   {/* Mood bar */}
-                  <View style={[
-                    styles.bar,
-                    {
-                      height: `${moodPct}%`,
-                      backgroundColor: isPeak ? COLORS.success : isTrough ? COLORS.danger : COLORS.accent,
-                      opacity: isPeak || isTrough ? 1 : 0.6,
-                    },
-                  ]} />
+                  <View
+                    style={[
+                      styles.bar,
+                      {
+                        height: `${moodPct}%`,
+                        backgroundColor: isPeak
+                          ? COLORS.success
+                          : isTrough
+                            ? COLORS.danger
+                            : COLORS.accent,
+                        opacity: isPeak || isTrough ? 1 : 0.6,
+                      },
+                    ]}
+                  />
                   {/* Energy dot */}
-                  <View style={[
-                    styles.energyDot,
-                    { bottom: `${energyPct}%` },
-                  ]} />
+                  <View
+                    style={[styles.energyDot, { bottom: `${energyPct}%` }]}
+                  />
                 </View>
-                <Text style={[
-                  styles.hourLabel,
-                  (isPeak || isTrough) && { color: COLORS.text, fontWeight: '700' as const },
-                ]}>
+                <Text
+                  style={[
+                    styles.hourLabel,
+                    (isPeak || isTrough) && {
+                      color: COLORS.text,
+                      fontWeight: "700" as const,
+                    },
+                  ]}
+                >
                   {bucket.label}
                 </Text>
               </View>
@@ -121,22 +153,30 @@ export default function TimeOfDayCurve({ checkins }: Props) {
       {/* Legend + insights */}
       <View style={styles.legendRow}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendSwatch, { backgroundColor: COLORS.accent }]} />
+          <View
+            style={[styles.legendSwatch, { backgroundColor: COLORS.accent }]}
+          />
           <Text style={styles.legendText}>Mood</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: COLORS.warning }]} />
+          <View
+            style={[styles.legendDot, { backgroundColor: COLORS.warning }]}
+          />
           <Text style={styles.legendText}>Energy</Text>
         </View>
       </View>
 
       <View style={styles.insightRow}>
-        <View style={[styles.insightChip, { borderColor: `${COLORS.success}44` }]}>
+        <View
+          style={[styles.insightChip, { borderColor: `${COLORS.success}44` }]}
+        >
           <Text style={[styles.insightText, { color: COLORS.success }]}>
             Peak: {peakBucket.label} ({peakBucket.avgMood.toFixed(1)}/5)
           </Text>
         </View>
-        <View style={[styles.insightChip, { borderColor: `${COLORS.danger}44` }]}>
+        <View
+          style={[styles.insightChip, { borderColor: `${COLORS.danger}44` }]}
+        >
           <Text style={[styles.insightText, { color: COLORS.danger }]}>
             Low: {troughBucket.label} ({troughBucket.avgMood.toFixed(1)}/5)
           </Text>
@@ -148,9 +188,9 @@ export default function TimeOfDayCurve({ checkins }: Props) {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     marginBottom: SPACING.md,
   },
   title: {
@@ -163,42 +203,42 @@ const styles = StyleSheet.create({
     marginTop: 2,
   } as object,
   chart: {
-    position: 'relative',
+    position: "relative",
     marginBottom: SPACING.sm,
   },
   gridLine: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
     height: 1,
     backgroundColor: COLORS.border,
   },
   barsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: '100%',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    height: "100%",
     paddingBottom: 20,
     gap: 2,
   },
   barCol: {
     flex: 1,
-    alignItems: 'center',
+    alignItems: "center",
   },
   barArea: {
-    width: '70%',
+    width: "70%",
     height: 100,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    position: 'relative',
+    justifyContent: "flex-end",
+    alignItems: "center",
+    position: "relative",
   },
   bar: {
-    width: '100%',
+    width: "100%",
     borderRadius: RADIUS.sm,
     minHeight: 4,
   },
   energyDot: {
-    position: 'absolute',
+    position: "absolute",
     width: 8,
     height: 8,
     borderRadius: 4,
@@ -213,13 +253,13 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   } as object,
   legendRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.md,
     marginBottom: SPACING.sm,
   },
   legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
   },
   legendSwatch: {
@@ -238,7 +278,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   } as object,
   insightRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.sm,
   },
   insightChip: {
@@ -250,7 +290,7 @@ const styles = StyleSheet.create({
   },
   insightText: {
     ...TYPOGRAPHY.caption,
-    fontWeight: '600',
+    fontWeight: "600",
     fontSize: 11,
   } as object,
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   View,
@@ -10,8 +10,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { TYPOGRAPHY } from '../../constants/theme';
+} from "react-native";
+import { TYPOGRAPHY } from "../../constants/theme";
 
 interface Props {
   visible: boolean;
@@ -21,7 +21,7 @@ interface Props {
   reappraisalLoading: boolean;
 }
 
-type Phase = 'breathe' | 'name' | 'reframe';
+type Phase = "breathe" | "name" | "reframe";
 
 const BREATHE_DURATION = 4000;
 
@@ -32,8 +32,8 @@ export default function SomaticInterceptor({
   reappraisal,
   reappraisalLoading,
 }: Props) {
-  const [phase, setPhase] = useState<Phase>('breathe');
-  const [feeling, setFeeling] = useState('');
+  const [phase, setPhase] = useState<Phase>("breathe");
+  const [feeling, setFeeling] = useState("");
 
   // Animated values
   const breatheScale = useRef(new Animated.Value(1)).current;
@@ -44,8 +44,8 @@ export default function SomaticInterceptor({
   // Reset state when modal opens
   useEffect(() => {
     if (visible) {
-      setPhase('breathe');
-      setFeeling('');
+      setPhase("breathe");
+      setFeeling("");
       phaseFade.setValue(0);
       pauseFade.setValue(0);
       breathTextFade.setValue(0);
@@ -62,8 +62,8 @@ export default function SomaticInterceptor({
 
   // Transition to reframe phase when reappraisal arrives
   useEffect(() => {
-    if (phase === 'name' && reappraisal) {
-      transitionToPhase('reframe');
+    if (phase === "name" && reappraisal) {
+      transitionToPhase("reframe");
     }
   }, [reappraisal, phase]);
 
@@ -101,7 +101,7 @@ export default function SomaticInterceptor({
       // After 4 seconds, transition to name phase
       setTimeout(() => {
         breatheAnimation.stop();
-        transitionToPhase('name');
+        transitionToPhase("name");
       }, BREATHE_DURATION);
     });
   };
@@ -134,10 +134,7 @@ export default function SomaticInterceptor({
       </Animated.Text>
 
       <Animated.View
-        style={[
-          styles.breatheCircle,
-          { transform: [{ scale: breatheScale }] },
-        ]}
+        style={[styles.breatheCircle, { transform: [{ scale: breatheScale }] }]}
       />
 
       <Animated.Text style={[styles.breatheText, { opacity: breathTextFade }]}>
@@ -164,12 +161,20 @@ export default function SomaticInterceptor({
       />
 
       <TouchableOpacity
-        style={[styles.submitButton, !feeling.trim() && styles.submitButtonDisabled]}
+        style={[
+          styles.submitButton,
+          !feeling.trim() && styles.submitButtonDisabled,
+        ]}
         onPress={handleSubmitFeeling}
         disabled={!feeling.trim()}
         activeOpacity={0.7}
       >
-        <Text style={[styles.submitText, !feeling.trim() && styles.submitTextDisabled]}>
+        <Text
+          style={[
+            styles.submitText,
+            !feeling.trim() && styles.submitTextDisabled,
+          ]}
+        >
           Submit
         </Text>
       </TouchableOpacity>
@@ -206,11 +211,11 @@ export default function SomaticInterceptor({
     >
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        {phase === 'breathe' && renderBreathePhase()}
-        {phase === 'name' && renderNamePhase()}
-        {phase === 'reframe' && renderReframePhase()}
+        {phase === "breathe" && renderBreathePhase()}
+        {phase === "name" && renderNamePhase()}
+        {phase === "reframe" && renderReframePhase()}
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -219,21 +224,21 @@ export default function SomaticInterceptor({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 32,
   },
 
   phaseContainer: {
-    alignItems: 'center',
-    width: '100%',
+    alignItems: "center",
+    width: "100%",
   },
 
   // -- Breathe phase --
   pauseText: {
     ...TYPOGRAPHY.hero,
-    color: '#fff',
+    color: "#fff",
     marginBottom: 48,
   },
 
@@ -241,34 +246,34 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: "rgba(255,255,255,0.08)",
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    borderColor: "rgba(255,255,255,0.2)",
     marginBottom: 48,
   },
 
   breatheText: {
     ...TYPOGRAPHY.body,
-    color: 'rgba(255,255,255,0.6)',
+    color: "rgba(255,255,255,0.6)",
   },
 
   // -- Name phase --
   promptText: {
     ...TYPOGRAPHY.title,
-    color: '#fff',
-    textAlign: 'center',
+    color: "#fff",
+    textAlign: "center",
     marginBottom: 32,
   },
 
   input: {
     ...TYPOGRAPHY.body,
-    color: '#fff',
-    width: '100%',
+    color: "#fff",
+    width: "100%",
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.2)',
+    borderBottomColor: "rgba(255,255,255,0.2)",
     paddingVertical: 12,
     marginBottom: 32,
-    textAlign: 'center',
+    textAlign: "center",
     minHeight: 48,
   },
 
@@ -277,27 +282,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 48,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
+    borderColor: "rgba(255,255,255,0.4)",
   },
 
   submitButtonDisabled: {
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: "rgba(255,255,255,0.1)",
   },
 
   submitText: {
     ...TYPOGRAPHY.subtitle,
-    color: '#fff',
+    color: "#fff",
   },
 
   submitTextDisabled: {
-    color: 'rgba(255,255,255,0.2)',
+    color: "rgba(255,255,255,0.2)",
   },
 
   // -- Reframe phase --
   reappraisalText: {
     ...TYPOGRAPHY.body,
-    color: 'rgba(255,255,255,0.85)',
-    textAlign: 'center',
+    color: "rgba(255,255,255,0.85)",
+    textAlign: "center",
     lineHeight: 26,
     marginBottom: 48,
     paddingHorizontal: 8,
@@ -307,11 +312,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 48,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: "rgba(255,255,255,0.1)",
   },
 
   returnText: {
     ...TYPOGRAPHY.subtitle,
-    color: '#fff',
+    color: "#fff",
   },
 });

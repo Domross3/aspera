@@ -1,8 +1,14 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../../constants/theme';
-import { MAX_RESERVES_PER_WEEK } from '../../types';
+import React, { useEffect, useRef } from "react";
+import { View, Text, Animated, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  COLORS,
+  SPACING,
+  RADIUS,
+  TYPOGRAPHY,
+  SHADOWS,
+} from "../../constants/theme";
+import { MAX_RESERVES_PER_WEEK } from "../../types";
 
 interface Props {
   streak: number;
@@ -32,8 +38,8 @@ export default function StreakCounter({ streak, reservesRemaining }: Props) {
           isAvailable ? styles.tokenAvailable : styles.tokenSpent,
         ]}
       >
-        <Text style={styles.tokenIcon}>{isAvailable ? '🛡️' : '🔲'}</Text>
-      </View>
+        <Text style={styles.tokenIcon}>{isAvailable ? "🛡️" : "🔲"}</Text>
+      </View>,
     );
   }
 
@@ -44,18 +50,18 @@ export default function StreakCounter({ streak, reservesRemaining }: Props) {
       end={{ x: 1, y: 1 }}
       style={[styles.card, SHADOWS.glow]}
     >
-      <Animated.Text style={[styles.flame, { transform: [{ scale: scaleAnim }] }]}>🔥</Animated.Text>
+      <Animated.Text
+        style={[styles.flame, { transform: [{ scale: scaleAnim }] }]}
+      >
+        🔥
+      </Animated.Text>
       <View style={styles.text}>
         <Text style={styles.label}>STREAK</Text>
         <Text style={styles.count}>{streak}</Text>
-        <Text style={styles.unit}>
-          {streak === 1 ? 'day' : 'days'}
-        </Text>
+        <Text style={styles.unit}>{streak === 1 ? "day" : "days"}</Text>
       </View>
       <View style={styles.reserveColumn}>
-        <Text style={styles.reserveLabel}>
-          {reservesRemaining} remaining
-        </Text>
+        <Text style={styles.reserveLabel}>{reservesRemaining} remaining</Text>
         <View style={styles.tokenRow}>{reserveTokens}</View>
       </View>
     </LinearGradient>
@@ -66,15 +72,15 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.md,
   },
   flame: { fontSize: 40 },
   text: { flex: 1, gap: 2 },
   label: {
     ...TYPOGRAPHY.label,
-    color: 'rgba(255,255,255,0.7)',
+    color: "rgba(255,255,255,0.7)",
   } as object,
   count: {
     ...TYPOGRAPHY.hero,
@@ -82,33 +88,33 @@ const styles = StyleSheet.create({
   } as object,
   unit: {
     ...TYPOGRAPHY.caption,
-    color: 'rgba(255,255,255,0.7)',
+    color: "rgba(255,255,255,0.7)",
   } as object,
   reserveColumn: {
-    alignItems: 'center',
+    alignItems: "center",
     gap: SPACING.xs,
   },
   reserveLabel: {
     ...TYPOGRAPHY.label,
-    color: 'rgba(255,255,255,0.5)',
+    color: "rgba(255,255,255,0.5)",
     fontSize: 8,
   } as object,
   tokenRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.xs,
   },
   token: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   tokenAvailable: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   tokenSpent: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: "rgba(255,255,255,0.05)",
   },
   tokenIcon: {
     fontSize: 14,

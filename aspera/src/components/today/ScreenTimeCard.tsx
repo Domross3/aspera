@@ -1,9 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import GradientCard from '../common/GradientCard';
-import SectionLabel from '../common/SectionLabel';
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from '../../constants/theme';
-import { SCREEN_TIME_DATA } from '../../lib/mockData';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import GradientCard from "../common/GradientCard";
+import SectionLabel from "../common/SectionLabel";
+import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
+import { SCREEN_TIME_DATA } from "../../lib/mockData";
 
 function minsToLabel(mins: number): string {
   if (mins < 60) return `${mins}m`;
@@ -21,7 +21,12 @@ export default function ScreenTimeCard() {
 
   // Determine if screen time is high
   const isHigh = totalMs > 360; // >6h is high
-  const summaryColor = totalMs <= 240 ? COLORS.success : totalMs <= 360 ? COLORS.warning : COLORS.danger;
+  const summaryColor =
+    totalMs <= 240
+      ? COLORS.success
+      : totalMs <= 360
+        ? COLORS.warning
+        : COLORS.danger;
 
   return (
     <View>
@@ -38,7 +43,9 @@ export default function ScreenTimeCard() {
         {/* Total + Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.totalCircle}>
-            <Text style={[styles.totalValue, { color: summaryColor }]}>{minsToLabel(totalMs)}</Text>
+            <Text style={[styles.totalValue, { color: summaryColor }]}>
+              {minsToLabel(totalMs)}
+            </Text>
             <Text style={styles.totalLabel}>TODAY</Text>
           </View>
           <View style={styles.statsCol}>
@@ -51,7 +58,9 @@ export default function ScreenTimeCard() {
               <Text style={styles.statLabel}>First pickup</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{minsToLabel(today.longestSession)}</Text>
+              <Text style={styles.statValue}>
+                {minsToLabel(today.longestSession)}
+              </Text>
               <Text style={styles.statLabel}>Longest session</Text>
             </View>
           </View>
@@ -69,8 +78,10 @@ export default function ScreenTimeCard() {
                   backgroundColor: cat.color,
                   borderTopLeftRadius: i === 0 ? 4 : 0,
                   borderBottomLeftRadius: i === 0 ? 4 : 0,
-                  borderTopRightRadius: i === today.byCategory.length - 1 ? 4 : 0,
-                  borderBottomRightRadius: i === today.byCategory.length - 1 ? 4 : 0,
+                  borderTopRightRadius:
+                    i === today.byCategory.length - 1 ? 4 : 0,
+                  borderBottomRightRadius:
+                    i === today.byCategory.length - 1 ? 4 : 0,
                 },
               ]}
             />
@@ -79,11 +90,13 @@ export default function ScreenTimeCard() {
 
         {/* Category breakdown */}
         <View style={styles.categoryList}>
-          {today.byCategory.map(cat => (
+          {today.byCategory.map((cat) => (
             <View key={cat.category} style={styles.categoryRow}>
               <View style={[styles.dot, { backgroundColor: cat.color }]} />
               <Text style={styles.categoryName}>{cat.category}</Text>
-              <Text style={[styles.categoryTime, { color: cat.color }]}>{minsToLabel(cat.minutes)}</Text>
+              <Text style={[styles.categoryTime, { color: cat.color }]}>
+                {minsToLabel(cat.minutes)}
+              </Text>
               <Text style={styles.categoryPct}>
                 {Math.round((cat.minutes / totalMs) * 100)}%
               </Text>
@@ -92,13 +105,24 @@ export default function ScreenTimeCard() {
         </View>
 
         {/* Top Apps */}
-        <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted, marginTop: SPACING.md, marginBottom: SPACING.xs }]}>
+        <Text
+          style={[
+            TYPOGRAPHY.caption,
+            {
+              color: COLORS.textMuted,
+              marginTop: SPACING.md,
+              marginBottom: SPACING.xs,
+            },
+          ]}
+        >
           TOP APPS
         </Text>
         {topApps.map((app, i) => (
           <View key={app.name} style={styles.appRow}>
             <Text style={styles.appIcon}>{app.icon}</Text>
-            <Text style={styles.appName} numberOfLines={1}>{app.name}</Text>
+            <Text style={styles.appName} numberOfLines={1}>
+              {app.name}
+            </Text>
             <Text style={styles.appTime}>{minsToLabel(app.minutes)}</Text>
           </View>
         ))}
@@ -109,8 +133,8 @@ export default function ScreenTimeCard() {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: SPACING.md,
     gap: SPACING.xs,
   },
@@ -121,7 +145,7 @@ const styles = StyleSheet.create({
     flex: 1,
   } as object,
   badge: {
-    backgroundColor: 'rgba(108,99,255,0.2)',
+    backgroundColor: "rgba(108,99,255,0.2)",
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: RADIUS.pill,
@@ -133,8 +157,8 @@ const styles = StyleSheet.create({
   } as object,
   // Stats
   statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.lg,
     marginBottom: SPACING.md,
   },
@@ -144,8 +168,8 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     borderWidth: 2,
     borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   totalValue: {
     ...TYPOGRAPHY.subtitle,
@@ -162,15 +186,15 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   statItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   statValue: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
   } as object,
   statLabel: {
     ...TYPOGRAPHY.caption,
@@ -179,21 +203,21 @@ const styles = StyleSheet.create({
   } as object,
   // Bar
   barTrack: {
-    flexDirection: 'row',
+    flexDirection: "row",
     height: 6,
     borderRadius: 4,
-    overflow: 'hidden',
+    overflow: "hidden",
     backgroundColor: COLORS.surface,
     marginBottom: SPACING.sm,
   },
-  barFill: { height: '100%' },
+  barFill: { height: "100%" },
   // Categories
   categoryList: {
     gap: 2,
   },
   categoryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.xs,
     paddingVertical: 2,
   },
@@ -207,21 +231,21 @@ const styles = StyleSheet.create({
   categoryTime: {
     ...TYPOGRAPHY.caption,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
     minWidth: 40,
-    textAlign: 'right',
+    textAlign: "right",
   } as object,
   categoryPct: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textMuted,
     fontSize: 10,
     minWidth: 28,
-    textAlign: 'right',
+    textAlign: "right",
   } as object,
   // Apps
   appRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: SPACING.xs,
     gap: SPACING.xs,
   },
@@ -236,8 +260,8 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: "600",
     minWidth: 40,
-    textAlign: 'right',
+    textAlign: "right",
   } as object,
 });

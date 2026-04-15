@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 
 interface Props {
   icon: string;
@@ -13,7 +13,11 @@ interface Props {
 export default function SummaryPill({ icon, label, value, color }: Props) {
   return (
     <View style={[styles.pill, { borderColor: `${color}44` }]}>
-      <Ionicons name={icon as keyof typeof Ionicons.glyphMap} size={16} color={color} />
+      <Ionicons
+        name={icon as keyof typeof Ionicons.glyphMap}
+        size={16}
+        color={color}
+      />
       <View style={styles.text}>
         <Text style={[styles.label, { color: COLORS.textMuted }]}>{label}</Text>
         <Text style={[styles.value, { color }]}>{value}</Text>
@@ -24,8 +28,8 @@ export default function SummaryPill({ icon, label, value, color }: Props) {
 
 const styles = StyleSheet.create({
   pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.sm,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
@@ -37,12 +41,12 @@ const styles = StyleSheet.create({
   label: {
     ...TYPOGRAPHY.caption,
     fontSize: 10,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 0.8,
   } as object,
   value: {
     ...TYPOGRAPHY.caption,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 13,
   } as object,
 });

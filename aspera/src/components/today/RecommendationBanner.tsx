@@ -1,8 +1,20 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../../constants/theme';
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  COLORS,
+  SPACING,
+  RADIUS,
+  TYPOGRAPHY,
+  SHADOWS,
+} from "../../constants/theme";
 
 interface Props {
   recommendation: string | null;
@@ -10,7 +22,11 @@ interface Props {
   onRefresh: () => void;
 }
 
-export default function RecommendationBanner({ recommendation, isLoading, onRefresh }: Props) {
+export default function RecommendationBanner({
+  recommendation,
+  isLoading,
+  onRefresh,
+}: Props) {
   return (
     <LinearGradient
       colors={COLORS.gradients.focus as [string, string]}
@@ -23,22 +39,28 @@ export default function RecommendationBanner({ recommendation, isLoading, onRefr
           <Text style={styles.emoji}>🧠</Text>
           <Text style={styles.title}>AI Recommendation</Text>
         </View>
-        <TouchableOpacity onPress={onRefresh} disabled={isLoading} style={styles.refresh}>
-          {isLoading
-            ? <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />
-            : <Ionicons name="refresh" size={18} color="rgba(255,255,255,0.7)" />
-          }
+        <TouchableOpacity
+          onPress={onRefresh}
+          disabled={isLoading}
+          style={styles.refresh}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />
+          ) : (
+            <Ionicons name="refresh" size={18} color="rgba(255,255,255,0.7)" />
+          )}
         </TouchableOpacity>
       </View>
 
       {isLoading ? (
         <View style={styles.loading}>
           <View style={styles.shimmer} />
-          <View style={[styles.shimmer, { width: '70%' }]} />
+          <View style={[styles.shimmer, { width: "70%" }]} />
         </View>
       ) : (
         <Text style={styles.rec}>
-          {recommendation ?? 'Log today\'s data and tap refresh to get your AI recommendation.'}
+          {recommendation ??
+            "Log today's data and tap refresh to get your AI recommendation."}
         </Text>
       )}
     </LinearGradient>
@@ -52,26 +74,26 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.xs,
   },
   emoji: { fontSize: 18 },
   title: {
     ...TYPOGRAPHY.label,
-    color: 'rgba(255,255,255,0.8)',
+    color: "rgba(255,255,255,0.8)",
   } as object,
   refresh: { padding: SPACING.xs },
   loading: { gap: SPACING.xs },
   shimmer: {
     height: 14,
-    width: '100%',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    width: "100%",
+    backgroundColor: "rgba(255,255,255,0.2)",
     borderRadius: RADIUS.sm,
   },
   rec: {

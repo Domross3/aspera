@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 
 interface Metric {
   name: string;
@@ -15,14 +21,18 @@ interface Props {
 }
 
 export default function CustomMetrics({ metrics, onChange }: Props) {
-  const [newName, setNewName] = useState('');
+  const [newName, setNewName] = useState("");
 
   const addMetric = () => {
     const name = newName.trim();
-    if (!name || metrics.some(m => m.name.toLowerCase() === name.toLowerCase())) return;
+    if (
+      !name ||
+      metrics.some((m) => m.name.toLowerCase() === name.toLowerCase())
+    )
+      return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onChange([...metrics, { name, value: 5 }]);
-    setNewName('');
+    setNewName("");
   };
 
   const updateValue = (index: number, value: number) => {
@@ -40,17 +50,22 @@ export default function CustomMetrics({ metrics, onChange }: Props) {
 
   return (
     <View>
-      <Text style={styles.heading}>
-        Track anything that matters to you
-      </Text>
+      <Text style={styles.heading}>Track anything that matters to you</Text>
 
       {/* Existing metrics */}
       {metrics.map((metric, i) => (
         <View key={`${metric.name}-${i}`} style={styles.metricRow}>
           <View style={styles.metricHeader}>
             <Text style={styles.metricName}>{metric.name}</Text>
-            <TouchableOpacity onPress={() => removeMetric(i)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
+            <TouchableOpacity
+              onPress={() => removeMetric(i)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name="close-circle"
+                size={18}
+                color={COLORS.textMuted}
+              />
             </TouchableOpacity>
           </View>
 
@@ -71,11 +86,17 @@ export default function CustomMetrics({ metrics, onChange }: Props) {
           </View>
 
           <View style={styles.metricValueRow}>
-            <TouchableOpacity style={styles.adjBtn} onPress={() => updateValue(i, metric.value - 1)}>
+            <TouchableOpacity
+              style={styles.adjBtn}
+              onPress={() => updateValue(i, metric.value - 1)}
+            >
               <Text style={styles.adjText}>−</Text>
             </TouchableOpacity>
             <Text style={styles.metricValue}>{metric.value}/10</Text>
-            <TouchableOpacity style={styles.adjBtn} onPress={() => updateValue(i, metric.value + 1)}>
+            <TouchableOpacity
+              style={styles.adjBtn}
+              onPress={() => updateValue(i, metric.value + 1)}
+            >
               <Text style={styles.adjText}>+</Text>
             </TouchableOpacity>
           </View>
@@ -101,7 +122,11 @@ export default function CustomMetrics({ metrics, onChange }: Props) {
           onPress={addMetric}
           disabled={!newName.trim()}
         >
-          <Ionicons name="add" size={20} color={newName.trim() ? COLORS.text : COLORS.textMuted} />
+          <Ionicons
+            name="add"
+            size={20}
+            color={newName.trim() ? COLORS.text : COLORS.textMuted}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -119,9 +144,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   metricHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: SPACING.xs,
   },
   metricName: {
@@ -130,7 +155,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   } as object,
   dotsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 4,
     marginBottom: SPACING.xs,
   },
@@ -144,19 +169,19 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
   },
   metricValueRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: SPACING.md,
     marginBottom: SPACING.xs,
   },
   metricValue: {
     ...TYPOGRAPHY.caption,
     color: COLORS.accent,
-    fontWeight: '700',
+    fontWeight: "700",
     fontSize: 14,
     minWidth: 36,
-    textAlign: 'center',
+    textAlign: "center",
   } as object,
   adjBtn: {
     width: 28,
@@ -165,13 +190,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceElevated,
     borderWidth: 1,
     borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   adjText: {
     color: COLORS.text,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     lineHeight: 20,
   },
   divider: {
@@ -180,7 +205,7 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.sm,
   },
   addRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.sm,
     marginTop: SPACING.sm,
   },
@@ -201,8 +226,8 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   addBtnDisabled: {
     backgroundColor: COLORS.surfaceElevated,

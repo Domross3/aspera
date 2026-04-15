@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, Animated, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Correlation } from '../../types';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
-import GradientCard from '../common/GradientCard';
+import React, { useEffect, useRef } from "react";
+import { View, Text, Animated, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Correlation } from "../../types";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import GradientCard from "../common/GradientCard";
 
 interface Props {
   correlation: Correlation;
@@ -47,12 +47,17 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
   const metricColor = METRIC_COLORS[c.outputMetric] ?? COLORS.accent;
 
   const cardColors = c.isKeystone
-    ? ['#1A1040', '#0F0A2A'] as [string, string]  // deeper purple for keystone
+    ? (["#1A1040", "#0F0A2A"] as [string, string]) // deeper purple for keystone
     : undefined;
 
   return (
-    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-      <GradientCard style={[styles.card, c.isKeystone && styles.keystoneCard]} colors={cardColors}>
+    <Animated.View
+      style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
+    >
+      <GradientCard
+        style={[styles.card, c.isKeystone && styles.keystoneCard]}
+        colors={cardColors}
+      >
         {/* Keystone banner */}
         {c.isKeystone && (
           <LinearGradient
@@ -63,20 +68,45 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
           >
             <Text style={styles.keystoneIcon}>🔑</Text>
             <Text style={styles.keystoneLabel}>KEYSTONE HABIT</Text>
-            <Text style={styles.keystoneHint}>Cascading positive effects detected</Text>
+            <Text style={styles.keystoneHint}>
+              Cascading positive effects detected
+            </Text>
           </LinearGradient>
         )}
 
         <View style={styles.topRow}>
           <Text style={styles.emoji}>{c.emoji}</Text>
           <View style={styles.badgeRow}>
-            <View style={[styles.badge, { backgroundColor: `${CONFIDENCE_COLORS[c.confidence]}22`, borderColor: CONFIDENCE_COLORS[c.confidence] }]}>
-              <Text style={[styles.badgeText, { color: CONFIDENCE_COLORS[c.confidence] }]}>
+            <View
+              style={[
+                styles.badge,
+                {
+                  backgroundColor: `${CONFIDENCE_COLORS[c.confidence]}22`,
+                  borderColor: CONFIDENCE_COLORS[c.confidence],
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.badgeText,
+                  { color: CONFIDENCE_COLORS[c.confidence] },
+                ]}
+              >
                 {c.confidence} confidence
               </Text>
             </View>
-            <View style={[styles.badge, { backgroundColor: `${metricColor}22`, borderColor: metricColor }]}>
-              <Text style={[styles.badgeText, { color: metricColor }]}>{c.outputMetric}</Text>
+            <View
+              style={[
+                styles.badge,
+                {
+                  backgroundColor: `${metricColor}22`,
+                  borderColor: metricColor,
+                },
+              ]}
+            >
+              <Text style={[styles.badgeText, { color: metricColor }]}>
+                {c.outputMetric}
+              </Text>
             </View>
           </View>
         </View>
@@ -85,16 +115,32 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
         <Text style={styles.description}>{c.description}</Text>
 
         <View style={styles.deltaRow}>
-          <Text style={[styles.delta, { color: deltaPositive ? COLORS.success : COLORS.danger }]}>
-            {deltaPositive ? '+' : ''}{c.delta.toFixed(1)}
+          <Text
+            style={[
+              styles.delta,
+              { color: deltaPositive ? COLORS.success : COLORS.danger },
+            ]}
+          >
+            {deltaPositive ? "+" : ""}
+            {c.delta.toFixed(1)}
           </Text>
           <Text style={styles.deltaLabel}> avg {c.outputMetric} score</Text>
         </View>
 
         <View style={styles.factorsRow}>
-          {c.inputFactors.map(f => (
-            <View key={f} style={[styles.factor, c.isKeystone && styles.keystoneFactor]}>
-              <Text style={[styles.factorText, c.isKeystone && { color: COLORS.accent }]}>{f}</Text>
+          {c.inputFactors.map((f) => (
+            <View
+              key={f}
+              style={[styles.factor, c.isKeystone && styles.keystoneFactor]}
+            >
+              <Text
+                style={[
+                  styles.factorText,
+                  c.isKeystone && { color: COLORS.accent },
+                ]}
+              >
+                {f}
+              </Text>
             </View>
           ))}
         </View>
@@ -110,8 +156,8 @@ const styles = StyleSheet.create({
     borderColor: COLORS.borderAccent,
   },
   keystoneBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.xs,
     paddingVertical: SPACING.xs + 2,
     paddingHorizontal: SPACING.sm,
@@ -126,22 +172,22 @@ const styles = StyleSheet.create({
   } as object,
   keystoneHint: {
     ...TYPOGRAPHY.caption,
-    color: 'rgba(255,255,255,0.7)',
+    color: "rgba(255,255,255,0.7)",
     fontSize: 9,
     flex: 1,
-    textAlign: 'right',
+    textAlign: "right",
   } as object,
   topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   emoji: { fontSize: 28 },
   badgeRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: SPACING.xs,
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
+    flexWrap: "wrap",
+    justifyContent: "flex-end",
   },
   badge: {
     paddingHorizontal: SPACING.sm,
@@ -152,34 +198,34 @@ const styles = StyleSheet.create({
   badgeText: {
     ...TYPOGRAPHY.caption,
     fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+    fontWeight: "600",
+    textTransform: "uppercase",
     letterSpacing: 0.5,
   } as object,
   title: {
     ...TYPOGRAPHY.subtitle,
     color: COLORS.text,
-    fontWeight: '700',
+    fontWeight: "700",
   } as object,
   description: {
     ...TYPOGRAPHY.body,
     color: COLORS.textSecondary,
   } as object,
   deltaRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
+    flexDirection: "row",
+    alignItems: "baseline",
   },
   delta: {
     ...TYPOGRAPHY.title,
-    fontWeight: '800',
+    fontWeight: "800",
   } as object,
   deltaLabel: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textMuted,
   } as object,
   factorsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: SPACING.xs,
     marginTop: SPACING.xs,
   },
@@ -198,6 +244,6 @@ const styles = StyleSheet.create({
   factorText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
-    textTransform: 'capitalize',
+    textTransform: "capitalize",
   } as object,
 });

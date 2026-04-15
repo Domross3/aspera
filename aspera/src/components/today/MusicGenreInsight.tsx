@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import GradientCard from '../common/GradientCard';
-import { DailyLog } from '../../types';
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from '../../constants/theme';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import GradientCard from "../common/GradientCard";
+import { DailyLog } from "../../types";
+import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
 
 interface Props {
   currentGenres: string[];
@@ -22,38 +22,51 @@ function formatGenreLabel(genre: string): string {
   return genre
     .split(/[\s-]+/)
     .filter(Boolean)
-    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function round(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
-function buildGenreStats(currentGenres: string[], recentLogs: DailyLog[]): GenreStat[] {
+function buildGenreStats(
+  currentGenres: string[],
+  recentLogs: DailyLog[],
+): GenreStat[] {
   if (recentLogs.length === 0) return [];
 
-  const normalizedGenres = [...new Set(
-    currentGenres
-      .map(genre => genre.trim().toLowerCase())
-      .filter(genre => genre.length > 0 && genre !== 'none')
-  )];
+  const normalizedGenres = [
+    ...new Set(
+      currentGenres
+        .map((genre) => genre.trim().toLowerCase())
+        .filter((genre) => genre.length > 0 && genre !== "none"),
+    ),
+  ];
 
   if (normalizedGenres.length === 0) return [];
 
-  const baselineFocus = recentLogs.reduce((sum, log) => sum + log.output.focusRating, 0) / recentLogs.length;
+  const baselineFocus =
+    recentLogs.reduce((sum, log) => sum + log.output.focusRating, 0) /
+    recentLogs.length;
 
   return normalizedGenres
-    .map(genre => {
-      const matchingDays = recentLogs.filter(log =>
-        log.music.some(entry => entry.trim().toLowerCase() === genre)
+    .map((genre) => {
+      const matchingDays = recentLogs.filter((log) =>
+        log.music.some((entry) => entry.trim().toLowerCase() === genre),
       );
 
       if (matchingDays.length === 0) return null;
 
-      const avgFocus = matchingDays.reduce((sum, log) => sum + log.output.focusRating, 0) / matchingDays.length;
-      const avgEnergy = matchingDays.reduce((sum, log) => sum + log.output.energyRating, 0) / matchingDays.length;
-      const avgTasks = matchingDays.reduce((sum, log) => sum + log.output.tasksCompleted, 0) / matchingDays.length;
+      const avgFocus =
+        matchingDays.reduce((sum, log) => sum + log.output.focusRating, 0) /
+        matchingDays.length;
+      const avgEnergy =
+        matchingDays.reduce((sum, log) => sum + log.output.energyRating, 0) /
+        matchingDays.length;
+      const avgTasks =
+        matchingDays.reduce((sum, log) => sum + log.output.tasksCompleted, 0) /
+        matchingDays.length;
 
       return {
         genre,
@@ -68,26 +81,32 @@ function buildGenreStats(currentGenres: string[], recentLogs: DailyLog[]): Genre
     .sort((a, b) => {
       const left = a as GenreStat;
       const right = b as GenreStat;
-      if (right.avgFocus !== left.avgFocus) return right.avgFocus - left.avgFocus;
-      if (right.avgTasks !== left.avgTasks) return right.avgTasks - left.avgTasks;
+      if (right.avgFocus !== left.avgFocus)
+        return right.avgFocus - left.avgFocus;
+      if (right.avgTasks !== left.avgTasks)
+        return right.avgTasks - left.avgTasks;
       return right.count - left.count;
     }) as GenreStat[];
 }
 
 function formatDelta(value: number): string {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(1)}`;
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}`;
 }
 
-export default function MusicGenreInsight({ currentGenres, recentLogs }: Props) {
+export default function MusicGenreInsight({
+  currentGenres,
+  recentLogs,
+}: Props) {
   const stats = buildGenreStats(currentGenres, recentLogs);
 
   if (stats.length === 0) return null;
 
   const leadGenre = stats[0];
   const leadGenreLabel = formatGenreLabel(leadGenre.genre);
-  const body = leadGenre.count > 1
-    ? `${leadGenreLabel} days are averaging ${leadGenre.avgFocus.toFixed(1)}/10 focus, ${leadGenre.avgEnergy.toFixed(1)}/10 energy, and ${leadGenre.avgTasks.toFixed(1)} tasks across ${leadGenre.count} logs.`
-    : `${leadGenreLabel} is only logged once so far, but it landed at ${leadGenre.avgFocus.toFixed(1)}/10 focus and ${leadGenre.avgTasks.toFixed(1)} tasks.`;
+  const body =
+    leadGenre.count > 1
+      ? `${leadGenreLabel} days are averaging ${leadGenre.avgFocus.toFixed(1)}/10 focus, ${leadGenre.avgEnergy.toFixed(1)}/10 energy, and ${leadGenre.avgTasks.toFixed(1)} tasks across ${leadGenre.count} logs.`
+      : `${leadGenreLabel} is only logged once so far, but it landed at ${leadGenre.avgFocus.toFixed(1)}/10 focus and ${leadGenre.avgTasks.toFixed(1)} tasks.`;
 
   return (
     <GradientCard style={styles.card}>
@@ -105,12 +124,16 @@ export default function MusicGenreInsight({ currentGenres, recentLogs }: Props) 
       <Text style={styles.body}>{body}</Text>
 
       <View style={styles.chipRow}>
-        {stats.map(stat => {
+        {stats.map((stat) => {
           const active = stat.genre === leadGenre.genre;
           return (
-            <View key={stat.genre} style={[styles.chip, active && styles.chipActive]}>
+            <View
+              key={stat.genre}
+              style={[styles.chip, active && styles.chipActive]}
+            >
               <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                {formatGenreLabel(stat.genre)} {formatDelta(stat.focusDelta)} focus
+                {formatGenreLabel(stat.genre)} {formatDelta(stat.focusDelta)}{" "}
+                focus
               </Text>
             </View>
           );
@@ -124,11 +147,11 @@ const styles = StyleSheet.create({
   card: {
     marginTop: SPACING.md,
     borderWidth: 1,
-    borderColor: 'rgba(43, 211, 231, 0.18)',
+    borderColor: "rgba(43, 211, 231, 0.18)",
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.xs,
     marginBottom: SPACING.xs,
   },
@@ -150,8 +173,8 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   } as object,
   chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: SPACING.sm,
     marginTop: SPACING.md,
   },
@@ -162,15 +185,15 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceElevated,
   },
   chipActive: {
-    backgroundColor: 'rgba(43, 211, 231, 0.16)',
+    backgroundColor: "rgba(43, 211, 231, 0.16)",
     borderWidth: 1,
-    borderColor: 'rgba(43, 211, 231, 0.28)',
+    borderColor: "rgba(43, 211, 231, 0.28)",
   },
   chipText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textMuted,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: "700",
   } as object,
   chipTextActive: {
     color: COLORS.accentAlt,

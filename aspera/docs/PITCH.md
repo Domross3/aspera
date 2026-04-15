@@ -4,7 +4,7 @@
 
 Every productivity app on the market treats humans like machines: track more, optimize harder, never break the chain. The result? A $4.6B self-improvement industry that produces more guilt than growth.
 
-The core failure is architectural. Existing tools collect data in silos — your sleep tracker doesn't talk to your browser history, your to-do list doesn't know you slept four hours, and none of them adapt their tone when you're drowning. They optimize for *output* while ignoring the biological system producing it.
+The core failure is architectural. Existing tools collect data in silos — your sleep tracker doesn't talk to your browser history, your to-do list doesn't know you slept four hours, and none of them adapt their tone when you're drowning. They optimize for _output_ while ignoring the biological system producing it.
 
 **Aspera treats the human as the system.**
 
@@ -16,11 +16,11 @@ Aspera is a cross-platform personal intelligence layer that fuses data from 7+ s
 
 **Three surfaces, one brain:**
 
-| Surface | Role |
-|---|---|
-| **iOS/Android App** (React Native, Expo) | Daily logging, AI insights, mood tracking, trend visualization |
-| **Chrome Extension** | Real-time browsing analytics, attention bucketing, friction-based focus enforcement |
-| **Firebase Bridge** | Live data sync between extension and app — browsing telemetry flows into AI context |
+| Surface                                  | Role                                                                                |
+| ---------------------------------------- | ----------------------------------------------------------------------------------- |
+| **iOS/Android App** (React Native, Expo) | Daily logging, AI insights, mood tracking, trend visualization                      |
+| **Chrome Extension**                     | Real-time browsing analytics, attention bucketing, friction-based focus enforcement |
+| **Firebase Bridge**                      | Live data sync between extension and app — browsing telemetry flows into AI context |
 
 ---
 
@@ -67,7 +67,7 @@ This is not prompt engineering — it's **behavioral signal fusion**. The AI see
 
 Every insights generation identifies exactly **one keystone habit** — the single input that cascades across 2+ output metrics. This is the highest-leverage finding in behavioral science (Duhigg, 2012) applied computationally:
 
-> "Morning runs correlate with +2.1 focus, +1.8 energy, and +3 tasks completed. This is your keystone — it triggers a cascade across every output metric." — *Analytical Personality*
+> "Morning runs correlate with +2.1 focus, +1.8 energy, and +3 tasks completed. This is your keystone — it triggers a cascade across every output metric." — _Analytical Personality_
 
 The AI is structurally constrained to mark exactly one correlation as `isKeystone: true`, forcing prioritization over noise.
 
@@ -89,7 +89,7 @@ This is our core technical differentiator.
 
 ### The Neuroscience
 
-Procrastination is not a discipline failure. Research (Sirois & Pychyl, 2013) shows it's an **emotion regulation problem** — the amygdala hijacks executive function when tasks feel threatening. Traditional productivity tools respond with guilt ("you're falling behind!"), which *amplifies* the threat response.
+Procrastination is not a discipline failure. Research (Sirois & Pychyl, 2013) shows it's an **emotion regulation problem** — the amygdala hijacks executive function when tasks feel threatening. Traditional productivity tools respond with guilt ("you're falling behind!"), which _amplifies_ the threat response.
 
 ### The Implementation
 
@@ -99,10 +99,11 @@ Aspera's **Somatic Interceptor** detects idle periods (5 minutes without task ac
 A pulsing circle with "Pause." and "Take a breath." Forced deceleration interrupts the sympathetic nervous system response. This is vagal nerve activation through paced visual breathing.
 
 **Phase 2 — Name (user input)**
-"What are you feeling right now?" The user types a word — "stuck," "overwhelmed," "anxious." Affect labeling (Lieberman et al., 2007) reduces amygdala activation by up to 43%. Naming the feeling *is* the intervention.
+"What are you feeling right now?" The user types a word — "stuck," "overwhelmed," "anxious." Affect labeling (Lieberman et al., 2007) reduces amygdala activation by up to 43%. Naming the feeling _is_ the intervention.
 
 **Phase 3 — Reframe (Claude AI)**
 The feeling is sent to Claude with a somatic-aware reappraisal prompt. The AI returns exactly two sentences:
+
 1. A **Common Humanity** reframe — normalizing the feeling with cohort telemetry ("3,247 other users also missed a Big Rock today")
 2. A **micro-somatic action** — one 60-second physical reset ("Stand up, walk to the nearest window, press your palms together for five seconds, then release")
 
@@ -118,11 +119,11 @@ No productivity app on the market treats procrastination as a somatic event. The
 
 The AI automatically detects rough weeks (average focus < 5 or average energy < 5 across logged days) and shifts its entire output:
 
-| Normal Week | Rough Week |
-|---|---|
+| Normal Week                                                 | Rough Week                                                                       |
+| ----------------------------------------------------------- | -------------------------------------------------------------------------------- |
 | "Your focus peaks when you pair matcha with ambient music." | "This was a harder week. Your body was asking for rest — and the data shows it." |
-| "Try a morning workout before your first deep work block." | "One small thing: drink a glass of water before you open your laptop tomorrow." |
-| Standard correlation analysis | Self-Kindness + Common Humanity + Mindfulness framing |
+| "Try a morning workout before your first deep work block."  | "One small thing: drink a glass of water before you open your laptop tomorrow."  |
+| Standard correlation analysis                               | Self-Kindness + Common Humanity + Mindfulness framing                            |
 
 This is Kristin Neff's three-pillar self-compassion framework (2003) applied programmatically. The AI never says "you failed" or "you need to do better." It acknowledges, normalizes, and suggests one low-effort action.
 
@@ -137,7 +138,7 @@ The extension is not a site blocker. It's a **friction layer** that respects use
 When the user sets a "Big Rock" (their #1 priority) and enables Deep Work mode, visiting a distracting site triggers:
 
 1. **Page blur** — background becomes inaccessible
-2. **Priority reminder** — "You said your priority was: *Finish hackathon MVP*"
+2. **Priority reminder** — "You said your priority was: _Finish hackathon MVP_"
 3. **15-second countdown** — progress bar fills, creating a pause
 4. **"Continue anyway" button** — appears after countdown, giving the user full agency
 
@@ -146,6 +147,7 @@ This is choice architecture (Thaler & Sunstein, 2008) applied to browsing. The f
 ### Real-Time Sync
 
 The extension pushes browsing telemetry to Firebase every 30 seconds:
+
 - Per-site time tracking (hostname, milliseconds, category, visit count)
 - Category totals (productive / neutral / distracting)
 - Computed focus score (0–100)
@@ -206,14 +208,14 @@ These are generated dynamically based on the user's current state — not pulled
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Mobile App | React Native 19.1, Expo SDK 54, expo-router v6 |
-| AI | Claude Sonnet (claude-sonnet-4-6) via @anthropic-ai/sdk |
-| Persistence | AsyncStorage (local-first, per-day keys) |
-| Real-time Sync | Firebase Realtime Database (REST API, no SDK) |
-| Extension | Chrome Manifest V3, service worker architecture |
-| Design | Dark theme, #6C63FF accent, haptic feedback throughout |
+| Layer          | Technology                                              |
+| -------------- | ------------------------------------------------------- |
+| Mobile App     | React Native 19.1, Expo SDK 54, expo-router v6          |
+| AI             | Claude Sonnet (claude-sonnet-4-6) via @anthropic-ai/sdk |
+| Persistence    | AsyncStorage (local-first, per-day keys)                |
+| Real-time Sync | Firebase Realtime Database (REST API, no SDK)           |
+| Extension      | Chrome Manifest V3, service worker architecture         |
+| Design         | Dark theme, #6C63FF accent, haptic feedback throughout  |
 
 **Architectural choice: local-first.** All data stays on-device by default. The only outbound calls are to Claude (for insights) and Firebase (for extension sync). No user data touches our servers. This is a privacy-first architecture that happens to also be the simplest to build.
 
@@ -221,16 +223,16 @@ These are generated dynamically based on the user's current state — not pulled
 
 ## What Makes This Different
 
-| Feature | Typical App | Aspera |
-|---|---|---|
-| Bad week response | "You missed 3 days!" | Self-compassion mode activates |
-| Procrastination | Ignored or punished | Somatic Interceptor (breathe → name → reframe) |
-| Data sources | 1 (self-report) | 8 (Spotify, HealthKit, browsing, calendar, tasks, mood, screen time, self-report) |
-| AI insights | Generic tips | Structured correlations with confidence levels + keystone habit |
-| Site blocking | Binary on/off | 15-second friction with override (respects autonomy) |
-| Streak system | All-or-nothing | Emergency Reserves (2 skip days/week) |
-| AI personality | One tone | 3 coaching styles (analytical, unserious, stoic) |
-| Missed Big Rock | Shame notification | "3,247 others missed one too" (cohort normalization) |
+| Feature           | Typical App          | Aspera                                                                            |
+| ----------------- | -------------------- | --------------------------------------------------------------------------------- |
+| Bad week response | "You missed 3 days!" | Self-compassion mode activates                                                    |
+| Procrastination   | Ignored or punished  | Somatic Interceptor (breathe → name → reframe)                                    |
+| Data sources      | 1 (self-report)      | 8 (Spotify, HealthKit, browsing, calendar, tasks, mood, screen time, self-report) |
+| AI insights       | Generic tips         | Structured correlations with confidence levels + keystone habit                   |
+| Site blocking     | Binary on/off        | 15-second friction with override (respects autonomy)                              |
+| Streak system     | All-or-nothing       | Emergency Reserves (2 skip days/week)                                             |
+| AI personality    | One tone             | 3 coaching styles (analytical, unserious, stoic)                                  |
+| Missed Big Rock   | Shame notification   | "3,247 others missed one too" (cohort normalization)                              |
 
 ---
 
@@ -242,4 +244,4 @@ The thesis is simple: **the best productivity system is one that knows when to s
 
 ---
 
-*Built at CBC Hackathon 2026. Powered by Claude.*
+_Built at CBC Hackathon 2026. Powered by Claude._

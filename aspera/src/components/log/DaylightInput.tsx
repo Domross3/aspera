@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
-import { DAYLIGHT_DATA } from '../../lib/mockData';
+import React, { useEffect, useState } from "react";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { DAYLIGHT_DATA } from "../../lib/mockData";
 
 interface Props {
   value: number;
@@ -16,8 +16,8 @@ export default function DaylightInput({ value, onChange }: Props) {
   // Auto-pull from mock HealthKit on first render if value is 0
   useEffect(() => {
     if (value === 0 && !synced) {
-      const todayStr = new Date().toISOString().split('T')[0];
-      const todayDaylight = DAYLIGHT_DATA.find(d => d.date === todayStr);
+      const todayStr = new Date().toISOString().split("T")[0];
+      const todayDaylight = DAYLIGHT_DATA.find((d) => d.date === todayStr);
       if (todayDaylight) {
         onChange(todayDaylight.minutes);
         setSynced(true);
@@ -30,8 +30,18 @@ export default function DaylightInput({ value, onChange }: Props) {
     onChange(Math.max(0, Math.min(300, value + delta)));
   };
 
-  const levelLabel = value >= 60 ? 'Great' : value >= 30 ? 'Good' : value >= 15 ? 'Low' : value > 0 ? 'Minimal' : '—';
-  const levelColor = value >= 60 ? COLORS.success : value >= 30 ? COLORS.warning : COLORS.danger;
+  const levelLabel =
+    value >= 60
+      ? "Great"
+      : value >= 30
+        ? "Good"
+        : value >= 15
+          ? "Low"
+          : value > 0
+            ? "Minimal"
+            : "—";
+  const levelColor =
+    value >= 60 ? COLORS.success : value >= 30 ? COLORS.warning : COLORS.danger;
 
   return (
     <View>
@@ -60,36 +70,50 @@ export default function DaylightInput({ value, onChange }: Props) {
 
       {/* Quality indicator */}
       <View style={styles.qualityRow}>
-        <Text style={[styles.qualityLabel, { color: levelColor }]}>{levelLabel}</Text>
+        <Text style={[styles.qualityLabel, { color: levelColor }]}>
+          {levelLabel}
+        </Text>
         <View style={styles.barTrack}>
-          <View style={[styles.barFill, { width: `${Math.min(100, (value / 90) * 100)}%`, backgroundColor: levelColor }]} />
+          <View
+            style={[
+              styles.barFill,
+              {
+                width: `${Math.min(100, (value / 90) * 100)}%`,
+                backgroundColor: levelColor,
+              },
+            ]}
+          />
         </View>
       </View>
 
       {/* Quick presets */}
       <View style={styles.chips}>
-        {[0, 15, 30, 45, 60, 90].map(m => (
+        {[0, 15, 30, 45, 60, 90].map((m) => (
           <TouchableOpacity
             key={m}
             style={[styles.chip, value === m && styles.chipActive]}
-            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onChange(m); }}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              onChange(m);
+            }}
           >
-            <Text style={[styles.chipText, value === m && styles.chipTextActive]}>
-              {m === 0 ? 'None' : `${m}m`}
+            <Text
+              style={[styles.chipText, value === m && styles.chipTextActive]}
+            >
+              {m === 0 ? "None" : `${m}m`}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       {synced && (
-        <Text style={styles.syncNote}>
-          Auto-filled from Apple Health
-        </Text>
+        <Text style={styles.syncNote}>Auto-filled from Apple Health</Text>
       )}
 
       {value < 15 && value >= 0 && (
         <Text style={styles.tip}>
-          30+ min of natural light improves circadian rhythm and next-day sleep quality
+          30+ min of natural light improves circadian rhythm and next-day sleep
+          quality
         </Text>
       )}
     </View>
@@ -98,9 +122,9 @@ export default function DaylightInput({ value, onChange }: Props) {
 
 const styles = StyleSheet.create({
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: SPACING.md,
   },
   heading: {
@@ -108,10 +132,10 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   } as object,
   healthkitBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 4,
-    backgroundColor: 'rgba(251,191,36,0.15)',
+    backgroundColor: "rgba(251,191,36,0.15)",
     paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
     borderRadius: RADIUS.pill,
@@ -120,12 +144,12 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     color: COLORS.warning,
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: "600",
   } as object,
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: SPACING.lg,
   },
   btn: {
@@ -135,10 +159,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceElevated,
     borderWidth: 1,
     borderColor: COLORS.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
-  countWrap: { alignItems: 'center', minWidth: 70 },
+  countWrap: { alignItems: "center", minWidth: 70 },
   count: {
     ...TYPOGRAPHY.hero,
     color: COLORS.warning,
@@ -149,14 +173,14 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
   } as object,
   qualityRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: SPACING.sm,
     marginTop: SPACING.md,
   },
   qualityLabel: {
     ...TYPOGRAPHY.caption,
-    fontWeight: '700',
+    fontWeight: "700",
     width: 52,
   } as object,
   barTrack: {
@@ -164,16 +188,16 @@ const styles = StyleSheet.create({
     height: 6,
     backgroundColor: COLORS.surfaceElevated,
     borderRadius: 3,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   barFill: {
-    height: '100%',
+    height: "100%",
     borderRadius: 3,
   },
   chips: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    justifyContent: "center",
+    flexWrap: "wrap",
     gap: SPACING.sm,
     marginTop: SPACING.md,
   },
@@ -192,23 +216,23 @@ const styles = StyleSheet.create({
   chipText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
-    fontWeight: '600',
+    fontWeight: "600",
   } as object,
   chipTextActive: {
-    color: '#000',
+    color: "#000",
   },
   syncNote: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textMuted,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontStyle: "italic",
+    textAlign: "center",
     marginTop: SPACING.sm,
   } as object,
   tip: {
     ...TYPOGRAPHY.caption,
     color: COLORS.warning,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    fontStyle: "italic",
+    textAlign: "center",
     marginTop: SPACING.sm,
   } as object,
 });
