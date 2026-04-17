@@ -45,8 +45,8 @@ export interface DailyLog {
   drinks: number; // alcoholic drinks consumed
   sleepHours: number; // time in bed (from HealthKit or manual)
   daylightMinutes: number; // time in daylight (from HealthKit or manual)
-  customMetrics: { name: string; value: number }[]; // legacy shape — retained for backward compatibility, new code should use customMetricValues
-  customMetricValues?: CustomMetricValue[]; // per-log values keyed by CustomMetricDef.id
+  customMetrics: { name: string; value: number }[];
+  customMetricValues?: CustomMetricValue[];
   output: {
     tasksCompleted: number; // 0–20
     focusRating: number; // 1–10
@@ -65,7 +65,7 @@ export interface Correlation {
   outputMetric: "focus" | "energy" | "tasks";
   delta: number;
   confidence: "low" | "medium" | "high";
-  isKeystone?: boolean; // true if this habit triggers positive cascading effects
+  isKeystone?: boolean;
 }
 
 export interface WeeklyTrend {
@@ -119,20 +119,12 @@ export const STRESS_EMOJIS: Record<number, string> = {
   5: "🤯",
 };
 
-export interface NotificationSettings {
-  morningEnabled: boolean;
-  morningTime: string; // "HH:MM" local (display only — cron is server-side)
-  eveningEnabled: boolean;
-  eveningTime: string;
-}
-
 export interface AppSettings {
-  claudeApiKey: string;
   onboardingComplete: boolean;
   moodNotificationsEnabled: boolean;
   hiddenLogSections: LogSectionId[];
   customMetrics: CustomMetricDef[];
-  notificationSettings: NotificationSettings;
+  personality: "analytical" | "unserious" | "stoic";
 }
 
 // ── Log sections (defaults the user can hide) ───────────────────────────
@@ -163,31 +155,29 @@ export const LOG_SECTIONS: { id: LogSectionId; label: string }[] = [
 ];
 
 // ── Custom Metrics ──────────────────────────────────────────────────────
-// Definitions live in AppSettings (persist across days). Values live in
-// DailyLog.customMetricValues (per-log, keyed by def id).
 
 export type CustomMetricKind = "scale" | "chips" | "counter" | "toggle";
 
 export interface CustomMetricScaleConfig {
-  min: number; // inclusive
-  max: number; // inclusive
+  min: number;
+  max: number;
 }
 
 export interface CustomMetricChipsConfig {
   options: string[];
-  multi: boolean; // allow multi-select
+  multi: boolean;
 }
 
 export interface CustomMetricCounterConfig {
-  step: number; // e.g. 1, 15, 0.5
-  min?: number; // inclusive (default 0)
-  max?: number; // inclusive (default unbounded)
-  unit?: string; // e.g. "mg", "min"
+  step: number;
+  min?: number;
+  max?: number;
+  unit?: string;
 }
 
 export interface CustomMetricDef {
-  id: string; // stable uuid
-  name: string; // user-facing label
+  id: string;
+  name: string;
   kind: CustomMetricKind;
   createdAt: number;
   scale?: CustomMetricScaleConfig;
@@ -289,9 +279,9 @@ export const STORAGE_KEYS = {
 // ── Emergency Reserves ──────────────────────────────────────────────────
 
 export interface ReservesState {
-  weekStartDate: string; // ISO date of Monday that starts the current tracking week
-  reservesUsed: number; // 0–2: how many reserves spent this week
-  reserveDates: string[]; // dates when reserves were consumed
+  weekStartDate: string;
+  reservesUsed: number;
+  reserveDates: string[];
 }
 
 export const MAX_RESERVES_PER_WEEK = 2;

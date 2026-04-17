@@ -12,6 +12,10 @@ dist/
 .env
 .env.*
 *.local
+# Allow example/template files
+!.env.example
+!.env.*.example
+!*.env.local.example
 
 # OS
 .DS_Store

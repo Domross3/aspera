@@ -63,6 +63,12 @@ export async function getSettings(): Promise<AppSettings> {
     moodNotificationsEnabled: false,
     hiddenLogSections: [],
     customMetrics: [],
+    notificationSettings: {
+      morningEnabled: true,
+      morningTime: "08:00",
+      eveningEnabled: true,
+      eveningTime: "21:00",
+    },
   };
   return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
 }

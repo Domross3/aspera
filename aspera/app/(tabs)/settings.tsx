@@ -5,6 +5,7 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Switch,
   Alert,
   StyleSheet,
   ActivityIndicator,
@@ -251,6 +252,65 @@ export default function SettingsScreen() {
               : "Refresh Mock Integration Sync"}
           </Text>
         </TouchableOpacity>
+
+        {/* Notifications */}
+        <SectionLabel label="Notifications" />
+        <GradientCard style={{ marginBottom: SPACING.lg }}>
+          <Text
+            style={[
+              TYPOGRAPHY.caption,
+              { color: COLORS.textSecondary, marginBottom: SPACING.md },
+            ]}
+          >
+            Push reminders are sent from the cloud — no local scheduling needed.
+          </Text>
+          <View style={[styles.row, { marginBottom: SPACING.md }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Morning check-in
+              </Text>
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+                {settings.notificationSettings.morningTime} · How are you feeling?
+              </Text>
+            </View>
+            <Switch
+              value={settings.notificationSettings.morningEnabled}
+              onValueChange={(v) =>
+                update({
+                  notificationSettings: {
+                    ...settings.notificationSettings,
+                    morningEnabled: v,
+                  },
+                })
+              }
+              trackColor={{ false: COLORS.border, true: COLORS.accent }}
+              thumbColor={COLORS.text}
+            />
+          </View>
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Evening log reminder
+              </Text>
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+                {settings.notificationSettings.eveningTime} · Log today before you forget
+              </Text>
+            </View>
+            <Switch
+              value={settings.notificationSettings.eveningEnabled}
+              onValueChange={(v) =>
+                update({
+                  notificationSettings: {
+                    ...settings.notificationSettings,
+                    eveningEnabled: v,
+                  },
+                })
+              }
+              trackColor={{ false: COLORS.border, true: COLORS.accent }}
+              thumbColor={COLORS.text}
+            />
+          </View>
+        </GradientCard>
 
         {/* API Key */}
         <SectionLabel label="Claude API Key" />

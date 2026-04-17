@@ -69,8 +69,10 @@ function categorize(hostname) {
   return "neutral";
 }
 
-// ── Firebase Realtime Database ───────────────────────────────────
-const FIREBASE_URL = "https://aspera-bridge-default-rtdb.firebaseio.com";
+// ── Aspera Web App API ────────────────────────────────────────────
+// Local dev: http://localhost:3000/api/browsing
+// Production: replace with your Vercel deployment URL
+const ASPERA_API_URL = "http://localhost:3000/api/browsing";
 
 async function syncToFirebase(dayKey, dayData) {
   const { sites, totals } = dayData;
@@ -92,16 +94,9 @@ async function syncToFirebase(dayKey, dayData) {
     isDeepWork: false,
   };
 
-  // Firebase keys can't contain . $ # [ ] / — sanitize hostnames
-  const sanitizedSites = {};
-  for (const [hostname, info] of Object.entries(sites)) {
-    const safeKey = hostname.replace(/\./g, "_");
-    sanitizedSites[safeKey] = { ...info, hostname };
-  }
-
   const payload = {
     date: dayKey,
-    sites: sanitizedSites,
+    sites,
     totals,
     focusScore,
     bigRock,
@@ -109,22 +104,22 @@ async function syncToFirebase(dayKey, dayData) {
   };
 
   try {
-    const res = await fetch(`${FIREBASE_URL}/browsing/${dayKey}.json`, {
-      method: "PUT",
+    const res = await fetch(ASPERA_API_URL, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     if (res.ok) {
-      console.log("[Aspera] Synced to Firebase:", dayKey);
+      console.log("[Aspera] Synced to web app:", dayKey);
     } else {
       console.warn(
-        "[Aspera] Firebase sync failed:",
+        "[Aspera] Web app sync failed:",
         res.status,
         await res.text(),
       );
     }
   } catch (err) {
-    console.warn("[Aspera] Firebase unreachable:", err.message);
+    console.warn("[Aspera] Web app unreachable (is `npm run dev` running?):", err.message);
   }
 }
 

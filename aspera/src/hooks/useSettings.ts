@@ -10,6 +10,12 @@ export function useSettings() {
     moodNotificationsEnabled: false,
     hiddenLogSections: [],
     customMetrics: [],
+    notificationSettings: {
+      morningEnabled: true,
+      morningTime: "08:00",
+      eveningEnabled: true,
+      eveningTime: "21:00",
+    },
   });
   const [loading, setLoading] = useState(true);
 

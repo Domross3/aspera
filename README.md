@@ -11,6 +11,7 @@ Aspera correlates personal inputs (caffeine, sleep, workouts, music, nutrition) 
 ```
 CBCHackathon/
 ├── aspera/                  # React Native / Expo mobile app
+├── aspera-web/              # Next.js 15 web dashboard + API backend
 ├── aspera-extension/        # Chrome extension (browsing focus + friction)
 └── README.md
 ```
@@ -39,9 +40,8 @@ nvm use
 # Install the mobile app dependencies from the repo root
 npm run mobile:install
 
-# (Optional) Create environment file with your Claude API key
-# AI features work without this — the app loads mock data automatically
-echo "EXPO_PUBLIC_CLAUDE_KEY=your-api-key-here" > aspera/.env
+# Copy the env template and fill in your values
+cp aspera/.env.example aspera/.env
 
 # Start the dev server
 npm run mobile:start:clear
@@ -55,7 +55,21 @@ Scan the QR code with **Expo Go** (iOS: Camera app, Android: Expo Go app).
 
 The app ships with 7 days of mock data so you can explore immediately without logging anything first.
 
-### 2. Chrome Extension
+### 2. Web Dashboard
+
+```bash
+cd aspera-web
+npm install
+
+# Copy the env template and fill in your Claude key
+cp .env.local.example .env.local
+
+npm run dev   # → http://localhost:3000
+```
+
+The web dashboard mirrors the mobile app's Today/Insights/Mood tabs and exposes the API routes used by the Chrome extension and push notification cron jobs.
+
+### 3. Chrome Extension
 
 ```bash
 # No build step required — plain JS
@@ -67,26 +81,74 @@ The app ships with 7 days of mock data so you can explore immediately without lo
 4. Select the `aspera-extension/` folder
 5. The Aspera Focus icon appears in your toolbar
 
-The extension immediately begins tracking browsing activity. Click the icon to see your focus score.
+The extension immediately begins tracking browsing activity and POSTs telemetry to the Next.js backend every 30 seconds. Click the icon to see your focus score.
 
-### 3. Firebase Realtime Bridge
+---
 
-The Chrome extension syncs browsing telemetry to a Firebase Realtime Database every 30 seconds. This enables cross-device intelligence — browsing data collected on desktop flows into the mobile app's AI context window.
+## TestFlight Distribution
 
-**How it works:**
+The mobile app uses [EAS Build](https://docs.expo.dev/build/introduction/) for iOS distribution.
 
-- Extension `PUT`s sanitized site data to `https://aspera-bridge-default-rtdb.firebaseio.com/browsing/{YYYY-MM-DD}.json`
-- Payload includes: per-site time tracking, category totals, computed focus score (0-100), Big Rock state
-- No SDK required — both sides use plain `fetch()` against Firebase's REST API
-- No authentication needed (database rules open for demo period)
+### First-time setup
 
-**To verify the sync:**
+```bash
+# Install EAS CLI
+npm install -g eas-cli
 
-1. Load the extension, browse a few sites for 30+ seconds
-2. Visit `https://aspera-bridge-default-rtdb.firebaseio.com/browsing.json` in your browser
-3. You should see your browsing data with sanitized hostname keys (e.g. `github_com`)
+# Authenticate with your Expo account
+eas login
 
-> **Note:** The mobile app currently displays mock browsing data by default. The Firebase reader is implemented (`src/lib/firebase.ts`) and can be toggled on in `src/components/today/BrowsingFocus.tsx` to show live data with a green LIVE badge.
+# Inside aspera/ — links project to EAS, writes eas.json + sets projectId
+cd aspera
+eas build:configure
+# Copy the projectId UUID it prints → paste into app.json extra.eas.projectId
+```
+
+### Build + submit to TestFlight
+
+```bash
+# Production build (~15 min on EAS cloud)
+eas build --platform ios --profile production
+
+# Submit to TestFlight (authenticates via your Apple ID)
+eas submit --platform ios
+```
+
+After submit: App Store Connect → TestFlight → Add internal testers → send invite link.
+
+For a development build with hot-reload on real device:
+
+```bash
+eas build --platform ios --profile development
+npx expo start --dev-client
+```
+
+---
+
+## Push Notifications
+
+Bedtime log reminders and morning mood check-ins are delivered via Expo's push infrastructure, triggered by Vercel cron jobs.
+
+| Notification | Cron (UTC) | Local (EST) |
+|---|---|---|
+| Morning check-in | `0 12 * * *` | 8:00 AM |
+| Evening log reminder | `0 1 * * *` | 9:00 PM |
+
+**Architecture:**
+
+```
+iPhone app              Next.js backend (Vercel)       Expo Push Service
+────────────────        ────────────────────────       ─────────────────
+First launch:
+ requestPermissions()
+ getExpoPushToken()  →  POST /api/push/register
+                        saves token to /tmp
+
+Vercel cron (2×/day):   GET /api/push/cron?type=…  →  expo.sendPushNotificationsAsync()
+                        reads stored tokens               delivers to device
+```
+
+Toggle morning/evening notifications in **Settings → Notifications**.
 
 ---
 
@@ -102,7 +164,7 @@ The Chrome extension syncs browsing telemetry to a Firebase Realtime Database ev
 
 **Mood** — Multi-capture mood/energy/stress tracking with emoji scales, 14-day trends, time-of-day curve analysis
 
-**Settings** — Integration status hub, API key management, data controls
+**Settings** — Integration status hub, notification toggles, API key management, data controls
 
 ### Chrome Extension
 
@@ -110,7 +172,7 @@ The Chrome extension syncs browsing telemetry to a Firebase Realtime Database ev
 - **Site categorization** — 24 productive sites, 20 distracting sites, everything else neutral
 - **Big Rock mode** — Set your #1 priority from the popup
 - **Deep Work friction** — When enabled, distracting sites show a 15-second countdown with your priority reminder. "Continue anyway" button respects user autonomy
-- **Firebase sync** — Browsing telemetry pushed every 30 seconds for cross-device intelligence
+- **Backend sync** — Browsing telemetry pushed every 30 seconds to `/api/browsing` for cross-device intelligence
 
 ### AI Features (requires Claude API key)
 
@@ -121,30 +183,51 @@ The Chrome extension syncs browsing telemetry to a Firebase Realtime Database ev
 - **Somatic Interceptor** — Detects idle periods, guides breathing + affect labeling, generates Claude-powered cognitive reappraisal
 - **Coaching personalities** — Analytical (data-driven), Unserious (witty), Stoic (Marcus Aurelius energy)
 
+### Web Dashboard (`aspera-web/`)
+
+- Today / Insights / Mood views built with Next.js 15 + Recharts
+- Server-side Claude proxy (`/api/insights`, `/api/search`)
+- Chrome extension relay (`/api/browsing`) — receives extension POSTs, serves data to mobile
+- Push notification endpoints (`/api/push/register`, `/api/push/cron`)
+
 ---
 
 ## Tech Stack
 
-| Layer     | Technology                                                  |
-| --------- | ----------------------------------------------------------- |
-| Mobile    | React Native 0.81, Expo SDK 54, expo-router v6              |
-| AI        | Claude Sonnet (claude-sonnet-4-6) via @anthropic-ai/sdk     |
-| Storage   | AsyncStorage (local-first, per-day keys)                    |
-| Sync      | Firebase Realtime Database (REST API, no SDK)               |
-| Extension | Chrome Manifest V3, service worker                          |
-| Design    | Dark theme (#090C14), haptic feedback, animated transitions |
+| Layer         | Technology                                                  |
+| ------------- | ----------------------------------------------------------- |
+| Mobile        | React Native 0.81, Expo SDK 54, expo-router v6              |
+| Web           | Next.js 15, React 19, Recharts, Tailwind CSS                |
+| AI            | Claude Sonnet (claude-sonnet-4-6) via @anthropic-ai/sdk     |
+| Storage       | AsyncStorage (mobile, local-first) · localStorage (web)     |
+| Push          | Expo Push API + expo-server-sdk, Vercel cron                |
+| Extension     | Chrome Manifest V3, service worker                          |
+| Distribution  | EAS Build + TestFlight                                      |
+| Design        | Dark theme (#090C14), haptic feedback, animated transitions |
 
 ---
 
 ## Environment Variables
 
-Create `aspera/.env`:
+### Mobile (`aspera/.env`)
+
+Copy `aspera/.env.example` and fill in your values:
 
 ```
 EXPO_PUBLIC_CLAUDE_KEY=sk-ant-api03-your-key-here
+EXPO_PUBLIC_API_URL=https://your-app.vercel.app
 ```
 
-The app works without an API key — mock data populates automatically and all non-AI features function normally. The API key enables AI recommendations, insights generation, and the Somatic Interceptor's reappraisal feature.
+- `EXPO_PUBLIC_CLAUDE_KEY` — enables AI recommendations and insights. The app works without it (mock data populates automatically).
+- `EXPO_PUBLIC_API_URL` — points the mobile app at your deployed Next.js backend for browsing sync and push token registration. Use `http://localhost:3000` during local development.
+
+### Web (`aspera-web/.env.local`)
+
+Copy `aspera-web/.env.local.example` and fill in your values:
+
+```
+CLAUDE_KEY=sk-ant-api03-your-key-here
+```
 
 ---
 
@@ -154,16 +237,19 @@ The app works without an API key — mock data populates automatically and all n
 - [ ] **Log tab**: Fill all fields, tap Save — green confirmation appears
 - [ ] **Insights tab**: Select a personality, tap Generate — correlations render with keystone highlight
 - [ ] **Mood tab**: Log a check-in with emoji scales — trends update
-- [ ] **Settings tab**: Enter API key, see integration status cards
+- [ ] **Settings tab**: Enter API key, toggle notification reminders, see integration status cards
 - [ ] **Extension popup**: Shows focus score and top sites after browsing
 - [ ] **Deep Work mode**: Set a Big Rock, enable Deep Work, visit reddit.com — friction overlay appears
 - [ ] **Somatic Interceptor**: On Today tab, long-press the invisible area next to "Today" header (top-right) for 0.5s — breathing modal appears
+- [ ] **Web dashboard**: `cd aspera-web && npm run dev` → localhost:3000 loads Today/Insights/Mood
+- [ ] **Push token**: First launch on real device → iOS "Allow Notifications" prompt → Vercel logs show `POST /api/push/register`
+- [ ] **Manual cron test**: `curl https://your-app.vercel.app/api/push/cron?type=evening` → notification arrives on device
 
 ---
 
 ## Architecture Highlights
 
-**Local-first privacy**: All data stays on-device. Only outbound calls are to Claude (insights) and Firebase (extension sync).
+**Local-first privacy**: All user data stays on-device. Only outbound calls are to Claude (insights) and the Next.js backend (browsing sync + push tokens).
 
 **Multi-source context fusion**: Every AI call includes data from 8 streams (Spotify, HealthKit, Calendar, Tasks, Browsing, Screen Time, Mood, Self-report) for holistic pattern detection.
 

@@ -1,5 +1,3 @@
-const FIREBASE_URL = "https://aspera-bridge-default-rtdb.firebaseio.com";
-
 export interface FirebaseBrowsingDay {
   date: string;
   sites: Record<
@@ -30,22 +28,31 @@ function yesterdayKey(): string {
 export async function fetchBrowsingFromFirebase(): Promise<
   FirebaseBrowsingDay[]
 > {
-  const keys = [todayKey(), yesterdayKey()];
-  const results: FirebaseBrowsingDay[] = [];
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (!apiUrl) return [];
 
-  for (const key of keys) {
-    try {
-      const res = await fetch(`${FIREBASE_URL}/browsing/${key}.json`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.sites) {
-          results.push(data);
-        }
+  try {
+    const res = await fetch(`${apiUrl}/api/browsing`);
+    if (!res.ok) return [];
+
+    const data = (await res.json()) as {
+      latest: unknown;
+      all: Record<string, unknown>;
+    };
+
+    const keys = [todayKey(), yesterdayKey()];
+    const results: FirebaseBrowsingDay[] = [];
+
+    for (const key of keys) {
+      const day = data.all?.[key];
+      if (day && (day as FirebaseBrowsingDay).sites) {
+        results.push(day as FirebaseBrowsingDay);
       }
-    } catch {
-      // Firebase unreachable — caller will fall back to mock
     }
-  }
 
-  return results;
+    return results;
+  } catch {
+    // backend unreachable — caller will fall back to mock
+    return [];
+  }
 }
