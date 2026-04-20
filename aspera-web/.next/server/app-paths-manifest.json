@@ -1,0 +1,12 @@
+{
+  "/api/insights/route": "app/api/insights/route.js",
+  "/api/search/route": "app/api/search/route.js",
+  "/api/browsing/route": "app/api/browsing/route.js",
+  "/page": "app/page.js",
+  "/(dashboard)/log/page": "app/(dashboard)/log/page.js",
+  "/(dashboard)/mood/page": "app/(dashboard)/mood/page.js",
+  "/(dashboard)/insights/page": "app/(dashboard)/insights/page.js",
+  "/(dashboard)/search/page": "app/(dashboard)/search/page.js",
+  "/(dashboard)/today/page": "app/(dashboard)/today/page.js",
+  "/_not-found/page": "app/_not-found/page.js"
+}
