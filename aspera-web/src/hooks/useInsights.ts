@@ -31,7 +31,7 @@ export function useInsights() {
           body: JSON.stringify({ logs, personality }),
         });
         if (!res.ok) {
-          const data = await res.json() as { error?: string };
+          const data = (await res.json()) as { error?: string };
           throw new Error(data.error ?? `Server error ${res.status}`);
         }
         const result = (await res.json()) as InsightsResponse;
@@ -39,7 +39,9 @@ export function useInsights() {
         await saveInsights(result);
       } catch (e: unknown) {
         setError(
-          e instanceof Error ? e.message : "Failed to generate insights. Try again.",
+          e instanceof Error
+            ? e.message
+            : "Failed to generate insights. Try again.",
         );
       } finally {
         setLoading(false);

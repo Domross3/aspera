@@ -117,26 +117,32 @@ export function getAttentionSummaries(): AttentionSummary[] {
     .map(buildAttentionSummary);
 }
 
-function getTaskLoadLabel(tasks: GoogleTask[]): DailyIntegrationSummary["taskLoad"] {
+function getTaskLoadLabel(
+  tasks: GoogleTask[],
+): DailyIntegrationSummary["taskLoad"] {
   if (tasks.length === 0) return "None";
-  const uniqueLoads = Array.from(new Set(tasks.map((task) => task.cognitive_load)));
+  const uniqueLoads = Array.from(
+    new Set(tasks.map((task) => task.cognitive_load)),
+  );
   if (uniqueLoads.length > 1) return "Mixed";
   return uniqueLoads[0];
 }
 
 function uniqueDates(): string[] {
-  return Array.from(new Set([
-    ...SLEEP_DATA.map((entry) => entry.date),
-    ...WORKOUT_DATA.map((entry) => entry.date),
-    ...MOOD_DATA.map((entry) => entry.date),
-    ...BROWSING_DATA.map((entry) => entry.date),
-    ...SPOTIFY_TRACKS.map((track) => track.played_at.split("T")[0]),
-    ...CALENDAR_EVENTS.map((event) => event.start.split("T")[0]),
-    ...GOOGLE_TASKS.map((task) => task.due),
-    ...GOOGLE_TASKS.flatMap((task) =>
-      task.completed_at ? [task.completed_at.split("T")[0]] : [],
-    ),
-  ])).sort((left, right) => left.localeCompare(right));
+  return Array.from(
+    new Set([
+      ...SLEEP_DATA.map((entry) => entry.date),
+      ...WORKOUT_DATA.map((entry) => entry.date),
+      ...MOOD_DATA.map((entry) => entry.date),
+      ...BROWSING_DATA.map((entry) => entry.date),
+      ...SPOTIFY_TRACKS.map((track) => track.played_at.split("T")[0]),
+      ...CALENDAR_EVENTS.map((event) => event.start.split("T")[0]),
+      ...GOOGLE_TASKS.map((task) => task.due),
+      ...GOOGLE_TASKS.flatMap((task) =>
+        task.completed_at ? [task.completed_at.split("T")[0]] : [],
+      ),
+    ]),
+  ).sort((left, right) => left.localeCompare(right));
 }
 
 export function getDailyIntegrationSummaries(): DailyIntegrationSummary[] {
@@ -157,9 +163,13 @@ export function getDailyIntegrationSummaries(): DailyIntegrationSummary[] {
       (task) => task.due === date || task.completed_at?.startsWith(date),
     );
     const mood = MOOD_DATA.find((entry) => entry.date === date);
-    const musicGenres = Array.from(new Set(
-      SPOTIFY_TRACKS.filter((track) => track.played_at.startsWith(date)).map(inferMusicGenre)
-    ));
+    const musicGenres = Array.from(
+      new Set(
+        SPOTIFY_TRACKS.filter((track) => track.played_at.startsWith(date)).map(
+          inferMusicGenre,
+        ),
+      ),
+    );
 
     return {
       date,
@@ -173,8 +183,8 @@ export function getDailyIntegrationSummaries(): DailyIntegrationSummary[] {
       musicGenres: musicGenres.length > 0 ? musicGenres : undefined,
       calendarEvents: calendarEvents.length || undefined,
       calendarHighDemandBlocks:
-        calendarEvents.filter((event) => event.cognitive_demand === "High").length ||
-        undefined,
+        calendarEvents.filter((event) => event.cognitive_demand === "High")
+          .length || undefined,
       completedTasks: completedTasks.length || undefined,
       taskLoad: getTaskLoadLabel(taskScope),
       moodAverage: mood ? round(mood.mood_score / 2) : undefined,
@@ -188,12 +198,15 @@ export function getLatestIntegrationSummary(): DailyIntegrationSummary | null {
   return summaries.length > 0 ? summaries[summaries.length - 1] : null;
 }
 
-export function getDefaultIntegrationConnections(now = Date.now()): IntegrationConnection[] {
+export function getDefaultIntegrationConnections(
+  now = Date.now(),
+): IntegrationConnection[] {
   return [
     {
       id: "claude",
       name: "Claude",
-      description: "Generates recommendations, weekly insights, and cross-source pattern analysis.",
+      description:
+        "Generates recommendations, weekly insights, and cross-source pattern analysis.",
       status: "connected",
       source: "cloud",
       platform: "cross-platform",
@@ -203,27 +216,34 @@ export function getDefaultIntegrationConnections(now = Date.now()): IntegrationC
     {
       id: "spotify",
       name: "Spotify",
-      description: "Music listening context feeds genre-based focus and recovery patterns.",
+      description:
+        "Music listening context feeds genre-based focus and recovery patterns.",
       status: "mock",
       source: "mock",
       platform: "cross-platform",
       lastSyncAt: now,
-      highlights: ["Genre inference is normalized for future cross-source insights"],
+      highlights: [
+        "Genre inference is normalized for future cross-source insights",
+      ],
     },
     {
       id: "healthkit",
       name: "HealthKit",
-      description: "Sleep and workouts shape readiness, recovery, and output patterns.",
+      description:
+        "Sleep and workouts shape readiness, recovery, and output patterns.",
       status: "mock",
       source: "mock",
       platform: "ios",
       lastSyncAt: now,
-      highlights: ["Sleep hours and workout minutes are folded into daily summaries"],
+      highlights: [
+        "Sleep hours and workout minutes are folded into daily summaries",
+      ],
     },
     {
       id: "google_calendar",
       name: "Google Calendar",
-      description: "High-demand blocks help explain energy drain and attention fragmentation.",
+      description:
+        "High-demand blocks help explain energy drain and attention fragmentation.",
       status: "mock",
       source: "mock",
       platform: "cross-platform",
@@ -233,7 +253,8 @@ export function getDefaultIntegrationConnections(now = Date.now()): IntegrationC
     {
       id: "google_tasks",
       name: "Google Tasks",
-      description: "Task completion and cognitive load provide a stronger output baseline.",
+      description:
+        "Task completion and cognitive load provide a stronger output baseline.",
       status: "mock",
       source: "mock",
       platform: "cross-platform",
@@ -243,22 +264,29 @@ export function getDefaultIntegrationConnections(now = Date.now()): IntegrationC
     {
       id: "browsing",
       name: "Browsing Focus",
-      description: "Browser activity is translated into attention buckets like deep work and drift.",
+      description:
+        "Browser activity is translated into attention buckets like deep work and drift.",
       status: "mock",
       source: "mock",
       platform: "cross-platform",
       lastSyncAt: now,
-      highlights: ["Attention summaries now roll up productive, neutral, and distracting time"],
+      highlights: [
+        "Attention summaries now roll up productive, neutral, and distracting time",
+      ],
     },
     {
       id: "screen_time",
       name: "iOS Screen Time",
-      description: "Planned native integration for a more holistic time-spent model.",
+      description:
+        "Planned native integration for a more holistic time-spent model.",
       status: "planned",
       source: "device",
       platform: "ios",
-      nextStep: "Add a native iOS module using FamilyControls + DeviceActivity.",
-      highlights: ["Will extend browsing-only attention data into full device-level time spent"],
+      nextStep:
+        "Add a native iOS module using FamilyControls + DeviceActivity.",
+      highlights: [
+        "Will extend browsing-only attention data into full device-level time spent",
+      ],
     },
   ];
 }

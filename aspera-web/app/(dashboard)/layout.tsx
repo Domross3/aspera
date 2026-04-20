@@ -10,7 +10,11 @@ const NAV_ITEMS = [
   { href: "/mood", label: "Mood", icon: "🌊" },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
 
   return (
@@ -22,13 +26,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="text-xl font-black tracking-tight bg-gradient-focus bg-clip-text text-transparent">
             Aspera
           </div>
-          <div className="text-xs text-text-muted mt-0.5">Personal Performance</div>
+          <div className="text-xs text-text-muted mt-0.5">
+            Personal Performance
+          </div>
         </div>
 
         {/* Nav */}
         <nav className="flex-1 px-3 py-4 space-y-1">
           {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+            const isActive =
+              pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}
@@ -59,7 +66,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface border-t border-border z-50">
           <div className="flex">
             {NAV_ITEMS.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}

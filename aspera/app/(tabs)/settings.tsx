@@ -270,7 +270,8 @@ export default function SettingsScreen() {
                 Morning check-in
               </Text>
               <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
-                {settings.notificationSettings.morningTime} · How are you feeling?
+                {settings.notificationSettings.morningTime} · How are you
+                feeling?
               </Text>
             </View>
             <Switch
@@ -293,7 +294,8 @@ export default function SettingsScreen() {
                 Evening log reminder
               </Text>
               <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
-                {settings.notificationSettings.eveningTime} · Log today before you forget
+                {settings.notificationSettings.eveningTime} · Log today before
+                you forget
               </Text>
             </View>
             <Switch

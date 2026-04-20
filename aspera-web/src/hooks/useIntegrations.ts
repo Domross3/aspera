@@ -46,11 +46,19 @@ export function useIntegrations() {
 
   const latestSummary =
     summaries.length > 0
-      ? [...summaries].sort((left, right) => left.date.localeCompare(right.date))[
-          summaries.length - 1
-        ]
+      ? [...summaries].sort((left, right) =>
+          left.date.localeCompare(right.date),
+        )[summaries.length - 1]
       : null;
   const latestAttention = latestSummary?.attention ?? null;
 
-  return { connections, summaries, latestSummary, latestAttention, loading, reload, refreshFromMocks };
+  return {
+    connections,
+    summaries,
+    latestSummary,
+    latestAttention,
+    loading,
+    reload,
+    refreshFromMocks,
+  };
 }

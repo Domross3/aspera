@@ -18,7 +18,9 @@ export function DrinksInput({ value, onChange }: DrinksInputProps) {
           >
             −
           </button>
-          <span className={`text-xl font-bold w-6 text-center ${value > 2 ? "text-warning" : value > 0 ? "text-text" : "text-text-muted"}`}>
+          <span
+            className={`text-xl font-bold w-6 text-center ${value > 2 ? "text-warning" : value > 0 ? "text-text" : "text-text-muted"}`}
+          >
             {value}
           </span>
           <button

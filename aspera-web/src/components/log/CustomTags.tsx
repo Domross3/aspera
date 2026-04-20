@@ -1,7 +1,17 @@
 "use client";
 import { useState, KeyboardEvent } from "react";
 
-const PRESET_TAGS = ["Cold Shower", "Sunlight", "Meditation", "Journaling", "No Phone AM", "Social", "Alcohol", "Poor Sleep", "Nap"];
+const PRESET_TAGS = [
+  "Cold Shower",
+  "Sunlight",
+  "Meditation",
+  "Journaling",
+  "No Phone AM",
+  "Social",
+  "Alcohol",
+  "Poor Sleep",
+  "Nap",
+];
 
 interface CustomTagsProps {
   tags: string[];
@@ -12,7 +22,9 @@ export function CustomTags({ tags, onChange }: CustomTagsProps) {
   const [draft, setDraft] = useState("");
 
   const toggle = (tag: string) => {
-    onChange(tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag]);
+    onChange(
+      tags.includes(tag) ? tags.filter((t) => t !== tag) : [...tags, tag],
+    );
   };
 
   const addCustom = () => {
@@ -23,7 +35,10 @@ export function CustomTags({ tags, onChange }: CustomTagsProps) {
   };
 
   const handleKey = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") { e.preventDefault(); addCustom(); }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addCustom();
+    }
   };
 
   const customTags = tags.filter((t) => !PRESET_TAGS.includes(t));
@@ -49,9 +64,18 @@ export function CustomTags({ tags, onChange }: CustomTagsProps) {
           );
         })}
         {customTags.map((tag) => (
-          <span key={tag} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-pill text-sm font-medium bg-accent text-white">
+          <span
+            key={tag}
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-pill text-sm font-medium bg-accent text-white"
+          >
             {tag}
-            <button type="button" onClick={() => toggle(tag)} className="hover:text-white/70 ml-1">×</button>
+            <button
+              type="button"
+              onClick={() => toggle(tag)}
+              className="hover:text-white/70 ml-1"
+            >
+              ×
+            </button>
           </span>
         ))}
       </div>

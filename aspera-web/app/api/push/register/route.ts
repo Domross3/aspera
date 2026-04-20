@@ -21,7 +21,10 @@ export async function POST(req: NextRequest) {
     if (!tokens.includes(token)) {
       tokens.push(token);
       await fs.writeFile(TOKENS_FILE, JSON.stringify(tokens, null, 2), "utf8");
-      console.log("[/api/push/register] Registered token:", token.slice(0, 20) + "...");
+      console.log(
+        "[/api/push/register] Registered token:",
+        token.slice(0, 20) + "...",
+      );
     }
 
     return NextResponse.json({ ok: true });

@@ -7,7 +7,11 @@ interface BadgeProps {
   size?: "sm" | "md";
 }
 
-export function Badge({ children, variant = "default", size = "sm" }: BadgeProps) {
+export function Badge({
+  children,
+  variant = "default",
+  size = "sm",
+}: BadgeProps) {
   const variants = {
     default: "bg-elevated text-text-secondary border border-border",
     success: "bg-success/20 text-success border border-success/30",
@@ -22,7 +26,9 @@ export function Badge({ children, variant = "default", size = "sm" }: BadgeProps
   };
 
   return (
-    <span className={`inline-flex items-center rounded-pill font-medium ${variants[variant]} ${sizes[size]}`}>
+    <span
+      className={`inline-flex items-center rounded-pill font-medium ${variants[variant]} ${sizes[size]}`}
+    >
       {children}
     </span>
   );

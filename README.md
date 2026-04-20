@@ -129,10 +129,10 @@ npx expo start --dev-client
 
 Bedtime log reminders and morning mood check-ins are delivered via Expo's push infrastructure, triggered by Vercel cron jobs.
 
-| Notification | Cron (UTC) | Local (EST) |
-|---|---|---|
-| Morning check-in | `0 12 * * *` | 8:00 AM |
-| Evening log reminder | `0 1 * * *` | 9:00 PM |
+| Notification         | Cron (UTC)   | Local (EST) |
+| -------------------- | ------------ | ----------- |
+| Morning check-in     | `0 12 * * *` | 8:00 AM     |
+| Evening log reminder | `0 1 * * *`  | 9:00 PM     |
 
 **Architecture:**
 
@@ -194,16 +194,16 @@ Toggle morning/evening notifications in **Settings → Notifications**.
 
 ## Tech Stack
 
-| Layer         | Technology                                                  |
-| ------------- | ----------------------------------------------------------- |
-| Mobile        | React Native 0.81, Expo SDK 54, expo-router v6              |
-| Web           | Next.js 15, React 19, Recharts, Tailwind CSS                |
-| AI            | Claude Sonnet (claude-sonnet-4-6) via @anthropic-ai/sdk     |
-| Storage       | AsyncStorage (mobile, local-first) · localStorage (web)     |
-| Push          | Expo Push API + expo-server-sdk, Vercel cron                |
-| Extension     | Chrome Manifest V3, service worker                          |
-| Distribution  | EAS Build + TestFlight                                      |
-| Design        | Dark theme (#090C14), haptic feedback, animated transitions |
+| Layer        | Technology                                                  |
+| ------------ | ----------------------------------------------------------- |
+| Mobile       | React Native 0.81, Expo SDK 54, expo-router v6              |
+| Web          | Next.js 15, React 19, Recharts, Tailwind CSS                |
+| AI           | Claude Sonnet (claude-sonnet-4-6) via @anthropic-ai/sdk     |
+| Storage      | AsyncStorage (mobile, local-first) · localStorage (web)     |
+| Push         | Expo Push API + expo-server-sdk, Vercel cron                |
+| Extension    | Chrome Manifest V3, service worker                          |
+| Distribution | EAS Build + TestFlight                                      |
+| Design       | Dark theme (#090C14), haptic feedback, animated transitions |
 
 ---
 

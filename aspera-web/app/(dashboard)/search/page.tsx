@@ -18,32 +18,47 @@ const EXAMPLE_QUERIES = [
 function ResultCard({ result }: { result: SearchResult }) {
   const { log, relevanceScore, matchReason, highlightedFields } = result;
   const date = new Date(`${log.date}T12:00:00`).toLocaleDateString("en-US", {
-    weekday: "short", month: "short", day: "numeric",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
   });
 
-  const scoreColor = relevanceScore >= 80 ? "success" : relevanceScore >= 60 ? "warning" : "default";
+  const scoreColor =
+    relevanceScore >= 80
+      ? "success"
+      : relevanceScore >= 60
+        ? "warning"
+        : "default";
 
   return (
     <GradientCard>
       <div className="flex items-start justify-between gap-3 mb-2">
         <div>
           <div className="text-sm font-semibold text-text">{date}</div>
-          <div className="text-xs text-text-secondary mt-0.5">{matchReason}</div>
+          <div className="text-xs text-text-secondary mt-0.5">
+            {matchReason}
+          </div>
         </div>
         <Badge variant={scoreColor}>{relevanceScore}% match</Badge>
       </div>
       <div className="grid grid-cols-3 gap-2 mb-3">
         <div className="bg-background/50 rounded px-2 py-1.5 text-center">
           <div className="text-xs text-text-muted">Focus</div>
-          <div className="text-sm font-bold text-accent">{log.output.focusRating}</div>
+          <div className="text-sm font-bold text-accent">
+            {log.output.focusRating}
+          </div>
         </div>
         <div className="bg-background/50 rounded px-2 py-1.5 text-center">
           <div className="text-xs text-text-muted">Energy</div>
-          <div className="text-sm font-bold text-accent-alt">{log.output.energyRating}</div>
+          <div className="text-sm font-bold text-accent-alt">
+            {log.output.energyRating}
+          </div>
         </div>
         <div className="bg-background/50 rounded px-2 py-1.5 text-center">
           <div className="text-xs text-text-muted">Tasks</div>
-          <div className="text-sm font-bold text-success">{log.output.tasksCompleted}</div>
+          <div className="text-sm font-bold text-success">
+            {log.output.tasksCompleted}
+          </div>
         </div>
       </div>
       <div className="flex flex-wrap gap-2 text-xs">
@@ -63,7 +78,10 @@ function ResultCard({ result }: { result: SearchResult }) {
           </span>
         )}
         {log.tags.slice(0, 3).map((t) => (
-          <span key={t} className={`px-2 py-0.5 rounded-pill border text-xs ${highlightedFields.includes("tags") ? "bg-accent/20 text-accent border-accent/30" : "bg-elevated border-border text-text-secondary"}`}>
+          <span
+            key={t}
+            className={`px-2 py-0.5 rounded-pill border text-xs ${highlightedFields.includes("tags") ? "bg-accent/20 text-accent border-accent/30" : "bg-elevated border-border text-text-secondary"}`}
+          >
             {t}
           </span>
         ))}
@@ -90,7 +108,7 @@ export default function SearchPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: q, logs: recentLogs }),
       });
-      const data = await res.json() as SearchResponse & { error?: string };
+      const data = (await res.json()) as SearchResponse & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Search failed");
       setResult(data);
     } catch (e: unknown) {
@@ -109,7 +127,9 @@ export default function SearchPage() {
     <div className="max-w-2xl mx-auto px-4 py-6 pb-24 md:pb-6 space-y-5">
       <div>
         <h1 className="text-xl font-bold text-text">Search Your Data</h1>
-        <p className="text-sm text-text-secondary">Ask anything about your patterns in natural language.</p>
+        <p className="text-sm text-text-secondary">
+          Ask anything about your patterns in natural language.
+        </p>
       </div>
 
       {/* Search form */}
@@ -122,7 +142,11 @@ export default function SearchPage() {
             placeholder="What improves my focus?"
             className="flex-1 bg-surface border border-border rounded-lg px-4 py-3 text-sm text-text placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
           />
-          <Button type="submit" loading={searching} disabled={!query.trim() || logsLoading}>
+          <Button
+            type="submit"
+            loading={searching}
+            disabled={!query.trim() || logsLoading}
+          >
             Search
           </Button>
         </div>
@@ -131,13 +155,18 @@ export default function SearchPage() {
       {/* Example queries */}
       {!result && !searching && (
         <div className="space-y-2">
-          <div className="text-xs font-bold uppercase tracking-widest text-text-muted">Try asking…</div>
+          <div className="text-xs font-bold uppercase tracking-widest text-text-muted">
+            Try asking…
+          </div>
           <div className="flex flex-wrap gap-2">
             {EXAMPLE_QUERIES.map((q) => (
               <button
                 key={q}
                 type="button"
-                onClick={() => { setQuery(q); search(q); }}
+                onClick={() => {
+                  setQuery(q);
+                  search(q);
+                }}
                 className="px-3 py-1.5 rounded-pill bg-elevated border border-border text-sm text-text-secondary hover:border-accent hover:text-text transition-colors"
               >
                 {q}
@@ -167,8 +196,12 @@ export default function SearchPage() {
         <div className="space-y-4">
           {/* Summary */}
           <GradientCard glowAccent>
-            <div className="text-xs font-bold uppercase tracking-widest text-accent mb-2">Answer</div>
-            <p className="text-sm text-text leading-relaxed">{result.summary}</p>
+            <div className="text-xs font-bold uppercase tracking-widest text-accent mb-2">
+              Answer
+            </div>
+            <p className="text-sm text-text leading-relaxed">
+              {result.summary}
+            </p>
           </GradientCard>
 
           {/* Result cards */}
@@ -185,13 +218,17 @@ export default function SearchPage() {
 
           {result.results.length === 0 && (
             <p className="text-sm text-text-secondary text-center py-4">
-              No specific days matched this query — but the summary above still answers your question.
+              No specific days matched this query — but the summary above still
+              answers your question.
             </p>
           )}
 
           <button
             type="button"
-            onClick={() => { setResult(null); setQuery(""); }}
+            onClick={() => {
+              setResult(null);
+              setQuery("");
+            }}
             className="text-xs text-text-muted hover:text-accent transition-colors"
           >
             ← New search
@@ -200,12 +237,15 @@ export default function SearchPage() {
       )}
 
       {logsLoading && (
-        <div className="text-sm text-text-muted text-center py-4">Loading your logs…</div>
+        <div className="text-sm text-text-muted text-center py-4">
+          Loading your logs…
+        </div>
       )}
 
       {!logsLoading && recentLogs.length === 0 && (
         <div className="text-sm text-text-secondary text-center py-8">
-          No logs yet. Head to <span className="text-accent">Log</span> to record some days first.
+          No logs yet. Head to <span className="text-accent">Log</span> to
+          record some days first.
         </div>
       )}
     </div>
