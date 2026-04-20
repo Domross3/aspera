@@ -119,7 +119,10 @@ async function syncToFirebase(dayKey, dayData) {
       );
     }
   } catch (err) {
-    console.warn("[Aspera] Web app unreachable (is `npm run dev` running?):", err.message);
+    console.warn(
+      "[Aspera] Web app unreachable (is `npm run dev` running?):",
+      err.message,
+    );
   }
 }
 

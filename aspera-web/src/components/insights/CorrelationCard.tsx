@@ -15,10 +15,21 @@ const CONFIDENCE_BADGE: Record<string, "success" | "warning" | "default"> = {
 const METRIC_LABELS = { focus: "Focus", energy: "Energy", tasks: "Tasks" };
 
 export function CorrelationCard({ correlation }: CorrelationCardProps) {
-  const { emoji, title, description, delta, confidence, outputMetric, inputFactors, isKeystone } = correlation;
+  const {
+    emoji,
+    title,
+    description,
+    delta,
+    confidence,
+    outputMetric,
+    inputFactors,
+    isKeystone,
+  } = correlation;
 
   return (
-    <div className={`relative bg-gradient-to-br from-elevated to-surface border rounded-lg p-4 shadow-card transition-all ${isKeystone ? "border-accent/50 shadow-glow-sm" : "border-border"}`}>
+    <div
+      className={`relative bg-gradient-to-br from-elevated to-surface border rounded-lg p-4 shadow-card transition-all ${isKeystone ? "border-accent/50 shadow-glow-sm" : "border-border"}`}
+    >
       {isKeystone && (
         <div className="absolute -top-2.5 left-4">
           <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-pill">
@@ -43,7 +54,10 @@ export function CorrelationCard({ correlation }: CorrelationCardProps) {
             </div>
             <div className="flex gap-1.5 flex-wrap">
               {inputFactors.slice(0, 3).map((f) => (
-                <span key={f} className="text-xs px-2 py-0.5 bg-elevated rounded-pill text-text-muted border border-border">
+                <span
+                  key={f}
+                  className="text-xs px-2 py-0.5 bg-elevated rounded-pill text-text-muted border border-border"
+                >
                   {f}
                 </span>
               ))}

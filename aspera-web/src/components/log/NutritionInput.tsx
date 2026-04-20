@@ -9,10 +9,18 @@ interface NutritionInputProps {
 }
 
 const MEAL_LABELS: Record<number, string> = {
-  1: "Poor", 2: "Fair", 3: "Okay", 4: "Good", 5: "Excellent",
+  1: "Poor",
+  2: "Fair",
+  3: "Okay",
+  4: "Good",
+  5: "Excellent",
 };
 
-export function NutritionInput({ mealQuality, hydration, onChange }: NutritionInputProps) {
+export function NutritionInput({
+  mealQuality,
+  hydration,
+  onChange,
+}: NutritionInputProps) {
   return (
     <div className="space-y-4">
       <div className="space-y-2">

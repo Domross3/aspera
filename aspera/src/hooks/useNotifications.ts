@@ -15,7 +15,9 @@ Notifications.setNotificationHandler({
 });
 
 export function useNotifications() {
-  const notificationListener = useRef<Notifications.EventSubscription | null>(null);
+  const notificationListener = useRef<Notifications.EventSubscription | null>(
+    null,
+  );
   const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   useEffect(() => {
@@ -61,12 +63,16 @@ async function registerForPushNotificationsAsync() {
   if (finalStatus !== "granted") return;
 
   const projectId =
-    (Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined)
-      ?.eas?.projectId ?? Constants.easConfig?.projectId;
+    (
+      Constants.expoConfig?.extra as
+        | { eas?: { projectId?: string } }
+        | undefined
+    )?.eas?.projectId ?? Constants.easConfig?.projectId;
   if (!projectId) return;
 
   try {
-    const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+    const token = (await Notifications.getExpoPushTokenAsync({ projectId }))
+      .data;
     await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
 
     const apiUrl = process.env.EXPO_PUBLIC_API_URL;

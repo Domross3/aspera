@@ -19,7 +19,13 @@ export function SleepInput({ value, onChange }: SleepInputProps) {
         emoji="😴"
       />
       <p className="text-xs text-text-muted">
-        {value >= 8 ? "Great! Well rested." : value >= 6 ? "Decent, but aim for 7–9h" : value > 0 ? "Low — may impact performance" : ""}
+        {value >= 8
+          ? "Great! Well rested."
+          : value >= 6
+            ? "Decent, but aim for 7–9h"
+            : value > 0
+              ? "Low — may impact performance"
+              : ""}
       </p>
     </div>
   );

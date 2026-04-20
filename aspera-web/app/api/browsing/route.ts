@@ -22,10 +22,16 @@ export async function POST(req: NextRequest) {
       // file doesn't exist yet
     }
 
-    const date = (payload as { date?: string }).date ?? new Date().toISOString().split("T")[0];
+    const date =
+      (payload as { date?: string }).date ??
+      new Date().toISOString().split("T")[0];
     existing[date] = { ...payload, receivedAt: Date.now() };
 
-    await fs.writeFile(BROWSING_FILE, JSON.stringify(existing, null, 2), "utf8");
+    await fs.writeFile(
+      BROWSING_FILE,
+      JSON.stringify(existing, null, 2),
+      "utf8",
+    );
     console.log("[/api/browsing] Saved browsing data for:", date);
     return NextResponse.json({ ok: true, date });
   } catch (err: unknown) {

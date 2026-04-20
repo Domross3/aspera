@@ -7,7 +7,11 @@ interface GradientCardProps {
   glowAccent?: boolean;
 }
 
-export function GradientCard({ children, className = "", glowAccent = false }: GradientCardProps) {
+export function GradientCard({
+  children,
+  className = "",
+  glowAccent = false,
+}: GradientCardProps) {
   return (
     <div
       className={`

@@ -21,14 +21,20 @@ export function BigRocksInput({ value, onChange }: BigRocksInputProps) {
   };
 
   const handleKey = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") { e.preventDefault(); add(); }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      add();
+    }
   };
 
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-2">
         {value.map((rock, i) => (
-          <div key={i} className="flex items-center gap-2 bg-elevated rounded-md px-3 py-2 border border-border group">
+          <div
+            key={i}
+            className="flex items-center gap-2 bg-elevated rounded-md px-3 py-2 border border-border group"
+          >
             <span className="text-accent text-sm font-bold w-4">{i + 1}.</span>
             <span className="flex-1 text-sm text-text">{rock}</span>
             <button
@@ -48,7 +54,9 @@ export function BigRocksInput({ value, onChange }: BigRocksInputProps) {
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={handleKey}
-            placeholder={value.length === 0 ? "Most important task today…" : "Add another…"}
+            placeholder={
+              value.length === 0 ? "Most important task today…" : "Add another…"
+            }
             className="flex-1 bg-elevated border border-border rounded-md px-3 py-2 text-sm text-text placeholder-text-muted focus:outline-none focus:border-accent transition-colors"
           />
           <button

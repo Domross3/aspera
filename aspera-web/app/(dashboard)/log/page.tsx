@@ -23,15 +23,20 @@ function todayId(): string {
 function emptyLog(): DailyLog {
   const today = todayId();
   return {
-    id: today, date: today, createdAt: Date.now(),
+    id: today,
+    date: today,
+    createdAt: Date.now(),
     caffeine: { type: "none", amount: 0 },
     workout: { type: "none", intensity: 0 },
     music: [],
     nutrition: { mealQuality: 3, hydration: 6 },
-    drinks: 0, sleepHours: 7, daylightMinutes: 30,
+    drinks: 0,
+    sleepHours: 7,
+    daylightMinutes: 30,
     customMetrics: [],
     output: { tasksCompleted: 0, focusRating: 5, energyRating: 5 },
-    tags: [], bigRocks: [],
+    tags: [],
+    bigRocks: [],
   };
 }
 
@@ -74,7 +79,11 @@ export default function LogPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 pb-24 md:pb-6 space-y-4">
@@ -93,82 +102,133 @@ export default function LogPage() {
 
       {/* Big Rocks */}
       <GradientCard>
-        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">{SECTION_LABELS.bigRocks}</div>
-        <BigRocksInput value={log.bigRocks} onChange={(bigRocks) => setLog((p) => ({ ...p, bigRocks }))} />
+        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">
+          {SECTION_LABELS.bigRocks}
+        </div>
+        <BigRocksInput
+          value={log.bigRocks}
+          onChange={(bigRocks) => setLog((p) => ({ ...p, bigRocks }))}
+        />
       </GradientCard>
 
       {/* Sleep & Daylight */}
       <GradientCard>
-        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-4">{SECTION_LABELS.sleep}</div>
-        <SleepInput value={log.sleepHours} onChange={(v) => setLog((p) => ({ ...p, sleepHours: v }))} />
+        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-4">
+          {SECTION_LABELS.sleep}
+        </div>
+        <SleepInput
+          value={log.sleepHours}
+          onChange={(v) => setLog((p) => ({ ...p, sleepHours: v }))}
+        />
         <div className="mt-4">
-          <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">{SECTION_LABELS.daylight}</div>
-          <DaylightInput value={log.daylightMinutes} onChange={(v) => setLog((p) => ({ ...p, daylightMinutes: v }))} />
+          <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">
+            {SECTION_LABELS.daylight}
+          </div>
+          <DaylightInput
+            value={log.daylightMinutes}
+            onChange={(v) => setLog((p) => ({ ...p, daylightMinutes: v }))}
+          />
         </div>
       </GradientCard>
 
       {/* Caffeine */}
       <GradientCard>
-        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">{SECTION_LABELS.caffeine}</div>
+        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">
+          {SECTION_LABELS.caffeine}
+        </div>
         <CaffeinePicker
           type={log.caffeine.type}
           amount={log.caffeine.amount}
-          onChange={(type, amount) => setLog((p) => ({ ...p, caffeine: { type, amount } }))}
+          onChange={(type, amount) =>
+            setLog((p) => ({ ...p, caffeine: { type, amount } }))
+          }
         />
       </GradientCard>
 
       {/* Workout */}
       <GradientCard>
-        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">{SECTION_LABELS.workout}</div>
+        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">
+          {SECTION_LABELS.workout}
+        </div>
         <WorkoutSelector
           type={log.workout.type}
           intensity={log.workout.intensity}
-          onChange={(type, intensity) => setLog((p) => ({ ...p, workout: { type, intensity } }))}
+          onChange={(type, intensity) =>
+            setLog((p) => ({ ...p, workout: { type, intensity } }))
+          }
         />
       </GradientCard>
 
       {/* Music */}
       <GradientCard>
-        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">{SECTION_LABELS.music}</div>
-        <MusicChips selected={log.music} onChange={(music) => setLog((p) => ({ ...p, music }))} />
+        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">
+          {SECTION_LABELS.music}
+        </div>
+        <MusicChips
+          selected={log.music}
+          onChange={(music) => setLog((p) => ({ ...p, music }))}
+        />
       </GradientCard>
 
       {/* Nutrition */}
       <GradientCard>
-        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">{SECTION_LABELS.nutrition}</div>
+        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">
+          {SECTION_LABELS.nutrition}
+        </div>
         <NutritionInput
           mealQuality={log.nutrition.mealQuality}
           hydration={log.nutrition.hydration}
-          onChange={(mealQuality, hydration) => setLog((p) => ({ ...p, nutrition: { mealQuality, hydration } }))}
+          onChange={(mealQuality, hydration) =>
+            setLog((p) => ({ ...p, nutrition: { mealQuality, hydration } }))
+          }
         />
       </GradientCard>
 
       {/* Drinks */}
       <GradientCard>
-        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">{SECTION_LABELS.drinks}</div>
-        <DrinksInput value={log.drinks} onChange={(drinks) => setLog((p) => ({ ...p, drinks }))} />
+        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">
+          {SECTION_LABELS.drinks}
+        </div>
+        <DrinksInput
+          value={log.drinks}
+          onChange={(drinks) => setLog((p) => ({ ...p, drinks }))}
+        />
       </GradientCard>
 
       {/* Performance Output */}
       <GradientCard>
-        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-4">{SECTION_LABELS.output}</div>
+        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-4">
+          {SECTION_LABELS.output}
+        </div>
         <div className="space-y-4">
           <RatingSlider
             label="Focus rating"
             value={log.output.focusRating}
-            onChange={(v) => setLog((p) => ({ ...p, output: { ...p.output, focusRating: v } }))}
+            onChange={(v) =>
+              setLog((p) => ({ ...p, output: { ...p.output, focusRating: v } }))
+            }
             emoji="🎯"
           />
           <RatingSlider
             label="Energy rating"
             value={log.output.energyRating}
-            onChange={(v) => setLog((p) => ({ ...p, output: { ...p.output, energyRating: v } }))}
+            onChange={(v) =>
+              setLog((p) => ({
+                ...p,
+                output: { ...p.output, energyRating: v },
+              }))
+            }
             emoji="⚡"
           />
           <RatingSlider
             label="Tasks completed"
             value={log.output.tasksCompleted}
-            onChange={(v) => setLog((p) => ({ ...p, output: { ...p.output, tasksCompleted: v } }))}
+            onChange={(v) =>
+              setLog((p) => ({
+                ...p,
+                output: { ...p.output, tasksCompleted: v },
+              }))
+            }
             min={0}
             max={20}
             emoji="✅"
@@ -178,8 +238,13 @@ export default function LogPage() {
 
       {/* Tags */}
       <GradientCard>
-        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">{SECTION_LABELS.tags}</div>
-        <CustomTags tags={log.tags} onChange={(tags) => setLog((p) => ({ ...p, tags }))} />
+        <div className="text-xs font-bold uppercase tracking-widest text-text-muted mb-3">
+          {SECTION_LABELS.tags}
+        </div>
+        <CustomTags
+          tags={log.tags}
+          onChange={(tags) => setLog((p) => ({ ...p, tags }))}
+        />
       </GradientCard>
 
       {/* Save */}

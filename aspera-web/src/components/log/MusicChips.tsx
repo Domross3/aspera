@@ -2,7 +2,17 @@
 import { MusicGenre } from "../../types";
 import { ChipGroup } from "../ui/ChipGroup";
 
-const MUSIC_OPTIONS: MusicGenre[] = ["none", "lofi", "classical", "hiphop", "edm", "rock", "ambient", "jazz", "podcast"];
+const MUSIC_OPTIONS: MusicGenre[] = [
+  "none",
+  "lofi",
+  "classical",
+  "hiphop",
+  "edm",
+  "rock",
+  "ambient",
+  "jazz",
+  "podcast",
+];
 
 interface MusicChipsProps {
   selected: MusicGenre[];

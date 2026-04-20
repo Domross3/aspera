@@ -4,10 +4,7 @@
   "version": "1.0.0",
   "description": "Track your browsing productivity — powered by Aspera",
   "permissions": ["tabs", "activeTab", "storage", "alarms"],
-  "host_permissions": [
-    "http://localhost:3000/*",
-    "https://*.vercel.app/*"
-  ],
+  "host_permissions": ["http://localhost:3000/*", "https://*.vercel.app/*"],
   "background": {
     "service_worker": "background.js"
   },

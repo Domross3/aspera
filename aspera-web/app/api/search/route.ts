@@ -43,7 +43,7 @@ Rules:
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { query: string; logs: DailyLog[] };
+    const body = (await req.json()) as { query: string; logs: DailyLog[] };
     const { query, logs } = body;
 
     if (!query?.trim()) {
@@ -56,7 +56,10 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.CLAUDE_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "CLAUDE_KEY not configured on server" }, { status: 500 });
+      return NextResponse.json(
+        { error: "CLAUDE_KEY not configured on server" },
+        { status: 500 },
+      );
     }
 
     const client = new Anthropic({ apiKey });
@@ -64,7 +67,8 @@ export async function POST(req: NextRequest) {
       model: "claude-sonnet-4-6",
       max_tokens: 1500,
       temperature: 0,
-      system: "You are a precise data analyst. Return only valid JSON, no markdown, no explanations.",
+      system:
+        "You are a precise data analyst. Return only valid JSON, no markdown, no explanations.",
       messages: [{ role: "user", content: buildSearchPrompt(query, logs) }],
     });
 
@@ -77,11 +81,23 @@ export async function POST(req: NextRequest) {
       .replace(/\s*```$/i, "")
       .trim();
 
-    let parsed: { query: string; results: Array<{ date: string; relevanceScore: number; matchReason: string; highlightedFields: string[] }>; summary: string };
+    let parsed: {
+      query: string;
+      results: Array<{
+        date: string;
+        relevanceScore: number;
+        matchReason: string;
+        highlightedFields: string[];
+      }>;
+      summary: string;
+    };
     try {
       parsed = JSON.parse(rawText);
     } catch {
-      return NextResponse.json({ error: "Failed to parse AI response" }, { status: 502 });
+      return NextResponse.json(
+        { error: "Failed to parse AI response" },
+        { status: 502 },
+      );
     }
 
     // Hydrate results with full log objects

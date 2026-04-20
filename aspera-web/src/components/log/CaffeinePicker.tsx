@@ -17,7 +17,11 @@ interface CaffeinePickerProps {
   onChange: (type: CaffeineType, amount: number) => void;
 }
 
-export function CaffeinePicker({ type, amount, onChange }: CaffeinePickerProps) {
+export function CaffeinePicker({
+  type,
+  amount,
+  onChange,
+}: CaffeinePickerProps) {
   const handleTypeChange = (selected: string[]) => {
     const newType = (selected[0] ?? "none") as CaffeineType;
     const defaultMg = CAFFEINE_MG[newType] ?? 0;

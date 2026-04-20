@@ -16,15 +16,26 @@ async function loadRealBrowsingData(): Promise<BrowsingDay[] | null> {
       if (!entry || typeof entry !== "object") continue;
       const e = entry as Record<string, unknown>;
       const rawSites = e.sites;
-      if (!rawSites || typeof rawSites !== "object" || Array.isArray(rawSites)) continue;
-      const sitesObj = rawSites as Record<string, { time: number; category: string; visits: number }>;
-      const sites: BrowsingSite[] = Object.entries(sitesObj).map(([hostname, s]) => ({
-        hostname,
-        time: typeof s.time === "number" ? s.time : 0,
-        category: (s.category === "productive" || s.category === "distracting") ? s.category : "neutral",
-        visits: typeof s.visits === "number" ? s.visits : 1,
-      }));
-      const rawTotals = e.totals as { productive?: number; neutral?: number; distracting?: number } | undefined;
+      if (!rawSites || typeof rawSites !== "object" || Array.isArray(rawSites))
+        continue;
+      const sitesObj = rawSites as Record<
+        string,
+        { time: number; category: string; visits: number }
+      >;
+      const sites: BrowsingSite[] = Object.entries(sitesObj).map(
+        ([hostname, s]) => ({
+          hostname,
+          time: typeof s.time === "number" ? s.time : 0,
+          category:
+            s.category === "productive" || s.category === "distracting"
+              ? s.category
+              : "neutral",
+          visits: typeof s.visits === "number" ? s.visits : 1,
+        }),
+      );
+      const rawTotals = e.totals as
+        | { productive?: number; neutral?: number; distracting?: number }
+        | undefined;
       days.push({
         date,
         sites,
@@ -36,7 +47,9 @@ async function loadRealBrowsingData(): Promise<BrowsingDay[] | null> {
         focusScore: typeof e.focusScore === "number" ? e.focusScore : 0,
       });
     }
-    return days.length > 0 ? days.sort((a, b) => a.date.localeCompare(b.date)) : null;
+    return days.length > 0
+      ? days.sort((a, b) => a.date.localeCompare(b.date))
+      : null;
   } catch {
     return null;
   }
@@ -73,18 +86,28 @@ Your summary should open with acknowledgment, your recommendation should be a si
 
 function detectBadWeek(logs: DailyLog[]): boolean {
   if (logs.length < 3) return false;
-  const avgFocus = logs.reduce((s, l) => s + l.output.focusRating, 0) / logs.length;
-  const avgEnergy = logs.reduce((s, l) => s + l.output.energyRating, 0) / logs.length;
+  const avgFocus =
+    logs.reduce((s, l) => s + l.output.focusRating, 0) / logs.length;
+  const avgEnergy =
+    logs.reduce((s, l) => s + l.output.energyRating, 0) / logs.length;
   return avgFocus < 5 || avgEnergy < 5;
 }
 
 function stripCodeFences(text: string): string {
-  return text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  return text
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
 }
 
-function extractTextBlocks(content: ReadonlyArray<{ type: string; text?: string }>): string {
+function extractTextBlocks(
+  content: ReadonlyArray<{ type: string; text?: string }>,
+): string {
   return content
-    .filter((b): b is { type: string; text: string } => b.type === "text" && typeof b.text === "string")
+    .filter(
+      (b): b is { type: string; text: string } =>
+        b.type === "text" && typeof b.text === "string",
+    )
     .map((b) => b.text)
     .join("\n")
     .trim();
@@ -99,12 +122,24 @@ function extractBalancedJsonObject(text: string): string | null {
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
     if (start === -1) {
-      if (char === "{") { start = i; depth = 1; }
+      if (char === "{") {
+        start = i;
+        depth = 1;
+      }
       continue;
     }
-    if (isEscaped) { isEscaped = false; continue; }
-    if (char === "\\" && inString) { isEscaped = true; continue; }
-    if (char === '"') { inString = !inString; continue; }
+    if (isEscaped) {
+      isEscaped = false;
+      continue;
+    }
+    if (char === "\\" && inString) {
+      isEscaped = true;
+      continue;
+    }
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
     if (inString) continue;
     if (char === "{") depth++;
     if (char === "}") depth--;
@@ -125,15 +160,23 @@ function parseJsonCandidate(text: string): unknown | null {
   if (balanced) candidateSet.add(balanced);
   const start = stripped.indexOf("{");
   const end = stripped.lastIndexOf("}");
-  if (start !== -1 && end > start) candidateSet.add(stripped.slice(start, end + 1));
+  if (start !== -1 && end > start)
+    candidateSet.add(stripped.slice(start, end + 1));
   for (const candidate of Array.from(candidateSet)) {
-    try { return JSON.parse(removeTrailingCommas(candidate).trim()); } catch { continue; }
+    try {
+      return JSON.parse(removeTrailingCommas(candidate).trim());
+    } catch {
+      continue;
+    }
   }
   return null;
 }
 
 function slugify(value: string, fallback: string): string {
-  const slug = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
   return slug || fallback;
 }
 
@@ -143,74 +186,142 @@ function getDayLabel(date: string): string {
   return parsed.toLocaleDateString("en-US", { weekday: "short" });
 }
 
-function buildWeeklyTrendsFromLogs(logs: DailyLog[]): InsightsResponse["weeklyTrends"] {
-  return [...logs].sort((a, b) => a.date.localeCompare(b.date)).slice(-7).map((log) => ({
-    date: log.date,
-    dayLabel: getDayLabel(log.date),
-    focusRating: log.output.focusRating,
-    energyRating: log.output.energyRating,
-    tasksCompleted: log.output.tasksCompleted,
-  }));
+function buildWeeklyTrendsFromLogs(
+  logs: DailyLog[],
+): InsightsResponse["weeklyTrends"] {
+  return [...logs]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-7)
+    .map((log) => ({
+      date: log.date,
+      dayLabel: getDayLabel(log.date),
+      focusRating: log.output.focusRating,
+      energyRating: log.output.energyRating,
+      tasksCompleted: log.output.tasksCompleted,
+    }));
 }
 
 function normalizeCorrelations(raw: unknown): InsightsResponse["correlations"] {
   if (!Array.isArray(raw)) return [];
-  const normalized = raw.map((item, index) => {
-    if (!item || typeof item !== "object") return null;
-    const entry = item as Record<string, unknown>;
-    const title = typeof entry.title === "string" ? entry.title.trim() : "";
-    const description = typeof entry.description === "string" ? entry.description.trim() : "";
-    if (!title || !description) return null;
-    const outputMetric = entry.outputMetric;
-    const confidence = entry.confidence;
-    const delta = typeof entry.delta === "number" && Number.isFinite(entry.delta) ? entry.delta : 0;
-    return {
-      id: typeof entry.id === "string" && entry.id.trim() ? entry.id : slugify(title, `correlation-${index + 1}`),
-      emoji: typeof entry.emoji === "string" && entry.emoji.trim() ? entry.emoji : "📊",
-      title, description,
-      inputFactors: Array.isArray(entry.inputFactors) ? entry.inputFactors.filter((f): f is string => typeof f === "string" && f.trim().length > 0) : [],
-      outputMetric: outputMetric === "focus" || outputMetric === "energy" || outputMetric === "tasks" ? outputMetric : "focus",
-      delta,
-      confidence: confidence === "low" || confidence === "medium" || confidence === "high" ? confidence : "medium",
-      isKeystone: Boolean(entry.isKeystone),
-    };
-  }).filter(Boolean) as InsightsResponse["correlations"];
+  const normalized = raw
+    .map((item, index) => {
+      if (!item || typeof item !== "object") return null;
+      const entry = item as Record<string, unknown>;
+      const title = typeof entry.title === "string" ? entry.title.trim() : "";
+      const description =
+        typeof entry.description === "string" ? entry.description.trim() : "";
+      if (!title || !description) return null;
+      const outputMetric = entry.outputMetric;
+      const confidence = entry.confidence;
+      const delta =
+        typeof entry.delta === "number" && Number.isFinite(entry.delta)
+          ? entry.delta
+          : 0;
+      return {
+        id:
+          typeof entry.id === "string" && entry.id.trim()
+            ? entry.id
+            : slugify(title, `correlation-${index + 1}`),
+        emoji:
+          typeof entry.emoji === "string" && entry.emoji.trim()
+            ? entry.emoji
+            : "📊",
+        title,
+        description,
+        inputFactors: Array.isArray(entry.inputFactors)
+          ? entry.inputFactors.filter(
+              (f): f is string => typeof f === "string" && f.trim().length > 0,
+            )
+          : [],
+        outputMetric:
+          outputMetric === "focus" ||
+          outputMetric === "energy" ||
+          outputMetric === "tasks"
+            ? outputMetric
+            : "focus",
+        delta,
+        confidence:
+          confidence === "low" ||
+          confidence === "medium" ||
+          confidence === "high"
+            ? confidence
+            : "medium",
+        isKeystone: Boolean(entry.isKeystone),
+      };
+    })
+    .filter(Boolean) as InsightsResponse["correlations"];
 
   if (normalized.length === 0) return [];
   const keystoneCount = normalized.filter((item) => item.isKeystone).length;
   if (keystoneCount === 1) return normalized;
-  return normalized.map((item, index) => ({ ...item, isKeystone: index === 0 }));
+  return normalized.map((item, index) => ({
+    ...item,
+    isKeystone: index === 0,
+  }));
 }
 
-function normalizeWeeklyTrends(raw: unknown, logs: DailyLog[]): InsightsResponse["weeklyTrends"] {
+function normalizeWeeklyTrends(
+  raw: unknown,
+  logs: DailyLog[],
+): InsightsResponse["weeklyTrends"] {
   if (!Array.isArray(raw)) return buildWeeklyTrendsFromLogs(logs);
-  const normalized = raw.map((item) => {
-    if (!item || typeof item !== "object") return null;
-    const entry = item as Record<string, unknown>;
-    const date = typeof entry.date === "string" && entry.date.trim() ? entry.date : "";
-    if (!date) return null;
-    return {
-      date,
-      dayLabel: typeof entry.dayLabel === "string" && entry.dayLabel.trim() ? entry.dayLabel : getDayLabel(date),
-      focusRating: typeof entry.focusRating === "number" && Number.isFinite(entry.focusRating) ? entry.focusRating : 0,
-      energyRating: typeof entry.energyRating === "number" && Number.isFinite(entry.energyRating) ? entry.energyRating : 0,
-      tasksCompleted: typeof entry.tasksCompleted === "number" && Number.isFinite(entry.tasksCompleted) ? entry.tasksCompleted : 0,
-    };
-  }).filter(Boolean) as InsightsResponse["weeklyTrends"];
+  const normalized = raw
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const entry = item as Record<string, unknown>;
+      const date =
+        typeof entry.date === "string" && entry.date.trim() ? entry.date : "";
+      if (!date) return null;
+      return {
+        date,
+        dayLabel:
+          typeof entry.dayLabel === "string" && entry.dayLabel.trim()
+            ? entry.dayLabel
+            : getDayLabel(date),
+        focusRating:
+          typeof entry.focusRating === "number" &&
+          Number.isFinite(entry.focusRating)
+            ? entry.focusRating
+            : 0,
+        energyRating:
+          typeof entry.energyRating === "number" &&
+          Number.isFinite(entry.energyRating)
+            ? entry.energyRating
+            : 0,
+        tasksCompleted:
+          typeof entry.tasksCompleted === "number" &&
+          Number.isFinite(entry.tasksCompleted)
+            ? entry.tasksCompleted
+            : 0,
+      };
+    })
+    .filter(Boolean) as InsightsResponse["weeklyTrends"];
   return normalized.length === 7 ? normalized : buildWeeklyTrendsFromLogs(logs);
 }
 
-function coerceInsightsResponse(raw: unknown, logs: DailyLog[]): InsightsResponse | null {
+function coerceInsightsResponse(
+  raw: unknown,
+  logs: DailyLog[],
+): InsightsResponse | null {
   if (!raw || typeof raw !== "object") return null;
   const entry = raw as Record<string, unknown>;
   const summary = typeof entry.summary === "string" ? entry.summary.trim() : "";
-  const topRecommendation = typeof entry.topRecommendation === "string" ? entry.topRecommendation.trim() : "";
+  const topRecommendation =
+    typeof entry.topRecommendation === "string"
+      ? entry.topRecommendation.trim()
+      : "";
   const correlations = normalizeCorrelations(entry.correlations);
   if (!summary || !topRecommendation || correlations.length === 0) return null;
   return {
-    summary, correlations, topRecommendation,
+    summary,
+    correlations,
+    topRecommendation,
     weeklyTrends: normalizeWeeklyTrends(entry.weeklyTrends, logs),
-    generatedAt: typeof entry.generatedAt === "number" && Number.isFinite(entry.generatedAt) ? entry.generatedAt : Date.now(),
+    generatedAt:
+      typeof entry.generatedAt === "number" &&
+      Number.isFinite(entry.generatedAt)
+        ? entry.generatedAt
+        : Date.now(),
   };
 }
 
@@ -220,15 +331,40 @@ async function buildInsightsPrompt(logs: DailyLog[]): Promise<string> {
   const browsingData = realBrowsing ?? mockContext.browsing;
   const usingRealBrowsing = realBrowsing !== null;
   const integrationSummaries = getDailyIntegrationSummaries().slice(-7);
-  const bigRocksContext = logs.filter((l) => l.bigRocks && l.bigRocks.length > 0).map((l) => ({
-    date: l.date, bigRocks: l.bigRocks, tasksCompleted: l.output.tasksCompleted, focusRating: l.output.focusRating,
-  }));
+  const bigRocksContext = logs
+    .filter((l) => l.bigRocks && l.bigRocks.length > 0)
+    .map((l) => ({
+      date: l.date,
+      bigRocks: l.bigRocks,
+      tasksCompleted: l.output.tasksCompleted,
+      focusRating: l.output.focusRating,
+    }));
 
   const exampleResponse = {
     summary: "Exactly 2 concise sentences summarizing the user's patterns",
-    correlations: [{ id: "example-slug", emoji: "🎯", title: "Short catchy title", description: "1 concise sentence with specific numbers from the data", inputFactors: ["caffeine", "music"], outputMetric: "focus", delta: 2.5, confidence: "high", isKeystone: false }],
+    correlations: [
+      {
+        id: "example-slug",
+        emoji: "🎯",
+        title: "Short catchy title",
+        description: "1 concise sentence with specific numbers from the data",
+        inputFactors: ["caffeine", "music"],
+        outputMetric: "focus",
+        delta: 2.5,
+        confidence: "high",
+        isKeystone: false,
+      },
+    ],
     topRecommendation: "Single actionable sentence starting with a verb",
-    weeklyTrends: [{ date: "2026-03-22", dayLabel: "Sun", focusRating: 7, energyRating: 8, tasksCompleted: 9 }],
+    weeklyTrends: [
+      {
+        date: "2026-03-22",
+        dayLabel: "Sun",
+        focusRating: 7,
+        energyRating: 8,
+        tasksCompleted: 9,
+      },
+    ],
     generatedAt: Date.now(),
   };
 
@@ -238,12 +374,16 @@ Identify 3–5 correlations between their inputs and outputs.
 DAILY LOGS (self-reported):
 ${JSON.stringify(logs, null, 2)}
 
-${bigRocksContext.length > 0 ? `BIG ROCKS (user's stated top priorities per day):
+${
+  bigRocksContext.length > 0
+    ? `BIG ROCKS (user's stated top priorities per day):
 ${JSON.stringify(bigRocksContext, null, 2)}
 
 Analyze whether the user's task output and focus scores are higher on days they set Big Rocks vs. days they didn't.
 If so, note this as a correlation.
-` : ""}
+`
+    : ""
+}
 
 SPOTIFY RECENTLY PLAYED:
 ${JSON.stringify(mockContext.spotify, null, 2)}
@@ -297,7 +437,10 @@ ${JSON.stringify(exampleResponse, null, 2)}`;
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json() as { logs: DailyLog[]; personality?: CoachPersonality };
+    const body = (await req.json()) as {
+      logs: DailyLog[];
+      personality?: CoachPersonality;
+    };
     const { logs, personality = "analytical" } = body;
 
     if (!logs || logs.length === 0) {
@@ -306,7 +449,10 @@ export async function POST(req: NextRequest) {
 
     const apiKey = process.env.CLAUDE_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "CLAUDE_KEY not configured on server" }, { status: 500 });
+      return NextResponse.json(
+        { error: "CLAUDE_KEY not configured on server" },
+        { status: 500 },
+      );
     }
 
     const client = new Anthropic({ apiKey });
@@ -337,7 +483,10 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: "The AI returned an incomplete insights response. Please try again." },
+      {
+        error:
+          "The AI returned an incomplete insights response. Please try again.",
+      },
       { status: 502 },
     );
   } catch (err: unknown) {
