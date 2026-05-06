@@ -1,18 +1,37 @@
 {
   "cli": {
-    "version": ">= 7.0.0"
+    "version": ">= 7.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "simulator": false,
+        "resourceClass": "m-medium"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "ios": {
+        "simulator": false,
+        "resourceClass": "m-medium"
+      }
     },
-    "production": {}
+    "production": {
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleTeamId": "REPLACE_WITH_APPLE_TEAM_ID",
+        "appleId": "REPLACE_WITH_APPLE_ID_EMAIL",
+        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID"
+      }
+    }
   }
 }
