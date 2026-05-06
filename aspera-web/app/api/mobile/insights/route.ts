@@ -1,16 +1,14 @@
-// Browser-auth insights route. Dashboard calls this with the Supabase session
-// cookie. Mobile uses /api/mobile/insights instead (bearer auth).
+// Mobile insights endpoint. The React Native app calls this with
+// `Authorization: Bearer ${MOBILE_API_SECRET}` instead of a Supabase session
+// (mobile auth lands in DOM-12). Otherwise identical to /api/insights.
 
 import { NextRequest, NextResponse } from "next/server";
 import { DailyLog } from "@/types";
-import { requireBrowserAuth } from "@/lib/api/auth";
+import { requireMobileAuth } from "@/lib/api/auth";
 import { runInsights, type CoachPersonality } from "@/lib/api/insights";
 
-// Re-export so existing imports `import { CoachPersonality } from ".../insights/route"` keep working.
-export type { CoachPersonality };
-
 export async function POST(req: NextRequest) {
-  const denied = await requireBrowserAuth();
+  const denied = requireMobileAuth(req);
   if (denied) return denied;
 
   try {
@@ -30,7 +28,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json(result.data);
   } catch (err: unknown) {
-    console.error("[/api/insights] error:", err);
+    console.error("[/api/mobile/insights] error:", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Internal server error" },
       { status: 500 },

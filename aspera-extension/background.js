@@ -103,10 +103,17 @@ async function syncToFirebase(dayKey, dayData) {
     updatedAt: Date.now(),
   };
 
+  // Production deploys gate /api/browsing on a shared secret. Operator stores
+  // it in chrome.storage.local under `asperaSecret` (one-time setup — see
+  // README). In dev (no secret set on the server), the header is harmless.
+  const { asperaSecret } = await chrome.storage.local.get("asperaSecret");
+  const headers = { "Content-Type": "application/json" };
+  if (asperaSecret) headers["X-Aspera-Extension-Secret"] = asperaSecret;
+
   try {
     const res = await fetch(ASPERA_API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(payload),
     });
     if (res.ok) {

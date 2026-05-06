@@ -1,17 +1,14 @@
-// Browser-auth search route. Dashboard calls this with the Supabase session
-// cookie. Mobile uses /api/mobile/search instead (bearer auth).
+// Mobile search endpoint. The React Native app calls this with
+// `Authorization: Bearer ${MOBILE_API_SECRET}` instead of a Supabase session
+// (mobile auth lands in DOM-12). Otherwise identical to /api/search.
 
 import { NextRequest, NextResponse } from "next/server";
 import { DailyLog } from "@/types";
-import type { SearchResult, SearchResponse } from "@/types/search";
-import { requireBrowserAuth } from "@/lib/api/auth";
+import { requireMobileAuth } from "@/lib/api/auth";
 import { runSearch } from "@/lib/api/search";
 
-// Keep the historical re-exports so existing client code (`import { SearchResponse } from ".../search/route"`) keeps working.
-export type { SearchResult, SearchResponse };
-
 export async function POST(req: NextRequest) {
-  const denied = await requireBrowserAuth();
+  const denied = requireMobileAuth(req);
   if (denied) return denied;
 
   try {
@@ -25,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
     return NextResponse.json(result.data);
   } catch (err: unknown) {
-    console.error("[/api/search] error:", err);
+    console.error("[/api/mobile/search] error:", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Internal server error" },
       { status: 500 },

@@ -1,8 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import Expo from "expo-server-sdk";
+// Vercel cron hits this endpoint twice a day (see vercel.json) to send the
+// morning and evening push notifications. Tokens come from Supabase
+// `push_tokens`; auth is via `Authorization: Bearer ${CRON_SECRET}`.
 
-const TOKENS_FILE = "/tmp/aspera-push-tokens.json";
+import { NextRequest, NextResponse } from "next/server";
+import Expo from "expo-server-sdk";
+import { createServiceClient } from "@/lib/supabase/server";
 
 const MESSAGES = {
   morning: {
@@ -16,7 +18,8 @@ const MESSAGES = {
 } as const;
 
 export async function GET(req: NextRequest) {
-  // Verify Vercel cron secret
+  // Verify Vercel cron secret. Required in production; optional in dev so
+  // local curls work without setting up the env var.
   const cronSecret = process.env.CRON_SECRET;
   if (cronSecret) {
     const authHeader = req.headers.get("authorization");
@@ -30,27 +33,34 @@ export async function GET(req: NextRequest) {
     | "evening";
   const message = MESSAGES[type] ?? MESSAGES.evening;
 
-  let tokens: string[] = [];
-  try {
-    const raw = await fs.readFile(TOKENS_FILE, "utf8");
-    tokens = JSON.parse(raw) as string[];
-  } catch {
-    // no tokens registered yet
+  // Pull all registered Expo tokens from Supabase.
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("push_tokens")
+    .select("expo_token");
+
+  if (error) {
+    console.error("[/api/push/cron] supabase select error:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  const tokens = (data ?? [])
+    .map((row) => row.expo_token as string)
+    .filter(
+      (t): t is string => typeof t === "string" && Expo.isExpoPushToken(t),
+    );
 
   if (tokens.length === 0) {
     return NextResponse.json({ sent: 0, message: "No tokens registered" });
   }
 
   const expo = new Expo();
-  const messages = tokens
-    .filter((token) => Expo.isExpoPushToken(token))
-    .map((token) => ({
-      to: token,
-      sound: "default" as const,
-      title: message.title,
-      body: message.body,
-    }));
+  const messages = tokens.map((token) => ({
+    to: token,
+    sound: "default" as const,
+    title: message.title,
+    body: message.body,
+  }));
 
   let sent = 0;
   const chunks = expo.chunkPushNotifications(messages);
