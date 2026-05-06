@@ -15,15 +15,7 @@ export function useInsights() {
   }, []);
 
   const generate = useCallback(
-    async (
-      apiKey: string,
-      logs: DailyLog[],
-      personality: CoachPersonality = "analytical",
-    ) => {
-      if (!apiKey) {
-        setError("Add your Claude API key in Settings first.");
-        return;
-      }
+    async (logs: DailyLog[], personality: CoachPersonality = "analytical") => {
       if (logs.length === 0) {
         setError("Log at least one day of data first.");
         return;
@@ -31,7 +23,7 @@ export function useInsights() {
       setLoading(true);
       setError(null);
       try {
-        const result = await generateInsights(apiKey, logs, personality);
+        const result = await generateInsights(logs, personality);
         setInsights(result);
         await saveInsights(result);
       } catch (e: unknown) {

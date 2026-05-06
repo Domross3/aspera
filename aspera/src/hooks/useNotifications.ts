@@ -8,7 +8,12 @@ const PUSH_TOKEN_KEY = "aspera_push_token";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
+    // shouldShowAlert deprecated in expo-notifications 0.32+; replaced by
+    // shouldShowBanner + shouldShowList. Keeping shouldShowAlert true for
+    // back-compat during transition.
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),

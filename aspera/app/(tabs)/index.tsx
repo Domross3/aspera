@@ -71,12 +71,6 @@ export default function TodayScreen() {
   }, [todayLog?.output.tasksCompleted]);
 
   const handleInterceptorFeeling = async (feeling: string) => {
-    if (!settings.claudeApiKey) {
-      setReappraisal(
-        "You are not alone in this. Stand up, walk to the nearest window, and take three slow breaths.",
-      );
-      return;
-    }
     setReappraisalLoading(true);
     try {
       const bigRocks = todayLog?.bigRocks ?? [];
@@ -89,7 +83,6 @@ export default function TodayScreen() {
         avgEnergy: todayLog?.output.energyRating ?? 5,
       });
       const result = await generateAnxiousReappraisal(
-        settings.claudeApiKey,
         feeling,
         bigRocks,
         cohort,
@@ -122,24 +115,14 @@ export default function TodayScreen() {
   }, []);
 
   const fetchRecommendation = async () => {
-    if (!settings.claudeApiKey) {
-      setRecommendation(
-        "Add your Claude API key in Settings to get AI recommendations.",
-      );
-      return;
-    }
     setRecLoading(true);
     try {
-      const rec = await getTodayRecommendation(
-        settings.claudeApiKey,
-        todayLog,
-        recentLogs,
-      );
+      const rec = await getTodayRecommendation(todayLog, recentLogs);
       setRecommendation(rec);
       await saveTodayRec(todayId(), rec);
     } catch {
       setRecommendation(
-        "Could not generate recommendation. Check your API key.",
+        "Could not generate recommendation. Check that the server is reachable.",
       );
     } finally {
       setRecLoading(false);

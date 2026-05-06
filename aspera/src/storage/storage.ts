@@ -58,7 +58,6 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
 export async function getSettings(): Promise<AppSettings> {
   const raw = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
   const defaults: AppSettings = {
-    claudeApiKey: "",
     onboardingComplete: false,
     moodNotificationsEnabled: false,
     hiddenLogSections: [],

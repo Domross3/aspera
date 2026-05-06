@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { callClaudeViaProxy } from "./claudeProxy";
 import { DailyLog, InsightsResponse } from "../types";
 import { getMockContext, MockContext, CohortTelemetry } from "../lib/mockData";
 import {
@@ -445,11 +445,9 @@ RETRY FORMAT RULES:
 }
 
 export async function generateInsights(
-  apiKey: string,
   logs: DailyLog[],
   personality: CoachPersonality = "analytical",
 ): Promise<InsightsResponse> {
-  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const mockContext = getMockContext();
 
   // Build system prompt with optional self-compassion layer
@@ -463,7 +461,7 @@ export async function generateInsights(
   let lastRawResponse = "";
 
   for (let attempt = 0; attempt < prompts.length; attempt += 1) {
-    const message = await client.messages.create({
+    const message = await callClaudeViaProxy({
       model: "claude-sonnet-4-6",
       max_tokens: maxTokens[attempt],
       temperature: personality === "unserious" ? 0.2 : 0,
@@ -498,11 +496,9 @@ export async function generateInsights(
 // ── Today Recommendation ────────────────────────────────────────────────
 
 export async function getTodayRecommendation(
-  apiKey: string,
   log: DailyLog | null,
   recentLogs: DailyLog[],
 ): Promise<string> {
-  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const mockContext = getMockContext();
   const latestIntegrationSummary = getLatestIntegrationSummary();
 
@@ -521,7 +517,7 @@ export async function getTodayRecommendation(
       ? `\nToday's Big Rocks (stated priorities): ${context.bigRocks.join(", ")}`
       : "";
 
-  const message = await client.messages.create({
+  const message = await callClaudeViaProxy({
     model: "claude-sonnet-4-6",
     max_tokens: 150,
     system: `You are a terse personal performance coach. ${toneDirective} No JSON, no markdown, no preamble. Reference the user's actual data.`,
@@ -545,14 +541,11 @@ Give one sentence recommendation for maximizing performance today.`,
 // ── Anxious Reappraisal ──────────────────────────────────────────────────
 
 export async function generateAnxiousReappraisal(
-  apiKey: string,
   feeling: string,
   bigRocks: string[],
   cohortTelemetry: CohortTelemetry,
 ): Promise<string> {
-  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-
-  const message = await client.messages.create({
+  const message = await callClaudeViaProxy({
     model: "claude-sonnet-4-6",
     max_tokens: 150,
     temperature: 0.3,

@@ -35,11 +35,11 @@ const EXAMPLE_QUERIES = [
   "Best days for deep work?",
 ];
 
-interface Props {
-  apiKey: string;
-}
+// SearchBar no longer takes an apiKey — Claude calls go through
+// /api/mobile/claude on the server (see claudeProxy.ts).
+type Props = Record<string, never>;
 
-export default function SearchBar({ apiKey }: Props) {
+export default function SearchBar(_props: Props) {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SearchResponse | null>(null);
@@ -54,7 +54,7 @@ export default function SearchBar({ apiKey }: Props) {
     setLoading(true);
 
     try {
-      const response = await executeSearch({ query: q }, apiKey);
+      const response = await executeSearch({ query: q });
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 
       if (response.sampleSize === 0) {

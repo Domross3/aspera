@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { callClaudeViaProxy } from "../api/claudeProxy";
 import type { SearchQuery, SearchResponse } from "../types/search";
 import { getLogsForQuery } from "./searchDataRetrieval";
 import { buildSearchPrompt } from "./searchPromptBuilder";
@@ -123,15 +123,7 @@ export function clearSearchCache(): void {
 
 export async function executeSearch(
   searchQuery: SearchQuery,
-  apiKey: string,
 ): Promise<SearchResponse> {
-  const trimmedKey = apiKey?.trim();
-  if (!trimmedKey) {
-    return createErrorResponse(
-      "A Claude API key is required before search can run.",
-    );
-  }
-
   const trimmedQuery = searchQuery.query.trim();
   if (!trimmedQuery) {
     return createErrorResponse("Enter a question to search your logs.");
@@ -156,12 +148,8 @@ export async function executeSearch(
     }
 
     const prompt = buildSearchPrompt(trimmedQuery, logs);
-    const client = new Anthropic({
-      apiKey: trimmedKey,
-      dangerouslyAllowBrowser: true,
-    });
 
-    const message = await client.messages.create({
+    const message = await callClaudeViaProxy({
       model: SEARCH_MODEL,
       max_tokens: SEARCH_MAX_TOKENS,
       temperature: 0,
@@ -191,14 +179,14 @@ export async function executeSearch(
     });
 
     const rawText = extractTextBlocks(message.content);
-    const usage = message.usage as {
+    const usage = (message.usage ?? {}) as {
       input_tokens?: number;
       output_tokens?: number;
       cache_creation_input_tokens?: number;
       cache_read_input_tokens?: number;
     };
     console.log(
-      `[search] stop_reason=${message.stop_reason} tokens_in=${usage?.input_tokens} tokens_out=${usage?.output_tokens} cache_write=${usage?.cache_creation_input_tokens ?? 0} cache_read=${usage?.cache_read_input_tokens ?? 0} chars=${rawText.length}`,
+      `[search] stop_reason=${message.stop_reason} tokens_in=${usage.input_tokens} tokens_out=${usage.output_tokens} cache_write=${usage.cache_creation_input_tokens ?? 0} cache_read=${usage.cache_read_input_tokens ?? 0} chars=${rawText.length}`,
     );
     console.log("[search] raw response:", rawText);
 

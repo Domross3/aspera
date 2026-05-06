@@ -64,7 +64,7 @@ export default function InsightsScreen() {
 
   const handleGenerate = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await generate(settings.claudeApiKey, recentLogs, personality);
+    await generate(recentLogs, personality);
   };
 
   const handlePersonality = (p: CoachPersonality) => {
@@ -106,7 +106,7 @@ export default function InsightsScreen() {
           </Text>
 
           {/* Natural language search */}
-          <SearchBar apiKey={settings.claudeApiKey} />
+          <SearchBar />
 
           {/* Personality selector */}
           <SectionLabel label="Coaching Style" />

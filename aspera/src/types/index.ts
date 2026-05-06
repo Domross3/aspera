@@ -127,7 +127,9 @@ export interface NotificationSettings {
 }
 
 export interface AppSettings {
-  claudeApiKey: string;
+  // claudeApiKey removed: Claude calls go through aspera-web's
+  // /api/mobile/claude proxy. Mobile only ships a bearer secret via
+  // EXPO_PUBLIC_MOBILE_API_SECRET, baked at build time.
   onboardingComplete: boolean;
   moodNotificationsEnabled: boolean;
   hiddenLogSections: LogSectionId[];

@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   Switch,
@@ -56,20 +55,10 @@ export default function SettingsScreen() {
     loading: integrationsLoading,
     refreshFromMocks,
   } = useIntegrations();
-  const [apiKeyInput, setApiKeyInput] = useState("");
-  const [saved, setSaved] = useState(false);
   const [refreshed, setRefreshed] = useState(false);
 
-  React.useEffect(() => {
-    if (!loading) setApiKeyInput(settings.claudeApiKey);
-  }, [loading, settings.claudeApiKey]);
-
-  const handleSaveKey = async () => {
-    await update({ claudeApiKey: apiKeyInput.trim() });
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  };
+  // Claude API key UI removed — the mobile app no longer holds the key.
+  // All Claude calls go through the aspera-web `/api/mobile/claude` proxy.
 
   const handleRefreshIntegrations = async () => {
     await refreshFromMocks();
@@ -312,40 +301,6 @@ export default function SettingsScreen() {
               thumbColor={COLORS.text}
             />
           </View>
-        </GradientCard>
-
-        {/* API Key */}
-        <SectionLabel label="Claude API Key" />
-        <GradientCard style={{ marginBottom: SPACING.lg }}>
-          <Text
-            style={[
-              TYPOGRAPHY.caption,
-              { color: COLORS.textSecondary, marginBottom: SPACING.sm },
-            ]}
-          >
-            Required to generate AI insights. Your key is stored locally only.
-          </Text>
-          <TextInput
-            value={apiKeyInput}
-            onChangeText={setApiKeyInput}
-            placeholder="sk-ant-..."
-            placeholderTextColor={COLORS.textMuted}
-            style={[styles.input, TYPOGRAPHY.body as object]}
-            autoCapitalize="none"
-            autoCorrect={false}
-            onSubmitEditing={handleSaveKey}
-          />
-          <TouchableOpacity
-            style={[styles.button, saved && styles.buttonSuccess]}
-            onPress={handleSaveKey}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={[TYPOGRAPHY.subtitle as object, { color: COLORS.text }]}
-            >
-              {saved ? "✓ Saved" : "Save Key"}
-            </Text>
-          </TouchableOpacity>
         </GradientCard>
 
         {/* About */}
