@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
-    return NextResponse.json(result.value);
+    return NextResponse.json(result.data);
   } catch (error: any) {
     console.error("Search API Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
