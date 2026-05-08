@@ -4,7 +4,7 @@
 // Supabase Auth. Click the link → hits /auth/callback → exchanges the code
 // for a session cookie → redirects to /log.
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 
@@ -14,6 +14,35 @@ export default function LoginPage() {
     "idle",
   );
   const [error, setError] = useState<string | null>(null);
+
+  // Handle implicit-flow magic links: tokens arrive in the URL fragment
+  // (#access_token=...&refresh_token=...) when the link was minted via
+  // auth.admin.generateLink, or when the project's flow type defaults to
+  // implicit. The /auth/callback route handler can't see fragments, so it
+  // redirects here with ?error=missing_code and the fragment passes through.
+  // Pick the tokens up here, write the session, bounce to the dashboard.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hash = window.location.hash;
+    if (!hash.includes("access_token=")) return;
+
+    const params = new URLSearchParams(hash.slice(1));
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    if (!access_token || !refresh_token) return;
+
+    const supabase = createClient();
+    supabase.auth
+      .setSession({ access_token, refresh_token })
+      .then(({ error }) => {
+        if (error) {
+          setError(error.message);
+          setStatus("error");
+          return;
+        }
+        window.location.replace("/log");
+      });
+  }, []);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
