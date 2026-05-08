@@ -2,36 +2,29 @@
 // `Authorization: Bearer ${MOBILE_API_SECRET}` instead of a Supabase session
 // (mobile auth lands in DOM-12). Otherwise identical to /api/insights.
 
-import { NextRequest, NextResponse } from "next/server";
-import { DailyLog } from "@/types";
-import { requireMobileAuth } from "@/lib/api/auth";
-import { runInsights, type CoachPersonality } from "@/lib/api/insights";
+import { NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 
-export async function POST(req: NextRequest) {
-  const denied = requireMobileAuth(req);
-  if (denied) return denied;
+const anthropic = new Anthropic({ apiKey: process.env.CLAUDE_KEY });
+
+export async function POST(req: Request) {
+  // Verify the shared mobile secret
+  const authHeader = req.headers.get('Authorization');
+  if (authHeader !== `Bearer ${process.env.MOBILE_API_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
   try {
-    const body = (await req.json()) as {
-      logs: DailyLog[];
-      personality?: CoachPersonality;
-    };
-    const result = await runInsights(
-      body.logs,
-      body.personality ?? "analytical",
-    );
-    if (!result.ok) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: result.status },
-      );
-    }
-    return NextResponse.json(result.data);
-  } catch (err: unknown) {
-    console.error("[/api/mobile/insights] error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
-      { status: 500 },
-    );
+    const { prompt, system, max_tokens } = await req.json();
+    const msg = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: max_tokens || 1024,
+      system: system,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    return NextResponse.json(msg);
+  } catch (error: any) {
+    console.error('Anthropic API Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

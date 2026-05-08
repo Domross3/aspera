@@ -40,6 +40,7 @@ export async function callClaudeViaProxy(
 ): Promise<ClaudeProxyResponse> {
   const baseUrl = getEnv("EXPO_PUBLIC_API_URL");
   const secret = getEnv("EXPO_PUBLIC_MOBILE_API_SECRET");
+
   if (!baseUrl) {
     throw new Error(
       "EXPO_PUBLIC_API_URL is not configured. Set it in aspera/.env or eas.json before building.",
@@ -50,6 +51,27 @@ export async function callClaudeViaProxy(
       "EXPO_PUBLIC_MOBILE_API_SECRET is not configured. Set it in aspera/.env or eas.json before building.",
     );
   }
+
+  // Extract data from the Anthropic-style params object
+  const prompt = params.messages?.[0]?.content || "";
+  const system = params.system || "";
+  const max_tokens = params.max_tokens || 1024;
+
+  const response = await fetch(`${baseUrl}/api/mobile/insights`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${secret}`
+    },
+    body: JSON.stringify({ prompt, system, max_tokens })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Insights API error: ${response.status}`);
+  }
+
+  return response.json();
+}
 
   const res = await fetch(`${baseUrl}/api/mobile/claude`, {
     method: "POST",
