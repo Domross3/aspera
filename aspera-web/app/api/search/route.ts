@@ -9,18 +9,22 @@ import { runSearch } from "@/lib/api/search";
 
 // Keep the historical re-exports so existing client code (`import { SearchResponse } from ".../search/route"`) keeps working.
 export type { SearchResult, SearchResponse };
-import { NextResponse } from 'next/server';
-import { createClient } from '@/src/lib/supabase/server';
+import { NextResponse } from "next/server";
+import { createClient } from "../../../src/lib/supabase/server";
 export async function POST(req: Request) {
   // --- ADD THIS AUTH CHECK TO THE TOP ---
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized: No Supabase session' }, { status: 401 });
+    return NextResponse.json(
+      { error: "Unauthorized: No Supabase session" },
+      { status: 401 },
+    );
   }
   // --------------------------------------
-
 
   try {
     const body = (await req.json()) as { query: string; logs: DailyLog[] };

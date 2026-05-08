@@ -1,12 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 import { runSearch } from "@/lib/api/search";
 import { DailyLog } from "@/types";
 
 export async function POST(req: Request) {
   // Verify the shared mobile secret
-  const authHeader = req.headers.get('Authorization');
+  const authHeader = req.headers.get("Authorization");
   if (authHeader !== `Bearer ${process.env.MOBILE_API_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     }
     return NextResponse.json(result.value);
   } catch (error: any) {
-    console.error('Search API Error:', error);
+    console.error("Search API Error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
