@@ -12,13 +12,19 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import * as Notifications from "expo-notifications";
 import { useSettings } from "../../src/hooks/useSettings";
 import { useIntegrations } from "../../src/hooks/useIntegrations";
 import {
   clearAllLogs,
+  clearAllMoodCheckIns,
   clearInsights,
   clearIntegrationData,
 } from "../../src/storage/storage";
+import {
+  cancelAllQuickMoodNotifications,
+  ensureQuickMoodSchedule,
+} from "../../src/lib/quickMoodNotifications";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
@@ -67,10 +73,82 @@ export default function SettingsScreen() {
     setTimeout(() => setRefreshed(false), 2000);
   };
 
+  const handleToggleQuickMood = async (enabled: boolean) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const nextSettings = {
+      ...settings.notificationSettings,
+      quickMoodEnabled: enabled,
+    };
+
+    if (enabled) {
+      // Request OS permission if needed before scheduling
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== "granted") {
+        const result = await Notifications.requestPermissionsAsync();
+        if (result.status !== "granted") {
+          Alert.alert(
+            "Notifications disabled",
+            "Enable notifications for Aspera in iOS Settings to receive quick mood check-ins.",
+          );
+          return;
+        }
+      }
+      await update({ notificationSettings: nextSettings });
+      await ensureQuickMoodSchedule(nextSettings);
+    } else {
+      await update({ notificationSettings: nextSettings });
+      await cancelAllQuickMoodNotifications();
+    }
+  };
+
+  const handleCycleFrequency = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Cycle through 2 → 3 → 4 → 6 → 2
+    const current = settings.notificationSettings.quickMoodFrequency;
+    const cycle = [2, 3, 4, 6];
+    const next = cycle[(cycle.indexOf(current) + 1) % cycle.length] ?? 3;
+    const nextSettings = {
+      ...settings.notificationSettings,
+      quickMoodFrequency: next,
+    };
+    await update({ notificationSettings: nextSettings });
+    if (nextSettings.quickMoodEnabled) {
+      await cancelAllQuickMoodNotifications();
+      await ensureQuickMoodSchedule(nextSettings);
+    }
+  };
+
+  const handleSendTestMoodNotification = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== "granted") {
+      const result = await Notifications.requestPermissionsAsync();
+      if (result.status !== "granted") {
+        Alert.alert(
+          "Notifications disabled",
+          "Enable notifications for Aspera in iOS Settings to send a test.",
+        );
+        return;
+      }
+    }
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Pulse check",
+        body: "How are you right now? (test notification)",
+        data: { kind: "quick_mood_check" },
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+        seconds: 2,
+      },
+    });
+  };
+
   const handleClearData = () => {
     Alert.alert(
       "Clear All Data",
-      "This will delete all logs, cached insights, and integration cache. This cannot be undone.",
+      "This will delete all logs, mood check-ins, cached insights, and integration cache. This cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -78,6 +156,7 @@ export default function SettingsScreen() {
           style: "destructive",
           onPress: async () => {
             await clearAllLogs();
+            await clearAllMoodCheckIns();
             await clearInsights();
             await clearIntegrationData();
             await Haptics.notificationAsync(
@@ -301,6 +380,74 @@ export default function SettingsScreen() {
               thumbColor={COLORS.text}
             />
           </View>
+        </GradientCard>
+
+        {/* Quick mood check-ins */}
+        <SectionLabel label="Quick Mood Check-ins" />
+        <GradientCard style={{ marginBottom: SPACING.lg }}>
+          <Text
+            style={[
+              TYPOGRAPHY.caption,
+              { color: COLORS.textSecondary, marginBottom: SPACING.md },
+            ]}
+          >
+            Random notifications throughout the day for a 10-second mood +
+            energy capture. Scheduled locally on your device.
+          </Text>
+          <View style={[styles.row, { marginBottom: SPACING.md }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Enable
+              </Text>
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+                {settings.notificationSettings.quickMoodWindowStart} –{" "}
+                {settings.notificationSettings.quickMoodWindowEnd} · respects
+                quiet hours
+              </Text>
+            </View>
+            <Switch
+              value={settings.notificationSettings.quickMoodEnabled}
+              onValueChange={handleToggleQuickMood}
+              trackColor={{ false: COLORS.border, true: COLORS.accent }}
+              thumbColor={COLORS.text}
+            />
+          </View>
+          <TouchableOpacity
+            onPress={handleCycleFrequency}
+            activeOpacity={0.7}
+            disabled={!settings.notificationSettings.quickMoodEnabled}
+            style={[
+              styles.row,
+              { opacity: settings.notificationSettings.quickMoodEnabled ? 1 : 0.5 },
+            ]}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Frequency
+              </Text>
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+                Tap to cycle: 2 / 3 / 4 / 6 per day
+              </Text>
+            </View>
+            <Text style={[TYPOGRAPHY.body, { color: COLORS.accent }]}>
+              {settings.notificationSettings.quickMoodFrequency}× / day
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleSendTestMoodNotification}
+            activeOpacity={0.7}
+            style={[styles.row, { marginTop: SPACING.md }]}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Send test notification
+              </Text>
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+                Fires in 2 seconds — for verifying the modal works
+              </Text>
+            </View>
+            <Text style={[TYPOGRAPHY.body, { color: COLORS.accent }]}>→</Text>
+          </TouchableOpacity>
         </GradientCard>
 
         {/* About */}

@@ -91,8 +91,9 @@ export interface MoodCheckIn {
   timestamp: number;
   mood: number; // 1–5
   energy: number; // 1–5
-  stress: number; // 1–5
+  stress: number; // 1–5 (defaults to 3/neutral when source = "quick")
   note?: string;
+  source?: "quick" | "full"; // quick = notification-triggered capture, full = manual Mood tab entry
 }
 
 export const MOOD_EMOJIS: Record<number, string> = {
@@ -124,6 +125,12 @@ export interface NotificationSettings {
   morningTime: string; // "HH:MM" local (display only — cron is server-side)
   eveningEnabled: boolean;
   eveningTime: string;
+  // Quick mood capture — randomized local notifications throughout the waking
+  // window. Scheduled on-device via expo-notifications (no server cron).
+  quickMoodEnabled: boolean;
+  quickMoodFrequency: number; // notifications per day (default 3)
+  quickMoodWindowStart: string; // "HH:MM" local, default "09:00"
+  quickMoodWindowEnd: string; // "HH:MM" local, default "21:00"
 }
 
 export interface AppSettings {

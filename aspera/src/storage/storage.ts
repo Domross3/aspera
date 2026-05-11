@@ -67,9 +67,24 @@ export async function getSettings(): Promise<AppSettings> {
       morningTime: "08:00",
       eveningEnabled: true,
       eveningTime: "21:00",
+      quickMoodEnabled: false,
+      quickMoodFrequency: 3,
+      quickMoodWindowStart: "09:00",
+      quickMoodWindowEnd: "21:00",
     },
   };
-  return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+  if (!raw) return defaults;
+  const stored = JSON.parse(raw) as Partial<AppSettings>;
+  // Deep-merge notificationSettings so older saved versions get the new
+  // quickMood* defaults instead of `undefined`.
+  return {
+    ...defaults,
+    ...stored,
+    notificationSettings: {
+      ...defaults.notificationSettings,
+      ...(stored.notificationSettings ?? {}),
+    },
+  };
 }
 
 // ─── Insights Cache ────────────────────────────────────────────────────────
@@ -181,6 +196,12 @@ export async function getMoodCheckIns(date: string): Promise<MoodCheckIn[]> {
   const key = `${STORAGE_KEYS.MOOD_PREFIX}${date}`;
   const raw = await AsyncStorage.getItem(key);
   return raw ? JSON.parse(raw) : [];
+}
+
+export async function clearAllMoodCheckIns(): Promise<void> {
+  const allKeys = await AsyncStorage.getAllKeys();
+  const moodKeys = allKeys.filter((k) => k.startsWith(STORAGE_KEYS.MOOD_PREFIX));
+  if (moodKeys.length > 0) await AsyncStorage.multiRemove(moodKeys);
 }
 
 export async function getRecentMoodCheckIns(days = 7): Promise<MoodCheckIn[]> {
