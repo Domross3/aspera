@@ -1,12 +1,15 @@
 import "react-native-url-polyfill/auto";
 import { useEffect } from "react";
-import { Stack, useRouter } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { View, ActivityIndicator } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as Notifications from "expo-notifications";
 import * as Updates from "expo-updates";
 import { useNotifications } from "../src/hooks/useNotifications";
 import { useSettings } from "../src/hooks/useSettings";
+import { useAuth } from "../src/hooks/useAuth";
+import { COLORS } from "../src/constants/theme";
 import {
   QUICK_MOOD_NOTIFICATION_KIND,
   ensureQuickMoodSchedule,
@@ -14,8 +17,23 @@ import {
 
 function AppLayout() {
   const router = useRouter();
+  const segments = useSegments();
   const { settings, loading: settingsLoading } = useSettings();
+  const { session, loading: authLoading } = useAuth();
   useNotifications();
+
+  // Auth gate: redirect to /sign-in when there's no session, and out of
+  // /sign-in once a session appears. Skip while initial auth check is in
+  // flight to avoid a flash of the login screen for already-signed-in users.
+  useEffect(() => {
+    if (authLoading) return;
+    const onSignInScreen = (segments[0] as string | undefined) === "sign-in";
+    if (!session && !onSignInScreen) {
+      router.replace("/sign-in" as never);
+    } else if (session && onSignInScreen) {
+      router.replace("/(tabs)" as never);
+    }
+  }, [session, authLoading, segments, router]);
 
   // Replenish the quick-mood notification schedule on app launch. Cheap if
   // already populated (helper checks scheduled count); only re-schedules
@@ -71,11 +89,30 @@ function AppLayout() {
     return () => subscription.remove();
   }, [router]);
 
+  // Splash placeholder while the persisted Supabase session is being
+  // hydrated from AsyncStorage. Prevents a flash of /sign-in for users
+  // who are already authenticated.
+  if (authLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: COLORS.background,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <ActivityIndicator color={COLORS.accent} />
+      </View>
+    );
+  }
+
   return (
     <>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="sign-in" />
         <Stack.Screen
           name="quick-mood"
           options={{

@@ -16,13 +16,17 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://aspera-web.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://aspera-web.vercel.app",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://epfewtmwfpnbkwxcnohb.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_FiqQktd3AKrPhjBfMhMW5w_JpQ_Mt5v"
       }
     },
     "production": {
       "channel": "production",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://aspera-web.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://aspera-web.vercel.app",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://epfewtmwfpnbkwxcnohb.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_FiqQktd3AKrPhjBfMhMW5w_JpQ_Mt5v"
       }
     }
   }

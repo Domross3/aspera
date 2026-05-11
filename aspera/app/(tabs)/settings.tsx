@@ -15,6 +15,7 @@ import * as Haptics from "expo-haptics";
 import * as Notifications from "expo-notifications";
 import { useSettings } from "../../src/hooks/useSettings";
 import { useIntegrations } from "../../src/hooks/useIntegrations";
+import { useAuth } from "../../src/hooks/useAuth";
 import {
   clearAllLogs,
   clearAllMoodCheckIns,
@@ -143,6 +144,26 @@ export default function SettingsScreen() {
         seconds: 2,
       },
     });
+  };
+
+  const { session, signOut } = useAuth();
+
+  const handleSignOut = () => {
+    Alert.alert(
+      "Sign out?",
+      "You'll need to sign in again to access your data. Local cached data stays until you Clear All Data.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign out",
+          style: "destructive",
+          onPress: async () => {
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            await signOut();
+          },
+        },
+      ],
+    );
   };
 
   const handleClearData = () => {
@@ -476,6 +497,32 @@ export default function SettingsScreen() {
             </Text>
           </View>
         </GradientCard>
+
+        {/* Account */}
+        {session && (
+          <>
+            <SectionLabel label="Account" />
+            <GradientCard style={{ marginBottom: SPACING.lg }}>
+              <View style={[styles.row, { marginBottom: SPACING.sm }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                    Signed in
+                  </Text>
+                  <Text
+                    style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}
+                  >
+                    {session.user.email ?? "Apple ID"}
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity onPress={handleSignOut} activeOpacity={0.7}>
+                <Text style={[TYPOGRAPHY.body, { color: COLORS.danger }]}>
+                  Sign out
+                </Text>
+              </TouchableOpacity>
+            </GradientCard>
+          </>
+        )}
 
         {/* Danger Zone */}
         <SectionLabel label="Data" />

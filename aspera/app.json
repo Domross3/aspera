@@ -15,6 +15,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.dominicross.aspera",
+      "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -43,7 +44,9 @@
           "color": "#6C63FF",
           "sounds": []
         }
-      ]
+      ],
+      "expo-apple-authentication",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
