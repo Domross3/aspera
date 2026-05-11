@@ -10,22 +10,27 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../src/lib/supabase/admin";
 
 export async function POST(req: Request) {
-  // 1. Verify Extension Secret
-  const secret = req.headers.get("X-Aspera-Extension-Secret");
-  if (secret !== process.env.EXTENSION_SHARED_SECRET) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Verify Extension Secret. If EXTENSION_SHARED_SECRET is unset (local dev),
+  // accept unauthenticated POSTs so the extension can talk to a localhost
+  // Next.js without setup. In prod the env var must be set, otherwise the
+  // route is open.
+  const expected = process.env.EXTENSION_SHARED_SECRET;
+  if (expected) {
+    const secret = req.headers.get("X-Aspera-Extension-Secret");
+    if (secret !== expected) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   try {
     const payload = await req.json();
     const today = new Date().toISOString().split("T")[0];
 
-    // 2. Insert into Supabase instead of /tmp
     // Note: user_id stays null until DOM-12 auth is finished
     const { error } = await supabaseAdmin.from("browsing_sessions").insert([
       {
         date: today,
-        data: payload, // Adjust this if your schema expects a different column name
+        tabs: payload,
       },
     ]);
 
