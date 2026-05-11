@@ -62,7 +62,12 @@ export default function InsightsScreen() {
     }).start();
   }, []);
 
+  // Need at least 3 days of logs for the AI to find meaningful patterns.
+  const MIN_LOGS_FOR_INSIGHTS = 3;
+  const hasEnoughData = recentLogs.length >= MIN_LOGS_FOR_INSIGHTS;
+
   const handleGenerate = async () => {
+    if (!hasEnoughData) return;
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await generate(recentLogs, personality);
   };
@@ -148,7 +153,7 @@ export default function InsightsScreen() {
           {/* Generate button */}
           <TouchableOpacity
             onPress={handleGenerate}
-            disabled={loading}
+            disabled={loading || !hasEnoughData}
             activeOpacity={0.85}
             style={{ marginTop: SPACING.lg }}
           >
@@ -156,7 +161,10 @@ export default function InsightsScreen() {
               colors={COLORS.gradients.accent as [string, string]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={[styles.genButton, loading && { opacity: 0.6 }]}
+              style={[
+                styles.genButton,
+                (loading || !hasEnoughData) && { opacity: 0.5 },
+              ]}
             >
               {loading ? (
                 <View style={styles.loadingRow}>
@@ -165,6 +173,12 @@ export default function InsightsScreen() {
                     Analyzing your patterns...
                   </Text>
                 </View>
+              ) : !hasEnoughData ? (
+                <Text style={styles.genButtonText}>
+                  Log {MIN_LOGS_FOR_INSIGHTS - recentLogs.length} more day
+                  {MIN_LOGS_FOR_INSIGHTS - recentLogs.length === 1 ? "" : "s"}{" "}
+                  to unlock insights
+                </Text>
               ) : (
                 <Text style={styles.genButtonText}>
                   {insights

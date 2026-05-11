@@ -99,7 +99,11 @@ export default function MoodScreen() {
   const [recentCheckins, setRecentCheckins] = useState<MoodCheckIn[]>([]);
 
   const loadCheckins = useCallback(async () => {
-    await seedMockMoodData();
+    // Demo seed only runs in dev (Expo Go / dev client). Production builds
+    // start with no mood history.
+    if (__DEV__) {
+      await seedMockMoodData();
+    }
     const recent = await getRecentMoodCheckIns(14);
     setRecentCheckins(recent);
   }, []);

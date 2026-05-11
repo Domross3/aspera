@@ -24,7 +24,11 @@ export function useLogs() {
   });
 
   const reload = useCallback(async () => {
-    await seedMockDataIfEmpty();
+    // Demo seed only runs in dev (Expo Go / dev client). Production builds
+    // start empty so users see their real data accumulate over time.
+    if (__DEV__) {
+      await seedMockDataIfEmpty();
+    }
     const [today, recent, res] = await Promise.all([
       getLog(todayId()),
       getRecentLogs(7),
