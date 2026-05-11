@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 10.0.0"
+    "version": ">= 10.0.0",
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -14,21 +15,12 @@
         "resourceClass": "m-medium"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "TO_BE_FILLED_BY_SCRIPT"
+        "EXPO_PUBLIC_API_URL": "https://aspera-web.vercel.app"
       }
     },
     "production": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "TO_BE_FILLED_BY_SCRIPT"
-      }
-    }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "",
-        "ascAppId": "",
-        "appleTeamId": ""
+        "EXPO_PUBLIC_API_URL": "https://aspera-web.vercel.app"
       }
     }
   }

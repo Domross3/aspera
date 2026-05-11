@@ -52,27 +52,6 @@ export async function callClaudeViaProxy(
     );
   }
 
-  // Extract data from the Anthropic-style params object
-  const prompt = params.messages?.[0]?.content || "";
-  const system = params.system || "";
-  const max_tokens = params.max_tokens || 1024;
-
-  const response = await fetch(`${baseUrl}/api/mobile/insights`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${secret}`
-    },
-    body: JSON.stringify({ prompt, system, max_tokens })
-  });
-
-  if (!response.ok) {
-    throw new Error(`Insights API error: ${response.status}`);
-  }
-
-  return response.json();
-}
-
   const res = await fetch(`${baseUrl}/api/mobile/claude`, {
     method: "POST",
     headers: {
