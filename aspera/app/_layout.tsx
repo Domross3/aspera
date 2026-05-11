@@ -116,11 +116,13 @@ function AppLayout() {
         <Stack.Screen
           name="quick-mood"
           options={{
-            presentation: "modal",
+            // fullScreenModal — not the iOS page-sheet modal — because the
+            // page-sheet style has a hard-wired native drag-to-dismiss
+            // gesture that ignores React Navigation's gestureEnabled flag.
+            // fullScreenModal is a full-screen overlay with no native drag
+            // behavior; only the in-app "Not now" / "Save" buttons dismiss.
+            presentation: "fullScreenModal",
             animation: "slide_from_bottom",
-            // Swipe-down-to-dismiss conflicts with our slider PanResponder —
-            // iOS picks up vertical drift and partially dismisses the sheet
-            // mid-drag. The modal has an explicit "Not now" button instead.
             gestureEnabled: false,
           }}
         />
