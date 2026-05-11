@@ -301,13 +301,13 @@ export default function MoodScreen() {
                 <View style={styles.captureRow}>
                   <View style={styles.captureMoodRow}>
                     <Text style={styles.captureEmoji}>
-                      {MOOD_EMOJIS[entry.mood]}
+                      {MOOD_EMOJIS[Math.round(entry.mood)]}
                     </Text>
                     <Text style={styles.captureEmoji}>
-                      {ENERGY_EMOJIS[entry.energy]}
+                      {ENERGY_EMOJIS[Math.round(entry.energy)]}
                     </Text>
                     <Text style={styles.captureEmoji}>
-                      {STRESS_EMOJIS[entry.stress]}
+                      {STRESS_EMOJIS[Math.round(entry.stress)]}
                     </Text>
                   </View>
                   <Text style={styles.captureTime}>

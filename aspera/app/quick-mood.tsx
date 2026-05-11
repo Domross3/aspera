@@ -29,7 +29,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import RatingSlider from "../src/components/log/RatingSlider";
+import ContinuousSlider from "../src/components/common/ContinuousSlider";
 import { saveMoodCheckIn } from "../src/storage/storage";
 import { MoodCheckIn } from "../src/types";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../src/constants/theme";
@@ -107,23 +107,27 @@ export default function QuickMoodModal() {
             </Text>
           </View>
 
-          {/* Mood slider */}
+          {/* Mood slider — continuous 1.0–5.0 in 0.1 steps */}
           <View style={styles.section}>
-            <RatingSlider
+            <ContinuousSlider
               label="Mood"
               value={mood}
+              min={1}
               max={5}
+              step={0.1}
               onChange={setMood}
               accentColor={COLORS.accent}
             />
           </View>
 
-          {/* Energy slider */}
+          {/* Energy slider — continuous 1.0–5.0 in 0.1 steps */}
           <View style={styles.section}>
-            <RatingSlider
+            <ContinuousSlider
               label="Energy"
               value={energy}
+              min={1}
               max={5}
+              step={0.1}
               onChange={setEnergy}
               accentColor={COLORS.gradients.energy[0]}
             />
