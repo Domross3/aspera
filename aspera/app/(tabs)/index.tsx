@@ -368,32 +368,41 @@ export default function TodayScreen() {
             </GradientCard>
           )}
 
-          {/* Integrations */}
-          <View style={{ marginTop: SPACING.xl }}>
-            <SpotifyRecent />
-          </View>
+          {/* Integration mocks (Spotify, browsing, screen time) are demo-only
+              scaffolding for real API connections that haven't shipped yet.
+              Hide in production builds; show in dev so we can keep iterating
+              on the cards. Real integrations will gate by connection status. */}
+          {__DEV__ && (
+            <>
+              <View style={{ marginTop: SPACING.xl }}>
+                <SpotifyRecent />
+              </View>
 
-          {/* Genre insight — derived from recent logs, always shown if music data exists */}
-          {(() => {
-            const genres =
-              log?.music ??
-              recentLogs.flatMap((l) => l.music).filter((g) => g !== "none");
-            const unique = [...new Set(genres)];
-            return unique.length > 0 ? (
-              <MusicGenreInsight
-                currentGenres={unique}
-                recentLogs={recentLogs}
-              />
-            ) : null;
-          })()}
+              {/* Genre insight — derived from recent logs, always shown if music data exists */}
+              {(() => {
+                const genres =
+                  log?.music ??
+                  recentLogs
+                    .flatMap((l) => l.music)
+                    .filter((g) => g !== "none");
+                const unique = [...new Set(genres)];
+                return unique.length > 0 ? (
+                  <MusicGenreInsight
+                    currentGenres={unique}
+                    recentLogs={recentLogs}
+                  />
+                ) : null;
+              })()}
 
-          <View style={{ marginTop: SPACING.lg }}>
-            <BrowsingFocus />
-          </View>
+              <View style={{ marginTop: SPACING.lg }}>
+                <BrowsingFocus />
+              </View>
 
-          <View style={{ marginTop: SPACING.lg }}>
-            <ScreenTimeCard />
-          </View>
+              <View style={{ marginTop: SPACING.lg }}>
+                <ScreenTimeCard />
+              </View>
+            </>
+          )}
 
           {/* Inputs go lower in the layout */}
           {log && (
@@ -505,12 +514,14 @@ export default function TodayScreen() {
             </GradientCard>
           )}
 
-          <View style={{ marginTop: SPACING.xl }}>
-            <StreakCounter
-              streak={streak}
-              reservesRemaining={reservesRemaining}
-            />
-          </View>
+          {(log || recentLogs.length > 0) && (
+            <View style={{ marginTop: SPACING.xl }}>
+              <StreakCounter
+                streak={streak}
+                reservesRemaining={reservesRemaining}
+              />
+            </View>
+          )}
         </ScrollView>
       </Animated.View>
 

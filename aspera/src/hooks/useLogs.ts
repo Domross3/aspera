@@ -64,6 +64,13 @@ export function useLogs() {
       : recentLogs;
     const logIds = new Set(all.map((l) => l.id));
 
+    // Brand-new user / cleared data: no logs anywhere → streak is 0. The
+    // reserve-spending fallback below would otherwise count today + yesterday
+    // as covered-by-reserve days and produce a phantom streak.
+    if (logIds.size === 0) {
+      return { streak: 0, reservesUsedInStreak: 0 };
+    }
+
     for (let i = 0; i < 14; i++) {
       const expected = new Date();
       expected.setDate(expected.getDate() - i);
