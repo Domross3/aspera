@@ -49,7 +49,11 @@ export default function ContinuousSlider({
 }: Props) {
   const [trackWidth, setTrackWidth] = useState(0);
   const trackWidthRef = useRef(0);
-  const lastHapticValue = useRef(value);
+  // Throttle haptics to half-step boundaries (1.0, 1.5, 2.0, ...) — firing
+  // on every tenth (40 ticks across the range) reads as "rattly" even when
+  // the value tracking is smooth. 9 ticks across the range gives clear
+  // landmarks without buzzing.
+  const lastHapticBucket = useRef(Math.round(value * 2));
   // Anchor the touch in the parent view's coordinate space at grant time,
   // then use gestureState.dx (screen-space pixel delta) for moves. Avoids
   // the locationX-flips-when-finger-crosses-a-child-view bug that PanResponder
@@ -65,10 +69,10 @@ export default function ContinuousSlider({
     const next = roundToStep(raw, step, min);
     const valueClamped = Math.max(min, Math.min(max, next));
 
-    if (valueClamped !== lastHapticValue.current) {
-      // Light tick on every tenth — feels like a physical slider.
+    const hapticBucket = Math.round(valueClamped * 2);
+    if (hapticBucket !== lastHapticBucket.current) {
       Haptics.selectionAsync();
-      lastHapticValue.current = valueClamped;
+      lastHapticBucket.current = hapticBucket;
     }
     onChange(valueClamped);
   };
