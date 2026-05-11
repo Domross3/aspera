@@ -50,30 +50,41 @@ export default function ContinuousSlider({
   const [trackWidth, setTrackWidth] = useState(0);
   const trackWidthRef = useRef(0);
   const lastHapticValue = useRef(value);
+  // Anchor the touch in the parent view's coordinate space at grant time,
+  // then use gestureState.dx (screen-space pixel delta) for moves. Avoids
+  // the locationX-flips-when-finger-crosses-a-child-view bug that PanResponder
+  // has when there's an absolutely positioned thumb on top of the track.
+  const startTouchX = useRef(0);
 
-  const updateFromX = (rawX: number) => {
+  const computeAndCommit = (x: number) => {
     const w = trackWidthRef.current;
     if (w <= 0) return;
-    const x = Math.max(0, Math.min(w, rawX));
-    const ratio = x / w;
+    const clamped = Math.max(0, Math.min(w, x));
+    const ratio = clamped / w;
     const raw = min + ratio * (max - min);
     const next = roundToStep(raw, step, min);
-    const clamped = Math.max(min, Math.min(max, next));
+    const valueClamped = Math.max(min, Math.min(max, next));
 
-    if (clamped !== lastHapticValue.current) {
+    if (valueClamped !== lastHapticValue.current) {
       // Light tick on every tenth — feels like a physical slider.
       Haptics.selectionAsync();
-      lastHapticValue.current = clamped;
+      lastHapticValue.current = valueClamped;
     }
-    onChange(clamped);
+    onChange(valueClamped);
   };
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (e) => updateFromX(e.nativeEvent.locationX),
-      onPanResponderMove: (e) => updateFromX(e.nativeEvent.locationX),
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: (e) => {
+        startTouchX.current = e.nativeEvent.locationX;
+        computeAndCommit(e.nativeEvent.locationX);
+      },
+      onPanResponderMove: (_e, g) => {
+        computeAndCommit(startTouchX.current + g.dx);
+      },
     }),
   ).current;
 
@@ -108,6 +119,7 @@ export default function ContinuousSlider({
         </View>
         {trackWidth > 0 && (
           <View
+            pointerEvents="none"
             style={[
               styles.thumb,
               {
