@@ -91,6 +91,11 @@ export default function QuickMoodModal() {
             { paddingTop: insets.top + SPACING.xl, paddingBottom: insets.bottom + SPACING.xl },
           ]}
           keyboardShouldPersistTaps="handled"
+          // No iOS bounce — gives the illusion of swiping the modal down
+          // when the gesture-to-dismiss is intentionally disabled.
+          bounces={false}
+          alwaysBounceVertical={false}
+          overScrollMode="never"
         >
           {/* Header */}
           <View style={styles.header}>
