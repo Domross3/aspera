@@ -75,9 +75,16 @@ export default function ContinuousSlider({
 
   const panResponder = useRef(
     PanResponder.create({
+      // Capture handlers run before children/parents get a shot. Combined with
+      // onShouldBlockNativeResponder=true below, this tells iOS that JS owns
+      // the touch — keeps ScrollViews and modal sheet gestures from stealing
+      // mid-drag (especially when fingers drift vertically while sliding).
       onStartShouldSetPanResponder: () => true,
+      onStartShouldSetPanResponderCapture: () => true,
       onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
       onPanResponderTerminationRequest: () => false,
+      onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: (e) => {
         startTouchX.current = e.nativeEvent.locationX;
         computeAndCommit(e.nativeEvent.locationX);

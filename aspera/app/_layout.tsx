@@ -118,7 +118,10 @@ function AppLayout() {
           options={{
             presentation: "modal",
             animation: "slide_from_bottom",
-            gestureEnabled: true,
+            // Swipe-down-to-dismiss conflicts with our slider PanResponder —
+            // iOS picks up vertical drift and partially dismisses the sheet
+            // mid-drag. The modal has an explicit "Not now" button instead.
+            gestureEnabled: false,
           }}
         />
       </Stack>
