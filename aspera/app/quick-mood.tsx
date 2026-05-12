@@ -31,12 +31,15 @@ import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
 import ContinuousSlider from "../src/components/common/ContinuousSlider";
 import { saveMoodCheckIn } from "../src/storage/storage";
+import { insertMoodCheckIn } from "../src/lib/cloudStore";
+import { useAuth } from "../src/hooks/useAuth";
 import { MoodCheckIn } from "../src/types";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../src/constants/theme";
 
 export default function QuickMoodModal() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { session } = useAuth();
   const [mood, setMood] = useState(3);
   const [energy, setEnergy] = useState(3);
   const [note, setNote] = useState("");
@@ -72,7 +75,14 @@ export default function QuickMoodModal() {
       note: note.trim() || undefined,
       source: "quick",
     };
+    // Optimistic local write first so the UI feels instant and we never
+    // lose a capture to a network blip.
     await saveMoodCheckIn(checkIn);
+    if (session) {
+      insertMoodCheckIn(session.user.id, checkIn).catch((err) => {
+        console.warn("[quick-mood] cloud sync failed; cached locally", err);
+      });
+    }
     dismiss();
   };
 

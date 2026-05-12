@@ -26,6 +26,7 @@ import {
   cancelAllQuickMoodNotifications,
   ensureQuickMoodSchedule,
 } from "../../src/lib/quickMoodNotifications";
+import { wipeUserData } from "../../src/lib/cloudStore";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
@@ -169,7 +170,7 @@ export default function SettingsScreen() {
   const handleClearData = () => {
     Alert.alert(
       "Clear All Data",
-      "This will delete all logs, mood check-ins, cached insights, and integration cache. This cannot be undone.",
+      "This will permanently delete all logs and mood check-ins from your account (on this device AND on Aspera's servers), plus reset cached insights. This cannot be undone.",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -180,6 +181,14 @@ export default function SettingsScreen() {
             await clearAllMoodCheckIns();
             await clearInsights();
             await clearIntegrationData();
+            // Also wipe the cloud copy so a re-fetch doesn't repopulate.
+            if (session) {
+              try {
+                await wipeUserData(session.user.id);
+              } catch (err) {
+                console.warn("[settings] cloud wipe failed", err);
+              }
+            }
             await Haptics.notificationAsync(
               Haptics.NotificationFeedbackType.Warning,
             );

@@ -21,6 +21,11 @@ import {
   getRecentMoodCheckIns,
   seedMockMoodData,
 } from "../../src/storage/storage";
+import {
+  fetchRecentMoodCheckIns,
+  insertMoodCheckIn,
+} from "../../src/lib/cloudStore";
+import { useAuth } from "../../src/hooks/useAuth";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
@@ -91,6 +96,7 @@ function buildTrend(
 
 export default function MoodScreen() {
   const insets = useSafeAreaInsets();
+  const { session } = useAuth();
   const [mood, setMood] = useState(3);
   const [energy, setEnergy] = useState(3);
   const [stress, setStress] = useState(1);
@@ -99,14 +105,33 @@ export default function MoodScreen() {
   const [recentCheckins, setRecentCheckins] = useState<MoodCheckIn[]>([]);
 
   const loadCheckins = useCallback(async () => {
-    // Demo seed only runs in dev (Expo Go / dev client). Production builds
-    // start with no mood history.
-    if (__DEV__) {
+    // Demo seed only runs in dev (Expo Go / dev client) for unauthenticated
+    // sessions. Production builds gate everything behind sign-in.
+    if (__DEV__ && !session) {
       await seedMockMoodData();
+      const recent = await getRecentMoodCheckIns(14);
+      setRecentCheckins(recent);
+      return;
     }
-    const recent = await getRecentMoodCheckIns(14);
-    setRecentCheckins(recent);
-  }, []);
+
+    if (!session) {
+      const recent = await getRecentMoodCheckIns(14);
+      setRecentCheckins(recent);
+      return;
+    }
+
+    try {
+      const cloud = await fetchRecentMoodCheckIns(session.user.id, 100);
+      setRecentCheckins(cloud);
+      // (Skipping cache warming for mood: saveMoodCheckIn appends to a day's
+      // array, so iterating cloud entries would create duplicates. Mood
+      // offline support is a P2 — fixable with a different cache layout.)
+    } catch (err) {
+      console.warn("[mood] cloud fetch failed, falling back to cache", err);
+      const recent = await getRecentMoodCheckIns(14);
+      setRecentCheckins(recent);
+    }
+  }, [session]);
 
   useEffect(() => {
     loadCheckins();
@@ -164,9 +189,16 @@ export default function MoodScreen() {
       energy,
       stress,
       note: note.trim() || undefined,
+      source: "full",
     };
 
+    // Optimistic local write, then background cloud sync.
     await saveMoodCheckIn(checkIn);
+    if (session) {
+      insertMoodCheckIn(session.user.id, checkIn).catch((err) => {
+        console.warn("[mood] cloud sync failed; cached locally", err);
+      });
+    }
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSaved(true);
     setNote("");

@@ -8,6 +8,11 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+import {
+  clearAllLogs,
+  clearAllMoodCheckIns,
+  clearInsights,
+} from "../storage/storage";
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -38,6 +43,14 @@ export function useAuth() {
   }, []);
 
   const signOut = async () => {
+    // Wipe the local cache before clearing the session. Otherwise the next
+    // user to sign in on this device would briefly see the previous user's
+    // cached logs/mood while the cloud fetch is in flight.
+    await Promise.all([
+      clearAllLogs(),
+      clearAllMoodCheckIns(),
+      clearInsights(),
+    ]);
     await supabase.auth.signOut();
     // The onAuthStateChange listener above will null out the session.
   };
