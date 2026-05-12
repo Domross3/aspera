@@ -1,5 +1,5 @@
 import "react-native-url-polyfill/auto";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator } from "react-native";
@@ -59,8 +59,9 @@ function AppLayout() {
     })();
   }, []);
 
-  // Notification tap handler: when a quick-mood notification is tapped
-  // (either from background or cold-start), open the modal.
+  // Notification tap handler: when a quick-mood notification is tapped from
+  // foreground or background, open the modal. (Cold-start is handled below
+  // — we need to wait for the auth gate to settle before navigating.)
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
@@ -72,22 +73,33 @@ function AppLayout() {
         }
       },
     );
+    return () => subscription.remove();
+  }, [router]);
 
-    // Cold-start case: app was launched by tapping the notification.
-    // getLastNotificationResponseAsync returns the response that launched the
-    // app (or null if it wasn't launched by a notification).
+  // Cold-start notification handler. If the app was launched by tapping a
+  // quick-mood notification, push the modal — but ONLY after auth is
+  // resolved and the user is signed in, otherwise we race the auth gate's
+  // redirect to /sign-in and end up with a half-mounted navigation tree
+  // that renders blank. Once-per-cold-start guard via ref.
+  const coldStartHandled = useRef(false);
+  useEffect(() => {
+    if (authLoading) return;
+    if (coldStartHandled.current) return;
+    coldStartHandled.current = true;
+    if (!session) return; // signed-out user — nothing to do
+
     void Notifications.getLastNotificationResponseAsync().then((response) => {
       if (!response) return;
       const kind = (
         response.notification.request.content.data as { kind?: string }
       )?.kind;
-      if (kind === QUICK_MOOD_NOTIFICATION_KIND) {
+      if (kind !== QUICK_MOOD_NOTIFICATION_KIND) return;
+      // Defer a tick so the Stack has mounted (tabs) before we push the modal.
+      setTimeout(() => {
         router.push("/quick-mood" as never);
-      }
+      }, 50);
     });
-
-    return () => subscription.remove();
-  }, [router]);
+  }, [authLoading, session, router]);
 
   // Splash placeholder while the persisted Supabase session is being
   // hydrated from AsyncStorage. Prevents a flash of /sign-in for users

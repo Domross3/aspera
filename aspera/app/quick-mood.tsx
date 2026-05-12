@@ -5,10 +5,12 @@
 //   - Direct router.push("/quick-mood") from anywhere
 //
 // UX goals (Phase B-mood spec):
-//   - 10-second capture: 2 sliders + 1 text input
+//   - 10-second capture: 2 sliders, no text
 //   - No coercion: Skip button dismisses without writing anything
 //   - No stress slider here (default to 3/neutral on save)
 //   - Single tap to save (checkmark icon)
+//   - Naming-what-you're-feeling text input removed per user feedback —
+//     felt like too much friction for a quick check-in.
 //
 // Saves as a MoodCheckIn with source: "quick" so we can later distinguish
 // notification-driven captures from full Mood-tab entries in analytics.
@@ -17,7 +19,6 @@ import React, { useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
   Platform,
@@ -42,7 +43,6 @@ export default function QuickMoodModal() {
   const { session } = useAuth();
   const [mood, setMood] = useState(3);
   const [energy, setEnergy] = useState(3);
-  const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
   const dismiss = () => {
@@ -72,7 +72,6 @@ export default function QuickMoodModal() {
       mood,
       energy,
       stress: 3, // neutral default — quick capture doesn't ask
-      note: note.trim() || undefined,
       source: "quick",
     };
     // Optimistic local write first so the UI feels instant and we never
@@ -148,22 +147,6 @@ export default function QuickMoodModal() {
             />
           </View>
 
-          {/* What's happening */}
-          <View style={styles.section}>
-            <Text style={[TYPOGRAPHY.caption, styles.fieldLabel]}>
-              What's happening right now? (optional)
-            </Text>
-            <TextInput
-              value={note}
-              onChangeText={setNote}
-              placeholder="e.g. focusing on the deck, stuck in traffic, just woke up"
-              placeholderTextColor={COLORS.textMuted}
-              multiline
-              maxLength={200}
-              style={styles.input}
-            />
-          </View>
-
           {/* Actions */}
           <View style={styles.actions}>
             <TouchableOpacity
@@ -202,24 +185,6 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: SPACING.lg, gap: SPACING.lg },
   header: { marginBottom: SPACING.md },
   section: { marginBottom: SPACING.sm },
-  fieldLabel: {
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.sm,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  input: {
-    backgroundColor: COLORS.surfaceElevated,
-    borderColor: COLORS.border,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    color: COLORS.text,
-    fontSize: 15,
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
   actions: {
     flexDirection: "row",
     gap: SPACING.md,
