@@ -6,28 +6,29 @@ import {
   getLatestIntegrationSummary,
 } from "../lib/integrations";
 
-// ── Coaching Personalities ──────────────────────────────────────────────
+// ── Aspera Voice ────────────────────────────────────────────────────────
+// One consistent character across every AI surface. Models the "Inner Coach"
+// research pattern — a benign external voice that gives the user permission
+// to develop self-kindness. Intensity modulates via SELF_COMPASSION_PREFIX
+// below; tone never changes.
+//
+// The JSON-output instructions are tacked on per-callsite because not every
+// caller needs structured output (e.g., briefing returns prose).
 
-export type CoachPersonality = "analytical" | "unserious" | "stoic";
+export const ASPERA_VOICE = `You are Aspera — the user's quiet, attentive relationship manager. You speak to the user the way a thoughtful, slightly-older friend who happens to be a behavioral scientist would: warm but never effusive, specific over generic, curious not declarative.
 
-const PERSONALITY_PROMPTS: Record<CoachPersonality, string> = {
-  analytical: `You are a precise, data-driven personal optimization analyst embedded in the Aspera app.
-Reference specific numbers, percentages, and correlations. Be clinical and thorough.
-You MUST respond with ONLY valid JSON matching the exact schema provided.
-Do not include markdown fences, explanations, or any text outside the JSON.`,
+Voice rules (always):
+- Cite the user's actual data. Real numbers ("sleep was 6.2"), real times ("yesterday at 3pm"), not "lately" or "recently."
+- Lead with observation, not prescription. "I noticed" not "you should." "Might be unrelated, but..." over "this means..."
+- Reserved about telling them what to do. You are a benign external voice, not a coach barking orders.
+- Warm without performing warmth. No emojis as decoration. No "you've got this!" energy. No "great job."
+- Self-effacing about your own conclusions. Floats hypotheses, doesn't pronounce verdicts.
+- Brief by default. A sentence is usually enough. Elaboration on request, not by default.
+- Never moralize. Never finger-wag. Never shame a missed day.
 
-  unserious: `You are a slightly sarcastic, casual personal coach embedded in the Aspera app.
-You gently call the user out on bad habits. Use casual language, throw in some humor.
-Be specific with data but keep the tone like a witty friend who also reads research papers.
-You MUST respond with ONLY valid JSON matching the exact schema provided.
-Do not include markdown fences, explanations, or any text outside the JSON.`,
+Your job is to be the kind of inner voice the user might struggle to be for themselves — the gentle, accurate one that gives them permission to take care of themselves without scolding.`;
 
-  stoic: `You are a terse, stoic personal advisor embedded in the Aspera app. Marcus Aurelius energy.
-No fluff. Short, declarative sentences. Reference the data but don't over-explain.
-Every insight should feel like a carved-in-stone principle.
-You MUST respond with ONLY valid JSON matching the exact schema provided.
-Do not include markdown fences, explanations, or any text outside the JSON.`,
-};
+const INSIGHTS_JSON_DIRECTIVE = `You MUST respond with ONLY valid JSON matching the exact schema provided. Do not include markdown fences, explanations, or any text outside the JSON.`;
 
 // ── Self-Compassion Layer ───────────────────────────────────────────────
 // Applied as a prefix when the user's week was rough.
@@ -42,12 +43,11 @@ function detectBadWeek(logs: DailyLog[]): boolean {
   return avgFocus < 5 || avgEnergy < 5;
 }
 
-const SELF_COMPASSION_PREFIX = `IMPORTANT TONE DIRECTIVE: The user's data indicates a difficult week with low energy or focus.
-Regardless of your personality style, you must apply Self-Compassion principles:
+const SELF_COMPASSION_PREFIX = `IMPORTANT INTENSITY MODULATION: The user's data indicates a difficult stretch — low energy or focus across recent days. Soften your voice further than baseline:
 - Self-Kindness: Acknowledge the struggle without judgment. Do NOT guilt-trip or shame.
-- Common Humanity: Remind them that difficult weeks are universal — everyone goes through them.
+- Common Humanity: Remind them that difficult stretches are universal — everyone goes through them.
 - Mindfulness: Note the data patterns without catastrophizing or over-dramatizing.
-Your summary should open with acknowledgment, your recommendation should be a single small, low-effort action to rebuild momentum. Never say "you failed" or "you need to do better."
+Open with acknowledgment. Any recommendation must be a single small, low-effort action to rebuild momentum. Never say "you failed" or "you need to do better."
 `;
 
 const INSIGHTS_MAX_TOKENS = 2200;
@@ -446,12 +446,12 @@ RETRY FORMAT RULES:
 
 export async function generateInsights(
   logs: DailyLog[],
-  personality: CoachPersonality = "analytical",
 ): Promise<InsightsResponse> {
   const mockContext = getMockContext();
 
-  // Build system prompt with optional self-compassion layer
-  let systemPrompt = PERSONALITY_PROMPTS[personality];
+  // Aspera voice + JSON output directive. Optional self-compassion prefix
+  // engages automatically when the user's week looks rough.
+  let systemPrompt = `${ASPERA_VOICE}\n\n${INSIGHTS_JSON_DIRECTIVE}`;
   if (detectBadWeek(logs)) {
     systemPrompt = SELF_COMPASSION_PREFIX + "\n\n" + systemPrompt;
   }
@@ -464,7 +464,7 @@ export async function generateInsights(
     const message = await callClaudeViaProxy({
       model: "claude-sonnet-4-6",
       max_tokens: maxTokens[attempt],
-      temperature: personality === "unserious" ? 0.2 : 0,
+      temperature: 0,
       system: systemPrompt,
       messages: [{ role: "user", content: prompts[attempt] }],
     });
@@ -493,9 +493,13 @@ export async function generateInsights(
   );
 }
 
-// ── Today Recommendation ────────────────────────────────────────────────
+// ── Morning Briefing ────────────────────────────────────────────────────
+// Living Briefing v1: 2-3 sentence narrative in the Aspera voice that opens
+// the user's day. Cites actual data from the last 24h, references today's
+// Big Rocks if set, and floats a gentle pattern heads-up. Replaces the
+// previous one-sentence "Today recommendation."
 
-export async function getTodayRecommendation(
+export async function getMorningBriefing(
   log: DailyLog | null,
   recentLogs: DailyLog[],
 ): Promise<string> {
@@ -503,40 +507,80 @@ export async function getTodayRecommendation(
   const latestIntegrationSummary = getLatestIntegrationSummary();
 
   const context = log ?? recentLogs[0];
-  if (!context)
-    return "Log your first day to get personalized recommendations.";
+  if (!context) {
+    return "Once we have a day or two of data, your briefing will appear here. For now, head to the Log tab and tell me about today.";
+  }
 
-  // Detect if we need compassion mode for the recommendation too
   const isBadWeek = detectBadWeek(recentLogs);
-  const toneDirective = isBadWeek
-    ? "The user has had a rough stretch. Be kind and encouraging. Suggest one small, low-effort action. Do not guilt them. Acknowledge the difficulty."
-    : "Give one concrete, actionable recommendation in a single sentence. Start with a verb.";
+  const baseVoice = ASPERA_VOICE;
+  const systemPrompt = isBadWeek
+    ? `${baseVoice}\n\n${SELF_COMPASSION_PREFIX}`
+    : baseVoice;
 
   const bigRocksInfo =
     context.bigRocks && context.bigRocks.length > 0
-      ? `\nToday's Big Rocks (stated priorities): ${context.bigRocks.join(", ")}`
+      ? `Today's Big Rocks: ${context.bigRocks.join(" · ")}`
+      : "No Big Rocks set today yet.";
+
+  const yesterday = recentLogs.find((l) => l.id !== context.id) ?? null;
+  const yesterdaySummary = yesterday
+    ? `Yesterday — sleep: ${yesterday.sleepHours}h, focus: ${yesterday.output.focusRating}/10, energy: ${yesterday.output.energyRating}/10, tasks: ${yesterday.output.tasksCompleted}.`
+    : "No prior-day log to reference.";
+
+  const reflectionNote = (
+    yesterday as (DailyLog & { reflectionNote?: string }) | null
+  )?.reflectionNote;
+  const reflection = reflectionNote
+    ? `Yesterday's wrap note: "${reflectionNote}"`
+    : "";
+
+  const bigRockOutcomes = (
+    yesterday as
+      | (DailyLog & { bigRockOutcomes?: ("done" | "partial" | "missed")[] })
+      | null
+  )?.bigRockOutcomes;
+  const outcomesLine =
+    yesterday && bigRockOutcomes && bigRockOutcomes.length > 0
+      ? `Yesterday's Big Rock outcomes: ${yesterday.bigRocks
+          .map((r, i) => `${r} (${bigRockOutcomes[i] ?? "unmarked"})`)
+          .join(", ")}.`
       : "";
 
   const message = await callClaudeViaProxy({
     model: "claude-sonnet-4-6",
-    max_tokens: 150,
-    system: `You are a terse personal performance coach. ${toneDirective} No JSON, no markdown, no preamble. Reference the user's actual data.`,
+    max_tokens: 300,
+    system: systemPrompt,
     messages: [
       {
         role: "user",
-        content: `Today's log: ${JSON.stringify(context)}${bigRocksInfo}
-Recent sleep: ${JSON.stringify(mockContext.sleep.slice(-2))}
-Today's calendar: ${JSON.stringify(mockContext.calendar)}
+        content: `Write today's morning briefing (2–3 sentences) for the user. Open by grounding in real data from the last 24 hours. Reference Big Rocks if they're set. Float at most one gentle heads-up about a likely pattern, only if the data supports it.
+
+Context:
+${bigRocksInfo}
+${yesterdaySummary}
+${outcomesLine}
+${reflection}
+Today's log so far: ${JSON.stringify({
+          sleep: context.sleepHours,
+          daylight: context.daylightMinutes,
+          mood: context.output,
+        })}
+Recent sleep (last 2 days): ${JSON.stringify(mockContext.sleep.slice(-2))}
 Recent mood: ${JSON.stringify(mockContext.mood.slice(-2))}
-Browsing focus: ${JSON.stringify(mockContext.browsing[0]?.focusScore ?? "N/A")}
-Normalized attention summary: ${JSON.stringify(latestIntegrationSummary?.attention ?? null)}
-Give one sentence recommendation for maximizing performance today.`,
+Calendar today: ${JSON.stringify(mockContext.calendar)}
+Attention summary: ${JSON.stringify(latestIntegrationSummary?.attention ?? null)}
+
+Format: 2–3 sentences. No headers, no markdown, no preamble like "Here's your briefing." Just speak as Aspera.`,
       },
     ],
   });
 
   return (message.content[0] as { type: string; text: string }).text.trim();
 }
+
+// Backward-compat shim. Existing callers can keep using this name; it
+// just delegates to the new briefing function. Remove in a follow-up.
+export const getTodayRecommendation = getMorningBriefing;
 
 // ── Anxious Reappraisal ──────────────────────────────────────────────────
 

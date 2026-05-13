@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { InsightsResponse } from "../types";
-import { generateInsights, CoachPersonality } from "../api/claude";
+import { generateInsights } from "../api/claude";
 import { getInsights, saveInsights } from "../storage/storage";
 import { DailyLog } from "../types";
 
@@ -14,30 +14,27 @@ export function useInsights() {
     if (cached) setInsights(cached);
   }, []);
 
-  const generate = useCallback(
-    async (logs: DailyLog[], personality: CoachPersonality = "analytical") => {
-      if (logs.length === 0) {
-        setError("Log at least one day of data first.");
-        return;
-      }
-      setLoading(true);
-      setError(null);
-      try {
-        const result = await generateInsights(logs, personality);
-        setInsights(result);
-        await saveInsights(result);
-      } catch (e: unknown) {
-        setError(
-          e instanceof Error
-            ? e.message
-            : "Failed to generate insights. Try again.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    [],
-  );
+  const generate = useCallback(async (logs: DailyLog[]) => {
+    if (logs.length === 0) {
+      setError("Log at least one day of data first.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await generateInsights(logs);
+      setInsights(result);
+      await saveInsights(result);
+    } catch (e: unknown) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Failed to generate insights. Try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return { insights, loading, error, loadCached, generate };
 }

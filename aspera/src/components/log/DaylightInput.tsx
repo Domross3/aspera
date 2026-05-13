@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
-import { DAYLIGHT_DATA } from "../../lib/mockData";
 
 interface Props {
   value: number;
@@ -11,20 +10,6 @@ interface Props {
 }
 
 export default function DaylightInput({ value, onChange }: Props) {
-  const [synced, setSynced] = useState(false);
-
-  // Auto-pull from mock HealthKit on first render if value is 0
-  useEffect(() => {
-    if (value === 0 && !synced) {
-      const todayStr = new Date().toISOString().split("T")[0];
-      const todayDaylight = DAYLIGHT_DATA.find((d) => d.date === todayStr);
-      if (todayDaylight) {
-        onChange(todayDaylight.minutes);
-        setSynced(true);
-      }
-    }
-  }, []);
-
   const adjust = (delta: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onChange(Math.max(0, Math.min(300, value + delta)));
@@ -45,13 +30,7 @@ export default function DaylightInput({ value, onChange }: Props) {
 
   return (
     <View>
-      <View style={styles.headerRow}>
-        <Text style={styles.heading}>Time in Daylight</Text>
-        <View style={styles.healthkitBadge}>
-          <Ionicons name="sunny" size={11} color={COLORS.warning} />
-          <Text style={styles.healthkitText}>Apple Health</Text>
-        </View>
-      </View>
+      <Text style={styles.heading}>Time in Daylight</Text>
 
       <View style={styles.row}>
         <TouchableOpacity style={styles.btn} onPress={() => adjust(-10)}>
@@ -106,10 +85,6 @@ export default function DaylightInput({ value, onChange }: Props) {
         ))}
       </View>
 
-      {synced && (
-        <Text style={styles.syncNote}>Auto-filled from Apple Health</Text>
-      )}
-
       {value < 15 && value >= 0 && (
         <Text style={styles.tip}>
           30+ min of natural light improves circadian rhythm and next-day sleep
@@ -121,30 +96,10 @@ export default function DaylightInput({ value, onChange }: Props) {
 }
 
 const styles = StyleSheet.create({
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: SPACING.md,
-  },
   heading: {
     ...TYPOGRAPHY.body,
     color: COLORS.textSecondary,
-  } as object,
-  healthkitBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(251,191,36,0.15)",
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
-    borderRadius: RADIUS.pill,
-  },
-  healthkitText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.warning,
-    fontSize: 10,
-    fontWeight: "600",
+    marginBottom: SPACING.md,
   } as object,
   row: {
     flexDirection: "row",
@@ -221,13 +176,6 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: "#000",
   },
-  syncNote: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontStyle: "italic",
-    textAlign: "center",
-    marginTop: SPACING.sm,
-  } as object,
   tip: {
     ...TYPOGRAPHY.caption,
     color: COLORS.warning,

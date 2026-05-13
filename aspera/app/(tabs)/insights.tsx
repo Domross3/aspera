@@ -14,7 +14,6 @@ import * as Haptics from "expo-haptics";
 import { useInsights } from "../../src/hooks/useInsights";
 import { useLogs } from "../../src/hooks/useLogs";
 import { useSettings } from "../../src/hooks/useSettings";
-import { CoachPersonality } from "../../src/api/claude";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
@@ -22,34 +21,11 @@ import CorrelationCard from "../../src/components/insights/CorrelationCard";
 import TrendBarsSection from "../../src/components/insights/TrendBarsSection";
 import SearchBar from "../../src/components/insights/SearchBar";
 
-const PERSONALITIES: {
-  key: CoachPersonality;
-  label: string;
-  emoji: string;
-  desc: string;
-}[] = [
-  {
-    key: "analytical",
-    label: "Analytical",
-    emoji: "📊",
-    desc: "Data-driven, precise",
-  },
-  {
-    key: "unserious",
-    label: "Unserious",
-    emoji: "😏",
-    desc: "Witty, calls you out",
-  },
-  { key: "stoic", label: "Stoic", emoji: "🏛️", desc: "Terse, Marcus Aurelius" },
-];
-
 export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const { recentLogs } = useLogs();
   const { settings } = useSettings();
   const { insights, loading, error, loadCached, generate } = useInsights();
-  const [personality, setPersonality] =
-    useState<CoachPersonality>("analytical");
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -69,12 +45,7 @@ export default function InsightsScreen() {
   const handleGenerate = async () => {
     if (!hasEnoughData) return;
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await generate(recentLogs, personality);
-  };
-
-  const handlePersonality = (p: CoachPersonality) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setPersonality(p);
+    await generate(recentLogs);
   };
 
   return (
@@ -112,43 +83,6 @@ export default function InsightsScreen() {
 
           {/* Natural language search */}
           <SearchBar />
-
-          {/* Personality selector */}
-          <SectionLabel label="Coaching Style" />
-          <View style={styles.personalityRow}>
-            {PERSONALITIES.map((p) => {
-              const active = personality === p.key;
-              return (
-                <TouchableOpacity
-                  key={p.key}
-                  style={[
-                    styles.personalityPill,
-                    active && styles.personalityPillActive,
-                  ]}
-                  onPress={() => handlePersonality(p.key)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.personalityEmoji}>{p.emoji}</Text>
-                  <Text
-                    style={[
-                      styles.personalityLabel,
-                      active && styles.personalityLabelActive,
-                    ]}
-                  >
-                    {p.label}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.personalityDesc,
-                      active && { color: COLORS.textSecondary },
-                    ]}
-                  >
-                    {p.desc}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
 
           {/* Generate button */}
           <TouchableOpacity
@@ -327,37 +261,6 @@ export default function InsightsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   content: { paddingHorizontal: SPACING.lg },
-  personalityRow: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-  },
-  personalityPill: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: SPACING.sm + 2,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    gap: 2,
-  },
-  personalityPillActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
-  },
-  personalityEmoji: { fontSize: 20 },
-  personalityLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontWeight: "700",
-  } as object,
-  personalityLabelActive: { color: COLORS.accent },
-  personalityDesc: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 9,
-  } as object,
   genButton: {
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md + 2,

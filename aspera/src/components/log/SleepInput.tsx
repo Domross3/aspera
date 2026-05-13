@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
-import { SLEEP_DATA } from "../../lib/mockData";
 
 interface Props {
   value: number;
@@ -11,20 +10,6 @@ interface Props {
 }
 
 export default function SleepInput({ value, onChange }: Props) {
-  const [synced, setSynced] = useState(false);
-
-  // Auto-pull from mock HealthKit on first render if value is 0
-  useEffect(() => {
-    if (value === 0 && !synced) {
-      const todayStr = new Date().toISOString().split("T")[0];
-      const todaySleep = SLEEP_DATA.find((s) => s.date === todayStr);
-      if (todaySleep) {
-        onChange(todaySleep.hours_slept);
-        setSynced(true);
-      }
-    }
-  }, []);
-
   const adjust = (delta: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next = Math.round((value + delta) * 10) / 10;
@@ -52,13 +37,7 @@ export default function SleepInput({ value, onChange }: Props) {
 
   return (
     <View>
-      <View style={styles.headerRow}>
-        <Text style={styles.heading}>Time in Bed</Text>
-        <View style={styles.healthkitBadge}>
-          <Ionicons name="heart" size={11} color={COLORS.danger} />
-          <Text style={styles.healthkitText}>Apple Health</Text>
-        </View>
-      </View>
+      <Text style={styles.heading}>Time in Bed</Text>
 
       <View style={styles.row}>
         <TouchableOpacity style={styles.btn} onPress={() => adjust(-0.5)}>
@@ -118,39 +97,15 @@ export default function SleepInput({ value, onChange }: Props) {
           </TouchableOpacity>
         ))}
       </View>
-
-      {synced && (
-        <Text style={styles.syncNote}>Auto-filled from Apple Health</Text>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: SPACING.md,
-  },
   heading: {
     ...TYPOGRAPHY.body,
     color: COLORS.textSecondary,
-  } as object,
-  healthkitBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(248,113,113,0.15)",
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
-    borderRadius: RADIUS.pill,
-  },
-  healthkitText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.danger,
-    fontSize: 10,
-    fontWeight: "600",
+    marginBottom: SPACING.md,
   } as object,
   row: {
     flexDirection: "row",
@@ -227,11 +182,4 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: "#000",
   },
-  syncNote: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontStyle: "italic",
-    textAlign: "center",
-    marginTop: SPACING.sm,
-  } as object,
 });
