@@ -54,7 +54,12 @@ export interface DailyLog {
   };
   tags: string[];
   bigRocks: string[]; // 1–3 most important tasks for the day
+  // Evening reflection — captured at end of day when wrapping up
+  bigRockOutcomes?: BigRockOutcome[]; // parallel array to bigRocks (same length)
+  reflectionNote?: string; // one-line free text for tomorrow's briefing context
 }
+
+export type BigRockOutcome = "done" | "partial" | "missed";
 
 export interface Correlation {
   id: string;

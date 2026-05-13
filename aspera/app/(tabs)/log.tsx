@@ -30,11 +30,13 @@ import MusicChips from "../../src/components/log/MusicChips";
 import NutritionInput from "../../src/components/log/NutritionInput";
 import RatingSlider from "../../src/components/log/RatingSlider";
 import CustomTags from "../../src/components/log/CustomTags";
-import BigRocksInput from "../../src/components/log/BigRocksInput";
 import DrinksInput from "../../src/components/log/DrinksInput";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import SleepInput from "../../src/components/log/SleepInput";
 import DaylightInput from "../../src/components/log/DaylightInput";
 import CustomMetrics from "../../src/components/log/CustomMetrics";
+import EveningReflection from "../../src/components/log/EveningReflection";
 
 function todayId(): string {
   return new Date().toISOString().split("T")[0];
@@ -62,6 +64,7 @@ function defaultLog(): DailyLog {
 
 export default function LogScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { todayLog, save } = useLogs();
   const [form, setForm] = useState<DailyLog>(defaultLog);
   const [saved, setSaved] = useState(false);
@@ -123,14 +126,60 @@ export default function LogScreen() {
             })}
           </Text>
 
-          {/* Big Rocks — morning intention */}
+          {/* Evening reflection — wrap up Big Rock outcomes + tomorrow note. */}
+          <EveningReflection
+            bigRocks={form.bigRocks ?? []}
+            outcomes={form.bigRockOutcomes}
+            reflectionNote={form.reflectionNote}
+            onChange={({ outcomes, reflectionNote }) =>
+              setForm((prev) => ({
+                ...prev,
+                bigRockOutcomes: outcomes,
+                reflectionNote,
+              }))
+            }
+          />
+
+          {/* Big Rocks — read-only here. Set them on the Today tab in the morning. */}
           <SectionLabel label="Big Rocks" style={{ marginTop: SPACING.sm }} />
-          <GradientCard style={{ marginBottom: SPACING.lg }}>
-            <BigRocksInput
-              rocks={form.bigRocks ?? []}
-              onChange={(rocks) => patch("bigRocks", rocks)}
-            />
-          </GradientCard>
+          <TouchableOpacity
+            onPress={() => router.navigate("/(tabs)" as never)}
+            activeOpacity={0.8}
+          >
+            <GradientCard style={{ marginBottom: SPACING.lg }}>
+              {form.bigRocks && form.bigRocks.length > 0 ? (
+                <>
+                  {form.bigRocks.map((rock, i) => (
+                    <View key={i} style={logStyles.rockRow}>
+                      <View style={logStyles.rockBadge}>
+                        <Text style={logStyles.rockBadgeText}>{i + 1}</Text>
+                      </View>
+                      <Text style={logStyles.rockText}>{rock}</Text>
+                    </View>
+                  ))}
+                  <View style={logStyles.editLinkRow}>
+                    <Text style={logStyles.editLinkText}>Edit on Today</Text>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={14}
+                      color={COLORS.accent}
+                    />
+                  </View>
+                </>
+              ) : (
+                <View style={logStyles.editLinkRow}>
+                  <Text style={logStyles.editLinkText}>
+                    Set today's Big Rocks on the Today tab
+                  </Text>
+                  <Ionicons
+                    name="chevron-forward"
+                    size={14}
+                    color={COLORS.accent}
+                  />
+                </View>
+              )}
+            </GradientCard>
+          </TouchableOpacity>
 
           {/* Sleep — auto-filled from HealthKit */}
           <SectionLabel label="Sleep" style={{ marginTop: SPACING.sm }} />
@@ -309,5 +358,44 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.subtitle,
     color: COLORS.text,
     fontWeight: "700",
+  } as object,
+});
+
+const logStyles = StyleSheet.create({
+  rockRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+  rockBadge: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: COLORS.accent,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rockBadgeText: {
+    color: COLORS.text,
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  rockText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.text,
+    flex: 1,
+  } as object,
+  editLinkRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    gap: 4,
+    marginTop: SPACING.xs,
+  },
+  editLinkText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.accent,
+    fontWeight: "600",
   } as object,
 });

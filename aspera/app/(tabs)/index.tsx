@@ -13,7 +13,7 @@ import { useLogs } from "../../src/hooks/useLogs";
 import { useSettings } from "../../src/hooks/useSettings";
 import { getTodayRec, saveTodayRec } from "../../src/storage/storage";
 import {
-  getTodayRecommendation,
+  getMorningBriefing,
   generateAnxiousReappraisal,
 } from "../../src/api/claude";
 import { generateCohortTelemetry } from "../../src/lib/mockData";
@@ -28,9 +28,11 @@ import SpotifyRecent from "../../src/components/today/SpotifyRecent";
 import BrowsingFocus from "../../src/components/today/BrowsingFocus";
 import ScreenTimeCard from "../../src/components/today/ScreenTimeCard";
 import MusicGenreInsight from "../../src/components/today/MusicGenreInsight";
+import TodayBigRocks from "../../src/components/today/TodayBigRocks";
 import TrendLineCard, {
   TrendPoint,
 } from "../../src/components/common/TrendLineCard";
+import { DailyLog } from "../../src/types";
 
 function todayId() {
   return new Date().toISOString().split("T")[0];
@@ -41,9 +43,29 @@ function shortDayLabel(date: string) {
     .slice(0, 2);
 }
 
+function defaultLogShell(): DailyLog {
+  const id = new Date().toISOString().split("T")[0];
+  return {
+    id,
+    date: id,
+    createdAt: Date.now(),
+    caffeine: { type: "none", amount: 0 },
+    workout: { type: "none", intensity: 0 },
+    music: [],
+    nutrition: { mealQuality: 3, hydration: 0 },
+    output: { tasksCompleted: 0, focusRating: 5, energyRating: 5 },
+    tags: [],
+    bigRocks: [],
+    drinks: 0,
+    sleepHours: 0,
+    daylightMinutes: 0,
+    customMetrics: [],
+  };
+}
+
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
-  const { todayLog, recentLogs, loading, streak, reservesRemaining } =
+  const { todayLog, recentLogs, loading, save, streak, reservesRemaining } =
     useLogs();
   const { settings } = useSettings();
   const [recommendation, setRecommendation] = useState<string | null>(null);
@@ -117,12 +139,12 @@ export default function TodayScreen() {
   const fetchRecommendation = async () => {
     setRecLoading(true);
     try {
-      const rec = await getTodayRecommendation(todayLog, recentLogs);
+      const rec = await getMorningBriefing(todayLog, recentLogs);
       setRecommendation(rec);
       await saveTodayRec(todayId(), rec);
     } catch {
       setRecommendation(
-        "Could not generate recommendation. Check that the server is reachable.",
+        "Couldn't reach the AI just now. Try again in a moment.",
       );
     } finally {
       setRecLoading(false);
@@ -230,58 +252,15 @@ export default function TodayScreen() {
             onRefresh={fetchRecommendation}
           />
 
-          {/* Big Rocks — shown if set */}
-          {log && log.bigRocks && log.bigRocks.length > 0 && (
-            <View style={{ marginTop: SPACING.lg }}>
-              <Text
-                style={[
-                  TYPOGRAPHY.subtitle,
-                  { color: COLORS.textSecondary, marginBottom: SPACING.sm },
-                ]}
-              >
-                Today's Big Rocks
-              </Text>
-              <GradientCard>
-                {log.bigRocks.map((rock, i) => (
-                  <View
-                    key={i}
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: SPACING.sm,
-                      paddingVertical: SPACING.xs,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: 11,
-                        backgroundColor: COLORS.accent,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: COLORS.text,
-                          fontSize: 11,
-                          fontWeight: "800",
-                        }}
-                      >
-                        {i + 1}
-                      </Text>
-                    </View>
-                    <Text
-                      style={[TYPOGRAPHY.body, { color: COLORS.text, flex: 1 }]}
-                    >
-                      {rock}
-                    </Text>
-                  </View>
-                ))}
-              </GradientCard>
-            </View>
-          )}
+          {/* Big Rocks — morning anchor, editable inline */}
+          <TodayBigRocks
+            todayRocks={log?.bigRocks ?? []}
+            recentLogs={recentLogs}
+            onChange={async (rocks) => {
+              const base = log ?? defaultLogShell();
+              await save({ ...base, bigRocks: rocks });
+            }}
+          />
 
           {/* Weekly metrics */}
           {trendDays.length > 0 && weekAvg && (
