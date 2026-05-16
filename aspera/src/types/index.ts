@@ -136,6 +136,10 @@ export interface NotificationSettings {
   quickMoodFrequency: number; // notifications per day (default 3)
   quickMoodWindowStart: string; // "HH:MM" local, default "09:00"
   quickMoodWindowEnd: string; // "HH:MM" local, default "21:00"
+  // Somatic Interceptor — the breathe → "What are you feeling?" → reframe
+  // modal triggered by the 5-minute idle timer on the Today tab. Default on;
+  // user can switch it off entirely from Settings.
+  somaticInterceptorEnabled: boolean;
 }
 
 export interface AppSettings {

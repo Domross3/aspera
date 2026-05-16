@@ -77,8 +77,13 @@ export default function TodayScreen() {
   const [reappraisalLoading, setReappraisalLoading] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // 5-minute idle timer — triggers interceptor if no task activity
+  // 5-minute idle timer — triggers interceptor if no task activity.
+  // Skipped entirely when the user has disabled the Somatic Interceptor
+  // in notification settings (default on).
+  const somaticInterceptorEnabled =
+    settings.notificationSettings.somaticInterceptorEnabled;
   useEffect(() => {
+    if (!somaticInterceptorEnabled) return;
     const IDLE_MS = 5 * 60 * 1000;
     const resetTimer = () => {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
@@ -90,7 +95,7 @@ export default function TodayScreen() {
     return () => {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
-  }, [todayLog?.output.tasksCompleted]);
+  }, [todayLog?.output.tasksCompleted, somaticInterceptorEnabled]);
 
   const handleInterceptorFeeling = async (feeling: string) => {
     setReappraisalLoading(true);
@@ -233,9 +238,12 @@ export default function TodayScreen() {
             }}
           >
             <Text style={[TYPOGRAPHY.hero, { color: COLORS.text }]}>Today</Text>
-            {/* Hidden demo trigger for Somatic Interceptor — invisible 44x44 tap target */}
+            {/* Hidden demo trigger for Somatic Interceptor — invisible 44x44 tap target.
+                Disabled (long-press does nothing) when the user has switched the
+                interceptor off in settings, so the off-toggle is fully honored. */}
             <TouchableOpacity
               onLongPress={() => {
+                if (!somaticInterceptorEnabled) return;
                 setReappraisal(null);
                 setInterceptorVisible(true);
               }}

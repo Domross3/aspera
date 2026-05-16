@@ -71,6 +71,7 @@ export async function getSettings(): Promise<AppSettings> {
       quickMoodFrequency: 3,
       quickMoodWindowStart: "09:00",
       quickMoodWindowEnd: "21:00",
+      somaticInterceptorEnabled: true,
     },
   };
   if (!raw) return defaults;

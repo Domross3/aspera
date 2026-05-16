@@ -480,6 +480,45 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </GradientCard>
 
+        {/* Somatic Interceptor */}
+        <SectionLabel label="Somatic Interceptor" />
+        <GradientCard style={{ marginBottom: SPACING.lg }}>
+          <Text
+            style={[
+              TYPOGRAPHY.caption,
+              { color: COLORS.textSecondary, marginBottom: SPACING.md },
+            ]}
+          >
+            After 5 minutes of inactivity on Today, a short breathe → name
+            your feeling → reframe modal appears. Switch it off here if you
+            don't want it interrupting you.
+          </Text>
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Enable
+              </Text>
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+                5-minute idle trigger on the Today tab
+              </Text>
+            </View>
+            <Switch
+              value={settings.notificationSettings.somaticInterceptorEnabled}
+              onValueChange={(v) => {
+                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                void update({
+                  notificationSettings: {
+                    ...settings.notificationSettings,
+                    somaticInterceptorEnabled: v,
+                  },
+                });
+              }}
+              trackColor={{ false: COLORS.border, true: COLORS.accent }}
+              thumbColor={COLORS.text}
+            />
+          </View>
+        </GradientCard>
+
         {/* About */}
         <SectionLabel label="About" />
         <GradientCard style={{ marginBottom: SPACING.lg }}>

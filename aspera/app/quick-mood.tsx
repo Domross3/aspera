@@ -5,12 +5,15 @@
 //   - Direct router.push("/quick-mood") from anywhere
 //
 // UX goals (Phase B-mood spec):
-//   - 10-second capture: 2 sliders, no text
+//   - 10-second capture: 2 sliders + 1 optional text note
 //   - No coercion: Skip button dismisses without writing anything
 //   - No stress slider here (default to 3/neutral on save)
 //   - Single tap to save (checkmark icon)
-//   - Naming-what-you're-feeling text input removed per user feedback —
-//     felt like too much friction for a quick check-in.
+//   - The text note is intentionally optional and unlabelled beyond a
+//     placeholder — Save works fine with it blank, so the 10-second flow
+//     stays intact for anyone who doesn't want to type. The text is
+//     persisted to MoodCheckIn.note for the timeline; no AI interpretation
+//     runs on it.
 //
 // Saves as a MoodCheckIn with source: "quick" so we can later distinguish
 // notification-driven captures from full Mood-tab entries in analytics.
@@ -19,6 +22,7 @@ import React, { useState } from "react";
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   Platform,
@@ -43,6 +47,7 @@ export default function QuickMoodModal() {
   const { session } = useAuth();
   const [mood, setMood] = useState(3);
   const [energy, setEnergy] = useState(3);
+  const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
   const dismiss = () => {
@@ -66,12 +71,14 @@ export default function QuickMoodModal() {
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
     const now = Date.now();
+    const trimmedNote = note.trim();
     const checkIn: MoodCheckIn = {
       id: new Date(now).toISOString(),
       timestamp: now,
       mood,
       energy,
       stress: 3, // neutral default — quick capture doesn't ask
+      note: trimmedNote ? trimmedNote : undefined,
       source: "quick",
     };
     // Optimistic local write first so the UI feels instant and we never
@@ -147,6 +154,22 @@ export default function QuickMoodModal() {
             />
           </View>
 
+          {/* Optional note — left blank, Save still works. No AI interpretation;
+              the text is stored verbatim on MoodCheckIn.note for the timeline. */}
+          <View style={styles.section}>
+            <TextInput
+              value={note}
+              onChangeText={setNote}
+              placeholder="What's happening? (optional)"
+              placeholderTextColor={COLORS.textMuted}
+              multiline
+              maxLength={200}
+              returnKeyType="done"
+              blurOnSubmit
+              style={styles.noteInput}
+            />
+          </View>
+
           {/* Actions */}
           <View style={styles.actions}>
             <TouchableOpacity
@@ -185,6 +208,18 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: SPACING.lg, gap: SPACING.lg },
   header: { marginBottom: SPACING.md },
   section: { marginBottom: SPACING.sm },
+  noteInput: {
+    backgroundColor: COLORS.surfaceElevated,
+    borderColor: COLORS.border,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    color: COLORS.text,
+    fontSize: 15,
+    minHeight: 64,
+    textAlignVertical: "top",
+  },
   actions: {
     flexDirection: "row",
     gap: SPACING.md,
