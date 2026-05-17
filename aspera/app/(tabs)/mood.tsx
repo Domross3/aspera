@@ -10,7 +10,9 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
+import { Ionicons } from "@expo/vector-icons";
 import {
+  Moment,
   MoodCheckIn,
   MOOD_EMOJIS,
   ENERGY_EMOJIS,
@@ -19,12 +21,17 @@ import {
 import {
   saveMoodCheckIn,
   getRecentMoodCheckIns,
+  saveMoment,
+  getRecentMoments,
   seedMockMoodData,
 } from "../../src/storage/storage";
 import {
   fetchRecentMoodCheckIns,
+  fetchRecentMoments,
+  insertMoment,
   insertMoodCheckIn,
 } from "../../src/lib/cloudStore";
+import MomentCapture from "../../src/components/mood/MomentCapture";
 import { useAuth } from "../../src/hooks/useAuth";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
@@ -55,6 +62,26 @@ function average(values: number[]): number {
 
 function round(value: number): number {
   return Math.round(value * 10) / 10;
+}
+
+function formatCaptureTime(ts: number): string {
+  const d = new Date(ts);
+  const date = d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+  const time = d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  return `${date} · ${time}`;
+}
+
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
 }
 
 function aggregateDailySnapshots(checkins: MoodCheckIn[]): DailyMoodSnapshot[] {
@@ -113,6 +140,12 @@ function buildTrend(
   return result;
 }
 
+// A unified timeline item — mood check-in OR moment. Used by Recent
+// Captures so the two stream into a single chronological feed.
+type TimelineItem =
+  | { kind: "mood"; data: MoodCheckIn }
+  | { kind: "moment"; data: Moment };
+
 export default function MoodScreen() {
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
@@ -122,33 +155,51 @@ export default function MoodScreen() {
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState(false);
   const [recentCheckins, setRecentCheckins] = useState<MoodCheckIn[]>([]);
+  const [recentMoments, setRecentMoments] = useState<Moment[]>([]);
+  const [momentSheetVisible, setMomentSheetVisible] = useState(false);
 
   const loadCheckins = useCallback(async () => {
     // Demo seed only runs in dev (Expo Go / dev client) for unauthenticated
     // sessions. Production builds gate everything behind sign-in.
     if (__DEV__ && !session) {
       await seedMockMoodData();
-      const recent = await getRecentMoodCheckIns(14);
+      const [recent, moments] = await Promise.all([
+        getRecentMoodCheckIns(14),
+        getRecentMoments(14),
+      ]);
       setRecentCheckins(recent);
+      setRecentMoments(moments);
       return;
     }
 
     if (!session) {
-      const recent = await getRecentMoodCheckIns(14);
+      const [recent, moments] = await Promise.all([
+        getRecentMoodCheckIns(14),
+        getRecentMoments(14),
+      ]);
       setRecentCheckins(recent);
+      setRecentMoments(moments);
       return;
     }
 
     try {
-      const cloud = await fetchRecentMoodCheckIns(session.user.id, 100);
-      setRecentCheckins(cloud);
+      const [cloudCheckins, cloudMoments] = await Promise.all([
+        fetchRecentMoodCheckIns(session.user.id, 100),
+        fetchRecentMoments(session.user.id, 100),
+      ]);
+      setRecentCheckins(cloudCheckins);
+      setRecentMoments(cloudMoments);
       // (Skipping cache warming for mood: saveMoodCheckIn appends to a day's
       // array, so iterating cloud entries would create duplicates. Mood
       // offline support is a P2 — fixable with a different cache layout.)
     } catch (err) {
       console.warn("[mood] cloud fetch failed, falling back to cache", err);
-      const recent = await getRecentMoodCheckIns(14);
+      const [recent, moments] = await Promise.all([
+        getRecentMoodCheckIns(14),
+        getRecentMoments(14),
+      ]);
       setRecentCheckins(recent);
+      setRecentMoments(moments);
     }
   }, [session]);
 
@@ -179,13 +230,16 @@ export default function MoodScreen() {
     [recentCheckins],
   );
 
-  const recentEntries = useMemo(
-    () =>
-      [...recentCheckins]
-        .sort((left, right) => right.timestamp - left.timestamp)
-        .slice(0, 4),
-    [recentCheckins],
-  );
+  // Interleaved Recent Captures: mood check-ins + moments, sorted by
+  // timestamp (newest first). The renderer discriminates on `kind`.
+  const recentEntries = useMemo<TimelineItem[]>(() => {
+    const items: TimelineItem[] = [
+      ...recentCheckins.map((c) => ({ kind: "mood" as const, data: c })),
+      ...recentMoments.map((m) => ({ kind: "moment" as const, data: m })),
+    ];
+    items.sort((a, b) => b.data.timestamp - a.data.timestamp);
+    return items.slice(0, 6);
+  }, [recentCheckins, recentMoments]);
 
   const moodTrend = useMemo(
     () => buildTrend(snapshots, "avgMood"),
@@ -223,6 +277,19 @@ export default function MoodScreen() {
     setNote("");
     await loadCheckins();
     setTimeout(() => setSaved(false), 2500);
+  };
+
+  const handleMomentSave = async (moment: Moment) => {
+    // Optimistic local write, then background cloud sync — mirror the
+    // mood-checkin pattern exactly.
+    await saveMoment(moment);
+    if (session) {
+      insertMoment(session.user.id, moment).catch((err) => {
+        console.warn("[mood] cloud moment sync failed; cached locally", err);
+      });
+    }
+    setMomentSheetVisible(false);
+    await loadCheckins();
   };
 
   return (
@@ -341,44 +408,91 @@ export default function MoodScreen() {
           </GradientCard>
         )}
 
-        {recentEntries.length > 0 && (
-          <>
-            <SectionLabel
-              label="Recent Captures"
-              style={{ marginTop: SPACING.xl }}
-            />
-            {recentEntries.map((entry) => (
-              <GradientCard key={entry.id} style={{ marginBottom: SPACING.sm }}>
-                <View style={styles.captureRow}>
-                  <View style={styles.captureMoodRow}>
-                    <Text style={styles.captureEmoji}>
-                      {MOOD_EMOJIS[Math.round(entry.mood)]}
-                    </Text>
-                    <Text style={styles.captureEmoji}>
-                      {ENERGY_EMOJIS[Math.round(entry.energy)]}
-                    </Text>
-                    <Text style={styles.captureEmoji}>
-                      {STRESS_EMOJIS[Math.round(entry.stress)]}
+        <View style={styles.recentHeaderRow}>
+          <SectionLabel
+            label="Recent Captures"
+            style={{ marginTop: SPACING.xl }}
+          />
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setMomentSheetVisible(true);
+            }}
+            activeOpacity={0.7}
+            style={styles.momentButton}
+          >
+            <Ionicons name="add-circle" size={16} color={COLORS.accent} />
+            <Text style={styles.momentButtonText}>Moment</Text>
+          </TouchableOpacity>
+        </View>
+        {recentEntries.length === 0 ? (
+          <GradientCard style={{ marginBottom: SPACING.sm }}>
+            <Text style={styles.captureNote}>
+              No captures yet. Log a mood pulse below or tap “Moment” to
+              note something that just happened.
+            </Text>
+          </GradientCard>
+        ) : (
+          recentEntries.map((item) => {
+            if (item.kind === "mood") {
+              const entry = item.data;
+              return (
+                <GradientCard
+                  key={`mood-${entry.id}`}
+                  style={{ marginBottom: SPACING.sm }}
+                >
+                  <View style={styles.captureRow}>
+                    <View style={styles.captureMoodRow}>
+                      <Text style={styles.captureEmoji}>
+                        {MOOD_EMOJIS[Math.round(entry.mood)]}
+                      </Text>
+                      <Text style={styles.captureEmoji}>
+                        {ENERGY_EMOJIS[Math.round(entry.energy)]}
+                      </Text>
+                      <Text style={styles.captureEmoji}>
+                        {STRESS_EMOJIS[Math.round(entry.stress)]}
+                      </Text>
+                    </View>
+                    <Text style={styles.captureTime}>
+                      {formatCaptureTime(entry.timestamp)}
                     </Text>
                   </View>
+                  {entry.note ? (
+                    <Text style={styles.captureNote}>{entry.note}</Text>
+                  ) : null}
+                </GradientCard>
+              );
+            }
+            const m = item.data;
+            return (
+              <GradientCard
+                key={`moment-${m.id}`}
+                style={{ marginBottom: SPACING.sm }}
+              >
+                <View style={styles.captureRow}>
+                  <View style={styles.momentLabelRow}>
+                    <Ionicons
+                      name="bookmark"
+                      size={14}
+                      color={COLORS.accent}
+                    />
+                    <Text style={styles.momentLabel}>{m.label}</Text>
+                    {typeof m.duration === "number" ? (
+                      <Text style={styles.momentDuration}>
+                        · {formatDuration(m.duration)}
+                      </Text>
+                    ) : null}
+                  </View>
                   <Text style={styles.captureTime}>
-                    {new Date(entry.timestamp).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}{" "}
-                    ·{" "}
-                    {new Date(entry.timestamp).toLocaleTimeString("en-US", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}
+                    {formatCaptureTime(m.timestamp)}
                   </Text>
                 </View>
-                {entry.note ? (
-                  <Text style={styles.captureNote}>{entry.note}</Text>
+                {m.note ? (
+                  <Text style={styles.captureNote}>{m.note}</Text>
                 ) : null}
               </GradientCard>
-            ))}
-          </>
+            );
+          })
         )}
 
         <SectionLabel label="Quick Capture" style={{ marginTop: SPACING.xl }} />
@@ -451,6 +565,12 @@ export default function MoodScreen() {
           </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
+
+      <MomentCapture
+        visible={momentSheetVisible}
+        onCancel={() => setMomentSheetVisible(false)}
+        onSave={handleMomentSave}
+      />
     </LinearGradient>
   );
 }
@@ -564,6 +684,47 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: SPACING.xs,
   },
+  momentLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+    flex: 1,
+  },
+  momentLabel: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.text,
+    fontWeight: "600",
+    fontSize: 14,
+  } as object,
+  momentDuration: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    fontSize: 12,
+  } as object,
+  recentHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: SPACING.sm,
+  },
+  momentButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    marginTop: SPACING.xl,
+  },
+  momentButtonText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.accent,
+    fontWeight: "700",
+    fontSize: 12,
+  } as object,
   captureEmoji: {
     fontSize: 18,
   },

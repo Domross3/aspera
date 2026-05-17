@@ -11,7 +11,7 @@
 // the row's user_id column to match auth.uid() — Supabase doesn't auto-fill it.
 
 import { supabase } from "./supabase";
-import type { DailyLog, MoodCheckIn } from "../types";
+import type { DailyLog, Moment, MoodCheckIn } from "../types";
 import { migrateDailyLog } from "../storage/migrations";
 
 // ─── Daily Logs ────────────────────────────────────────────────────────────
@@ -123,16 +123,78 @@ export async function insertMoodCheckIn(
   if (error) throw error;
 }
 
+// ─── Moments ──────────────────────────────────────────────────────────────
+
+interface MomentRow {
+  id: string;
+  timestamp: string;
+  label: string;
+  duration_min: number | null;
+  note: string | null;
+}
+
+function rowToMoment(row: MomentRow): Moment {
+  return {
+    id: row.id,
+    timestamp: new Date(row.timestamp).getTime(),
+    label: row.label,
+    duration: row.duration_min ?? undefined,
+    note: row.note ?? undefined,
+  };
+}
+
+export async function fetchRecentMoments(
+  userId: string,
+  limit = 100,
+): Promise<Moment[]> {
+  const { data, error } = await supabase
+    .from("moments")
+    .select("id, timestamp, label, duration_min, note")
+    .eq("user_id", userId)
+    .order("timestamp", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []).map((row) => rowToMoment(row as MomentRow));
+}
+
+export async function insertMoment(
+  userId: string,
+  moment: Moment,
+): Promise<void> {
+  const { error } = await supabase.from("moments").insert({
+    user_id: userId,
+    timestamp: new Date(moment.timestamp).toISOString(),
+    label: moment.label,
+    duration_min: moment.duration ?? null,
+    note: moment.note ?? null,
+  });
+  if (error) throw error;
+}
+
+export async function deleteMoment(
+  userId: string,
+  momentId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("moments")
+    .delete()
+    .eq("user_id", userId)
+    .eq("id", momentId);
+  if (error) throw error;
+}
+
 // ─── Bulk operations ──────────────────────────────────────────────────────
 
 /**
- * Wipe ALL of a user's logs + mood entries on the server. Used by the
- * Settings "Clear All Data" button when a user wants a true clean slate.
- * Service role isn't required — RLS lets the user delete their own rows.
+ * Wipe ALL of a user's logs + mood entries + moments on the server. Used
+ * by the Settings "Clear All Data" button when a user wants a true clean
+ * slate. Service role isn't required — RLS lets the user delete their
+ * own rows.
  */
 export async function wipeUserData(userId: string): Promise<void> {
   await Promise.all([
     supabase.from("daily_logs").delete().eq("user_id", userId),
     supabase.from("mood_entries").delete().eq("user_id", userId),
+    supabase.from("moments").delete().eq("user_id", userId),
   ]);
 }

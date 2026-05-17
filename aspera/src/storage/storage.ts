@@ -3,6 +3,7 @@ import {
   DailyLog,
   AppSettings,
   InsightsResponse,
+  Moment,
   MoodCheckIn,
   ReservesState,
   STORAGE_KEYS,
@@ -232,6 +233,72 @@ export async function getRecentMoodCheckIns(days = 7): Promise<MoodCheckIn[]> {
     if (v) all.push(...JSON.parse(v));
   }
   return all.sort((a, b) => a.timestamp - b.timestamp);
+}
+
+// ─── Moments ──────────────────────────────────────────────────────────────
+// Free-form timestamped events that live on the Mood tab timeline. Storage
+// shape mirrors mood check-ins exactly: one AsyncStorage key per day,
+// keyed by `aspera_moment_<YYYY-MM-DD>`, value = JSON Moment[].
+
+export async function saveMoment(moment: Moment): Promise<void> {
+  const date = new Date(moment.timestamp).toISOString().split("T")[0];
+  const key = `${STORAGE_KEYS.MOMENT_PREFIX}${date}`;
+  const existing = await getMoments(date);
+  existing.push(moment);
+  await AsyncStorage.setItem(key, JSON.stringify(existing));
+}
+
+export async function getMoments(date: string): Promise<Moment[]> {
+  const key = `${STORAGE_KEYS.MOMENT_PREFIX}${date}`;
+  const raw = await AsyncStorage.getItem(key);
+  return raw ? JSON.parse(raw) : [];
+}
+
+export async function getRecentMoments(days = 14): Promise<Moment[]> {
+  // Larger default window than mood check-ins because the promotion
+  // nudge (Phase 7) operates on a 14-day rolling window. Callers that
+  // only need a week's worth can slice the result.
+  const allKeys = await AsyncStorage.getAllKeys();
+  const momentKeys = allKeys
+    .filter((k) => k.startsWith(STORAGE_KEYS.MOMENT_PREFIX))
+    .sort()
+    .reverse()
+    .slice(0, days);
+  if (momentKeys.length === 0) return [];
+  const pairs = await AsyncStorage.multiGet(momentKeys);
+  const all: Moment[] = [];
+  for (const [, v] of pairs) {
+    if (v) all.push(...JSON.parse(v));
+  }
+  return all.sort((a, b) => a.timestamp - b.timestamp);
+}
+
+export async function deleteMoment(id: string): Promise<void> {
+  // Moment ids are ISO timestamps, so the date prefix is recoverable. We
+  // scan all moment-day buckets and rewrite the one that contains it —
+  // O(n) over days, n is small (max 14ish).
+  const allKeys = await AsyncStorage.getAllKeys();
+  const momentKeys = allKeys.filter((k) =>
+    k.startsWith(STORAGE_KEYS.MOMENT_PREFIX),
+  );
+  for (const key of momentKeys) {
+    const raw = await AsyncStorage.getItem(key);
+    if (!raw) continue;
+    const list = JSON.parse(raw) as Moment[];
+    const next = list.filter((m) => m.id !== id);
+    if (next.length !== list.length) {
+      await AsyncStorage.setItem(key, JSON.stringify(next));
+      return;
+    }
+  }
+}
+
+export async function clearAllMoments(): Promise<void> {
+  const allKeys = await AsyncStorage.getAllKeys();
+  const momentKeys = allKeys.filter((k) =>
+    k.startsWith(STORAGE_KEYS.MOMENT_PREFIX),
+  );
+  if (momentKeys.length > 0) await AsyncStorage.multiRemove(momentKeys);
 }
 
 // ─── Emergency Reserves ───────────────────────────────────────────────────

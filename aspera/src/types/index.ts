@@ -95,6 +95,21 @@ export interface InsightsResponse {
   generatedAt: number;
 }
 
+// ── Moments ─────────────────────────────────────────────────────────────
+// Free-form timestamped events that don't fit the structured daily log.
+// Example: "fell asleep outside" (60 min). Lives on the Mood tab's
+// timeline (interleaved with MoodCheckIn) — see Phase 5 design. Schema
+// is intentionally minimal; if a label repeats, the user is nudged to
+// promote it to a recurrent EventTypeDef in the daily log.
+
+export interface Moment {
+  id: string; // ISO timestamp
+  timestamp: number; // ms epoch
+  label: string;
+  duration?: number; // minutes, optional
+  note?: string;
+}
+
 // ── Mood Check-ins ──────────────────────────────────────────────────────
 
 export interface MoodCheckIn {
@@ -405,6 +420,7 @@ export const STORAGE_KEYS = {
   INSIGHTS_CACHE: "aspera_insights_cache",
   TODAY_REC_PREFIX: "aspera_today_rec_",
   MOOD_PREFIX: "aspera_mood_",
+  MOMENT_PREFIX: "aspera_moment_",
   RESERVES: "aspera_emergency_reserves",
   INTEGRATION_CONNECTIONS: "aspera_integration_connections",
   INTEGRATION_SUMMARIES: "aspera_integration_summaries",
