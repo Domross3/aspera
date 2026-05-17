@@ -100,9 +100,12 @@ export function useLogs() {
 
   const save = useCallback(
     async (log: DailyLog) => {
-      // Optimistic local write — UI updates immediately.
+      // Optimistic local write — UI updates immediately. saveLog keys by
+      // log.id (= date), so this works the same for today's draft and for
+      // backfilled past-day logs.
       await saveLog(log);
-      setTodayLog(log);
+      const isToday = log.id === todayId();
+      if (isToday) setTodayLog(log);
       setRecentLogs((prev) => {
         const without = prev.filter((l) => l.id !== log.id);
         return [log, ...without].slice(0, 7);
@@ -123,6 +126,27 @@ export function useLogs() {
       }
     },
     [session],
+  );
+
+  // Resolve the log for an arbitrary date — used by the Log tab when the
+  // user selects a past day in the WeekStrip. Tries today's draft, then
+  // the in-memory recent cache, then cloud, then local AsyncStorage.
+  // Returns null if nothing was ever saved for that date.
+  const getLogFor = useCallback(
+    async (date: string): Promise<DailyLog | null> => {
+      if (date === todayId()) return todayLog;
+      const cached = recentLogs.find((l) => l.id === date);
+      if (cached) return cached;
+      if (session) {
+        try {
+          return await fetchTodayLog(session.user.id, date);
+        } catch {
+          // Fall through to local cache.
+        }
+      }
+      return await getLog(date);
+    },
+    [session, todayLog, recentLogs],
   );
 
   // Reserve-aware streak computation
@@ -173,6 +197,7 @@ export function useLogs() {
     loading,
     save,
     reload,
+    getLogFor,
     streak,
     reserves,
     reservesRemaining,

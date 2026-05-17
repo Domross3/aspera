@@ -41,7 +41,9 @@ import DaylightInput from "../../src/components/log/DaylightInput";
 import EveningReflection from "../../src/components/log/EveningReflection";
 import EventTypeRenderer from "../../src/components/log/EventTypeRenderer";
 import SchemaBuilder from "../../src/components/log/SchemaBuilder";
+import WeekStrip from "../../src/components/log/WeekStrip";
 import { reorderSection, toggleSection } from "../../src/lib/logSections";
+import { clearInsights } from "../../src/storage/storage";
 
 // ── Section descriptors + ordering ───────────────────────────────────────
 
@@ -103,6 +105,10 @@ function todayId(): string {
   return new Date().toISOString().split("T")[0];
 }
 
+// Today's draft — friendly pre-fills so a user opening a fresh app can
+// adjust rather than start from zero. We keep these even though they're
+// somewhat "opinionated" because most users do have caffeine + ambient
+// music + a meal, and adjusting is faster than typing from scratch.
 function defaultLog(): DailyLog {
   const id = todayId();
   return {
@@ -124,13 +130,41 @@ function defaultLog(): DailyLog {
   };
 }
 
+// Empty shell for a past day with no existing log. Differs from
+// `defaultLog` in that nothing is pre-filled — we don't want to invent
+// "you had espresso last Tuesday" out of thin air when the user is
+// backfilling. Caller is responsible for `id`/`date`.
+function blankLog(date: string): DailyLog {
+  return {
+    id: date,
+    date,
+    createdAt: Date.now(),
+    caffeine: { type: "none", amount: 0 },
+    workout: { type: "none", intensity: 0 },
+    music: [],
+    nutrition: { mealQuality: 3, hydration: 0 },
+    output: { tasksCompleted: 0, focusRating: 5, energyRating: 5 },
+    tags: [],
+    bigRocks: [],
+    drinks: 0,
+    sleepHours: 0,
+    daylightMinutes: 0,
+    customMetrics: [],
+    eventEntries: [],
+  };
+}
+
 // ── LogScreen ────────────────────────────────────────────────────────────
 
 export default function LogScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { todayLog, save } = useLogs();
+  const { todayLog, save, getLogFor } = useLogs();
   const { settings, update: updateSettings } = useSettings();
+
+  const [selectedDate, setSelectedDate] = useState<string>(todayId());
+  const isToday = selectedDate === todayId();
+  const isPastDay = !isToday;
 
   const [form, setForm] = useState<DailyLog>(defaultLog);
   const [saved, setSaved] = useState(false);
@@ -140,9 +174,28 @@ export default function LogScreen() {
   // type"; a real EventTypeDef.id puts the builder into edit-mode.
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
 
+  // Load the right log into the form whenever the selected date changes.
+  // For today this just follows the live `todayLog` from useLogs. For
+  // past days we hit getLogFor (cloud → cache fallback) and render blank
+  // if nothing was ever saved for that day. Critical: blank past-day
+  // form so a transient visit doesn't accidentally save defaults like
+  // "espresso 150mg" for a day the user didn't actually log.
   useEffect(() => {
-    if (todayLog) setForm(todayLog);
-  }, [todayLog]);
+    let cancelled = false;
+    const load = async () => {
+      if (isToday) {
+        setForm(todayLog ?? defaultLog());
+        return;
+      }
+      const existing = await getLogFor(selectedDate);
+      if (cancelled) return;
+      setForm(existing ?? blankLog(selectedDate));
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDate, isToday, todayLog, getLogFor]);
 
   const patch = <K extends keyof DailyLog>(key: K, value: DailyLog[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -151,6 +204,12 @@ export default function LogScreen() {
   const handleSave = async () => {
     const log: DailyLog = { ...form, createdAt: Date.now() };
     await save(log);
+    // Retroactive edits invalidate the insights cache so the next Insights
+    // view regenerates against the corrected history. Today-day saves
+    // don't need this — insights regenerate naturally on the next call.
+    if (isPastDay) {
+      await clearInsights();
+    }
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -528,11 +587,14 @@ export default function LogScreen() {
                 Daily Log
               </Text>
               <Text style={[TYPOGRAPHY.body, { color: COLORS.textSecondary }]}>
-                {new Date().toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
+                {new Date(`${selectedDate}T12:00:00`).toLocaleDateString(
+                  "en-US",
+                  {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  },
+                )}
               </Text>
             </View>
             <TouchableOpacity
@@ -552,7 +614,37 @@ export default function LogScreen() {
             </TouchableOpacity>
           </View>
 
-          <View style={{ height: SPACING.xl }} />
+          {/* 7-day week strip — taps switch which day's log is being edited. */}
+          <View style={{ marginTop: SPACING.md }}>
+            <WeekStrip
+              selectedDate={selectedDate}
+              onSelect={setSelectedDate}
+            />
+          </View>
+
+          {/* Past-day banner — only when not on today. Includes a fast
+              "back to today" affordance because the week-strip tap target
+              for today is small. */}
+          {isPastDay ? (
+            <View style={styles.pastDayBanner}>
+              <Ionicons
+                name="time-outline"
+                size={16}
+                color={COLORS.warning}
+              />
+              <Text style={styles.pastDayText}>
+                Editing a past day · changes here will refresh your insights
+              </Text>
+              <TouchableOpacity
+                onPress={() => setSelectedDate(todayId())}
+                hitSlop={6}
+              >
+                <Text style={styles.backToToday}>Today →</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ height: SPACING.lg }} />
+          )}
 
           {sections.map((section, index) => {
             const id =
@@ -678,7 +770,11 @@ export default function LogScreen() {
               style={styles.saveButton}
             >
               <Text style={styles.saveButtonText}>
-                {saved ? "✓ Saved to Log" : "Save Today's Log"}
+                {saved
+                  ? "✓ Saved"
+                  : isPastDay
+                    ? "Save backfilled log"
+                    : "Save Today's Log"}
               </Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -849,6 +945,31 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.subtitle,
     color: COLORS.text,
     fontWeight: "700",
+  } as object,
+  pastDayBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm + 2,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: "rgba(251,191,36,0.3)",
+    backgroundColor: "rgba(251,191,36,0.08)",
+  },
+  pastDayText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.warning,
+    fontSize: 12,
+    flex: 1,
+  } as object,
+  backToToday: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.accent,
+    fontWeight: "700",
+    fontSize: 12,
   } as object,
 });
 
