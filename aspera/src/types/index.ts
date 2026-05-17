@@ -164,7 +164,10 @@ export interface AppSettings {
   schemaVersion?: number; // see APP_SETTINGS_SCHEMA_VERSION
   onboardingComplete: boolean;
   moodNotificationsEnabled: boolean;
-  hiddenLogSections: LogSectionId[];
+  // Section identifiers to hide in the Log tab. Strings here are either a
+  // known LogSectionId (built-in section) or an EventTypeDef.id (user-
+  // defined type) — the renderer dispatches on which.
+  hiddenLogSections: (LogSectionId | string)[];
   /** @deprecated Use eventTypes. Migrated on read by `migrateAppSettings`. */
   customMetrics: CustomMetricDef[];
   // Phase 2 schema — user-defined event types (multi-field schemas).
@@ -180,6 +183,7 @@ export interface AppSettings {
 // ── Log sections (defaults the user can hide) ───────────────────────────
 
 export type LogSectionId =
+  | "eveningReflection"
   | "bigRocks"
   | "sleep"
   | "daylight"
@@ -192,6 +196,7 @@ export type LogSectionId =
   | "tags";
 
 export const LOG_SECTIONS: { id: LogSectionId; label: string }[] = [
+  { id: "eveningReflection", label: "Evening Reflection" },
   { id: "bigRocks", label: "Big Rocks" },
   { id: "sleep", label: "Sleep" },
   { id: "daylight", label: "Daylight" },
@@ -203,6 +208,13 @@ export const LOG_SECTIONS: { id: LogSectionId; label: string }[] = [
   { id: "output", label: "Performance Output" },
   { id: "tags", label: "Tags" },
 ];
+
+// Canonical default order — used when `AppSettings.logSectionOrder` is
+// empty (fresh user) or when new system sections are added across
+// releases and the saved order doesn't know about them yet.
+export const DEFAULT_LOG_SECTION_ORDER: LogSectionId[] = LOG_SECTIONS.map(
+  (s) => s.id,
+);
 
 // ── Event Types (Phase 2 schema) ────────────────────────────────────────
 // User-defined, multi-field schemas. Each EventTypeDef is a small "form"
