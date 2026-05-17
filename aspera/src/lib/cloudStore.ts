@@ -12,6 +12,7 @@
 
 import { supabase } from "./supabase";
 import type { DailyLog, MoodCheckIn } from "../types";
+import { migrateDailyLog } from "../storage/migrations";
 
 // ─── Daily Logs ────────────────────────────────────────────────────────────
 
@@ -26,7 +27,11 @@ export async function fetchTodayLog(
     .eq("date", date)
     .maybeSingle();
   if (error) throw error;
-  return (data?.data as DailyLog | undefined) ?? null;
+  const raw = (data?.data as DailyLog | undefined) ?? null;
+  // Cloud rows can pre-date the Phase 2 schema. The read-time migration
+  // is cheap (pure function) and is what lets the rest of the app assume
+  // every DailyLog it sees has the new `eventEntries` shape populated.
+  return raw ? migrateDailyLog(raw) : null;
 }
 
 export async function fetchRecentLogs(
@@ -40,7 +45,7 @@ export async function fetchRecentLogs(
     .order("date", { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data ?? []).map((row) => row.data as DailyLog);
+  return (data ?? []).map((row) => migrateDailyLog(row.data as DailyLog));
 }
 
 export async function upsertDailyLog(

@@ -4,7 +4,6 @@ import {
   AppSettings,
   InsightsResponse,
   MoodCheckIn,
-  NotificationSettings,
   ReservesState,
   STORAGE_KEYS,
   MAX_RESERVES_PER_WEEK,
@@ -15,6 +14,11 @@ import {
   getDefaultIntegrationConnections,
   getDailyIntegrationSummaries,
 } from "../lib/integrations";
+import {
+  migrateAppSettings,
+  migrateDailyLog,
+  settingsNeedsMigration,
+} from "./migrations";
 
 // ─── Daily Logs ────────────────────────────────────────────────────────────
 
@@ -26,7 +30,12 @@ export async function saveLog(log: DailyLog): Promise<void> {
 export async function getLog(date: string): Promise<DailyLog | null> {
   const key = `${STORAGE_KEYS.LOGS_PREFIX}${date}`;
   const raw = await AsyncStorage.getItem(key);
-  return raw ? JSON.parse(raw) : null;
+  if (!raw) return null;
+  try {
+    return migrateDailyLog(JSON.parse(raw) as DailyLog);
+  } catch {
+    return null;
+  }
 }
 
 export async function getRecentLogs(days = 7): Promise<DailyLog[]> {
@@ -40,7 +49,14 @@ export async function getRecentLogs(days = 7): Promise<DailyLog[]> {
   if (logKeys.length === 0) return [];
   const pairs = await AsyncStorage.multiGet(logKeys);
   return pairs
-    .map(([, v]) => (v ? (JSON.parse(v) as DailyLog) : null))
+    .map(([, v]) => {
+      if (!v) return null;
+      try {
+        return migrateDailyLog(JSON.parse(v) as DailyLog);
+      } catch {
+        return null;
+      }
+    })
     .filter(Boolean) as DailyLog[];
 }
 
@@ -57,47 +73,32 @@ export async function saveSettings(settings: AppSettings): Promise<void> {
 }
 
 export async function getSettings(): Promise<AppSettings> {
+  // All migration logic — legacy CustomMetricDef → EventTypeDef, legacy
+  // quickMoodWindow* → wakeTime/sleepTime, missing defaults, etc. — lives
+  // in `migrations.ts`. This function just deals with serialization and
+  // the write-back-on-migration cache update.
   const raw = await AsyncStorage.getItem(STORAGE_KEYS.SETTINGS);
-  const defaults: AppSettings = {
-    onboardingComplete: false,
-    moodNotificationsEnabled: false,
-    hiddenLogSections: [],
-    customMetrics: [],
-    notificationSettings: {
-      morningEnabled: true,
-      morningTime: "08:00",
-      eveningEnabled: true,
-      eveningTime: "21:00",
-      wakeTime: "07:00",
-      sleepTime: "22:00",
-      quickMoodEnabled: false,
-      quickMoodFrequency: 3,
-      somaticInterceptorEnabled: true,
-    },
-  };
-  if (!raw) return defaults;
-  const stored = JSON.parse(raw) as Partial<AppSettings>;
-  // Deep-merge notificationSettings so older saved versions pick up new
-  // defaults rather than landing as `undefined`. Migrate legacy
-  // `quickMoodWindowStart`/`quickMoodWindowEnd` → `wakeTime`/`sleepTime`
-  // when the new fields are missing — keeps users who upgrade from the
-  // pre-rename build from losing their custom window settings.
-  const storedNotif = (stored.notificationSettings ?? {}) as Partial<
-    NotificationSettings
-  > & { quickMoodWindowStart?: string; quickMoodWindowEnd?: string };
-  const migratedNotif: Partial<NotificationSettings> = {
-    ...storedNotif,
-    wakeTime: storedNotif.wakeTime ?? storedNotif.quickMoodWindowStart,
-    sleepTime: storedNotif.sleepTime ?? storedNotif.quickMoodWindowEnd,
-  };
-  return {
-    ...defaults,
-    ...stored,
-    notificationSettings: {
-      ...defaults.notificationSettings,
-      ...migratedNotif,
-    },
-  };
+  if (!raw) {
+    return migrateAppSettings({});
+  }
+  let stored: Partial<AppSettings>;
+  try {
+    stored = JSON.parse(raw) as Partial<AppSettings>;
+  } catch {
+    // Corrupt blob (extremely rare — only if AsyncStorage was tampered
+    // with). Return a clean default rather than throwing on app open.
+    return migrateAppSettings({});
+  }
+  const migrated = migrateAppSettings(stored);
+  if (settingsNeedsMigration(stored)) {
+    // Persist the migrated shape so subsequent reads skip the work.
+    // Fire-and-forget — failure here just means next launch re-migrates.
+    void AsyncStorage.setItem(
+      STORAGE_KEYS.SETTINGS,
+      JSON.stringify(migrated),
+    );
+  }
+  return migrated;
 }
 
 // ─── Insights Cache ────────────────────────────────────────────────────────
