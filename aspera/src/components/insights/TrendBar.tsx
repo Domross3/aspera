@@ -4,19 +4,30 @@ import { COLORS, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 
 interface Props {
   label: string;
-  value: number;
+  // `null` means no data for that day — the bar stays at zero height and
+  // the value label renders as an em-dash. Lets a sparse week keep the
+  // x-axis legible instead of collapsing absent days off the chart.
+  value: number | null;
   maxValue: number;
   color: string;
 }
 
 const MAX_BAR_HEIGHT = 80;
 
+function isFiniteValue(v: number | null): v is number {
+  return typeof v === "number" && Number.isFinite(v);
+}
+
 export default function TrendBar({ label, value, maxValue, color }: Props) {
   const heightAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    const target =
+      isFiniteValue(value) && maxValue > 0
+        ? (value / maxValue) * MAX_BAR_HEIGHT
+        : 0;
     Animated.timing(heightAnim, {
-      toValue: maxValue > 0 ? (value / maxValue) * MAX_BAR_HEIGHT : 0,
+      toValue: target,
       duration: 700,
       useNativeDriver: false,
     }).start();
@@ -24,7 +35,7 @@ export default function TrendBar({ label, value, maxValue, color }: Props) {
 
   return (
     <View style={styles.col}>
-      <Text style={styles.val}>{value}</Text>
+      <Text style={styles.val}>{isFiniteValue(value) ? value : "—"}</Text>
       <View style={styles.track}>
         <Animated.View
           style={[styles.fill, { height: heightAnim, backgroundColor: color }]}

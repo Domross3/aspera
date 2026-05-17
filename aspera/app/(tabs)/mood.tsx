@@ -87,11 +87,30 @@ function aggregateDailySnapshots(checkins: MoodCheckIn[]): DailyMoodSnapshot[] {
 function buildTrend(
   points: DailyMoodSnapshot[],
   key: "avgMood" | "avgEnergy" | "avgStress",
+  windowDays = 7,
 ): TrendPoint[] {
-  return points.map((point) => ({
-    label: point.dayLabel,
-    value: point[key],
-  }));
+  // Always emit a fixed-window array so the chart x-axis covers a full
+  // rolling week. Days without captures land as `value: null`, which the
+  // TrendLineCard renders as a gap (no dot, no line crossing the day).
+  const byDate = new Map(points.map((p) => [p.date, p]));
+  const anchor = new Date();
+  anchor.setHours(12, 0, 0, 0);
+
+  const result: TrendPoint[] = [];
+  for (let daysAgo = windowDays - 1; daysAgo >= 0; daysAgo--) {
+    const d = new Date(anchor);
+    d.setDate(d.getDate() - daysAgo);
+    const dateStr = d.toISOString().split("T")[0];
+    const label = d
+      .toLocaleDateString("en-US", { weekday: "short" })
+      .slice(0, 2);
+    const snap = byDate.get(dateStr);
+    result.push({
+      label,
+      value: snap ? snap[key] : null,
+    });
+  }
+  return result;
 }
 
 export default function MoodScreen() {

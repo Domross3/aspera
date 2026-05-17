@@ -30,6 +30,20 @@ import { wipeUserData } from "../../src/lib/cloudStore";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
+import ContinuousSlider from "../../src/components/common/ContinuousSlider";
+import TimePickerModal from "../../src/components/settings/TimePickerModal";
+import type { NotificationSettings } from "../../src/types";
+
+// Which row's picker is open. Maps directly to the field name on
+// NotificationSettings so handlers can index by key without a switch.
+type TimeKey = "wakeTime" | "sleepTime" | "morningTime" | "eveningTime";
+
+const TIME_KEY_TITLES: Record<TimeKey, string> = {
+  wakeTime: "Wake time",
+  sleepTime: "Sleep time",
+  morningTime: "Morning check-in",
+  eveningTime: "Evening reflection",
+};
 
 function formatMinutes(totalMinutes: number): string {
   const hours = Math.floor(totalMinutes / 60);
@@ -64,6 +78,7 @@ export default function SettingsScreen() {
     refreshFromMocks,
   } = useIntegrations();
   const [refreshed, setRefreshed] = useState(false);
+  const [timePickerKey, setTimePickerKey] = useState<TimeKey | null>(null);
 
   // Claude API key UI removed — the mobile app no longer holds the key.
   // All Claude calls go through the aspera-web `/api/mobile/claude` proxy.
@@ -103,18 +118,34 @@ export default function SettingsScreen() {
     }
   };
 
-  const handleCycleFrequency = async () => {
-    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    // Cycle through 2 → 3 → 4 → 6 → 2
+  const handleFrequencyChange = async (raw: number) => {
+    const next = Math.round(raw);
     const current = settings.notificationSettings.quickMoodFrequency;
-    const cycle = [2, 3, 4, 6];
-    const next = cycle[(cycle.indexOf(current) + 1) % cycle.length] ?? 3;
-    const nextSettings = {
+    if (next === current) return;
+    const nextSettings: NotificationSettings = {
       ...settings.notificationSettings,
       quickMoodFrequency: next,
     };
     await update({ notificationSettings: nextSettings });
     if (nextSettings.quickMoodEnabled) {
+      await cancelAllQuickMoodNotifications();
+      await ensureQuickMoodSchedule(nextSettings);
+    }
+  };
+
+  const handleTimeChange = async (key: TimeKey, hhmm: string) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const nextSettings: NotificationSettings = {
+      ...settings.notificationSettings,
+      [key]: hhmm,
+    };
+    await update({ notificationSettings: nextSettings });
+    // Changing wake/sleep changes the window quick-mood pulses fire in —
+    // re-roll the schedule so the new bounds take effect immediately.
+    if (
+      (key === "wakeTime" || key === "sleepTime") &&
+      nextSettings.quickMoodEnabled
+    ) {
       await cancelAllQuickMoodNotifications();
       await ensureQuickMoodSchedule(nextSettings);
     }
@@ -351,19 +382,66 @@ export default function SettingsScreen() {
           </Text>
         </TouchableOpacity>
 
-        {/* Notifications */}
+        {/* Notifications — merged section covering wake/sleep window, daily
+            check-in pings, and random quick-mood pulses. One concept (the
+            user's day shape) drives all three cards. */}
         <SectionLabel label="Notifications" />
-        <GradientCard style={{ marginBottom: SPACING.lg }}>
+
+        {/* Waking window — these times also bound quick-mood pulses. */}
+        <GradientCard style={{ marginBottom: SPACING.md }}>
           <Text
             style={[
               TYPOGRAPHY.caption,
               { color: COLORS.textSecondary, marginBottom: SPACING.md },
             ]}
           >
-            Push reminders are sent from the cloud — no local scheduling needed.
+            Your waking window. Quick mood pulses fire only between these
+            times.
           </Text>
-          <View style={[styles.row, { marginBottom: SPACING.md }]}>
+          <TouchableOpacity
+            onPress={() => setTimePickerKey("wakeTime")}
+            activeOpacity={0.7}
+            style={[styles.row, { marginBottom: SPACING.md }]}
+          >
             <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Wake time
+              </Text>
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+                When your day starts
+              </Text>
+            </View>
+            <Text style={[TYPOGRAPHY.body, { color: COLORS.accent }]}>
+              {settings.notificationSettings.wakeTime}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => setTimePickerKey("sleepTime")}
+            activeOpacity={0.7}
+            style={styles.row}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Sleep time
+              </Text>
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+                When you wind down
+              </Text>
+            </View>
+            <Text style={[TYPOGRAPHY.body, { color: COLORS.accent }]}>
+              {settings.notificationSettings.sleepTime}
+            </Text>
+          </TouchableOpacity>
+        </GradientCard>
+
+        {/* Daily check-in reminders — independent toggles with editable times. */}
+        <GradientCard style={{ marginBottom: SPACING.md }}>
+          <View style={[styles.row, { marginBottom: SPACING.sm }]}>
+            <TouchableOpacity
+              onPress={() => setTimePickerKey("morningTime")}
+              activeOpacity={0.7}
+              style={{ flex: 1 }}
+            >
               <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
                 Morning check-in
               </Text>
@@ -371,7 +449,7 @@ export default function SettingsScreen() {
                 {settings.notificationSettings.morningTime} · How are you
                 feeling?
               </Text>
-            </View>
+            </TouchableOpacity>
             <Switch
               value={settings.notificationSettings.morningEnabled}
               onValueChange={(v) =>
@@ -386,16 +464,27 @@ export default function SettingsScreen() {
               thumbColor={COLORS.text}
             />
           </View>
-          <View style={styles.row}>
-            <View style={{ flex: 1 }}>
+          {settings.notificationSettings.morningTime <
+          settings.notificationSettings.wakeTime ? (
+            <Text style={styles.validationHint}>
+              Earlier than your wake time
+            </Text>
+          ) : null}
+
+          <View style={[styles.row, { marginTop: SPACING.md }]}>
+            <TouchableOpacity
+              onPress={() => setTimePickerKey("eveningTime")}
+              activeOpacity={0.7}
+              style={{ flex: 1 }}
+            >
               <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
-                Evening log reminder
+                Evening reflection
               </Text>
               <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
                 {settings.notificationSettings.eveningTime} · Log today before
                 you forget
               </Text>
-            </View>
+            </TouchableOpacity>
             <Switch
               value={settings.notificationSettings.eveningEnabled}
               onValueChange={(v) =>
@@ -410,10 +499,15 @@ export default function SettingsScreen() {
               thumbColor={COLORS.text}
             />
           </View>
+          {settings.notificationSettings.eveningTime >
+          settings.notificationSettings.sleepTime ? (
+            <Text style={styles.validationHint}>
+              Later than your sleep time
+            </Text>
+          ) : null}
         </GradientCard>
 
-        {/* Quick mood check-ins */}
-        <SectionLabel label="Quick Mood Check-ins" />
+        {/* Quick mood pulses — random scheduling within the waking window. */}
         <GradientCard style={{ marginBottom: SPACING.lg }}>
           <Text
             style={[
@@ -421,18 +515,17 @@ export default function SettingsScreen() {
               { color: COLORS.textSecondary, marginBottom: SPACING.md },
             ]}
           >
-            Random notifications throughout the day for a 10-second mood +
-            energy capture. Scheduled locally on your device.
+            Random notifications throughout your waking window for a 10-second
+            mood + energy capture. Scheduled locally on your device.
           </Text>
           <View style={[styles.row, { marginBottom: SPACING.md }]}>
             <View style={{ flex: 1 }}>
               <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
-                Enable
+                Quick mood pulses
               </Text>
               <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
-                {settings.notificationSettings.quickMoodWindowStart} –{" "}
-                {settings.notificationSettings.quickMoodWindowEnd} · respects
-                quiet hours
+                {settings.notificationSettings.wakeTime} –{" "}
+                {settings.notificationSettings.sleepTime}
               </Text>
             </View>
             <Switch
@@ -442,27 +535,29 @@ export default function SettingsScreen() {
               thumbColor={COLORS.text}
             />
           </View>
-          <TouchableOpacity
-            onPress={handleCycleFrequency}
-            activeOpacity={0.7}
-            disabled={!settings.notificationSettings.quickMoodEnabled}
-            style={[
-              styles.row,
-              { opacity: settings.notificationSettings.quickMoodEnabled ? 1 : 0.5 },
-            ]}
+          <View
+            style={{
+              opacity: settings.notificationSettings.quickMoodEnabled
+                ? 1
+                : 0.5,
+              marginBottom: SPACING.sm,
+            }}
+            pointerEvents={
+              settings.notificationSettings.quickMoodEnabled
+                ? "auto"
+                : "none"
+            }
           >
-            <View style={{ flex: 1 }}>
-              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
-                Frequency
-              </Text>
-              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
-                Tap to cycle: 2 / 3 / 4 / 6 per day
-              </Text>
-            </View>
-            <Text style={[TYPOGRAPHY.body, { color: COLORS.accent }]}>
-              {settings.notificationSettings.quickMoodFrequency}× / day
-            </Text>
-          </TouchableOpacity>
+            <ContinuousSlider
+              label="Frequency"
+              value={settings.notificationSettings.quickMoodFrequency}
+              min={1}
+              max={8}
+              step={1}
+              onChange={handleFrequencyChange}
+              formatValue={(v) => `${Math.round(v)}× / day`}
+            />
+          </View>
           <TouchableOpacity
             onPress={handleSendTestMoodNotification}
             activeOpacity={0.7}
@@ -592,6 +687,23 @@ export default function SettingsScreen() {
           </GradientCard>
         </TouchableOpacity>
       </ScrollView>
+
+      <TimePickerModal
+        visible={timePickerKey !== null}
+        initial={
+          timePickerKey
+            ? settings.notificationSettings[timePickerKey]
+            : "07:00"
+        }
+        title={timePickerKey ? TIME_KEY_TITLES[timePickerKey] : "Pick a time"}
+        onCancel={() => setTimePickerKey(null)}
+        onConfirm={(hhmm) => {
+          if (timePickerKey) {
+            void handleTimeChange(timePickerKey, hhmm);
+          }
+          setTimePickerKey(null);
+        }}
+      />
     </LinearGradient>
   );
 }
@@ -599,6 +711,12 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   content: { paddingHorizontal: SPACING.lg },
+  validationHint: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.warning,
+    marginTop: SPACING.xs,
+    fontSize: 11,
+  } as object,
   input: {
     backgroundColor: COLORS.background,
     borderRadius: RADIUS.md,

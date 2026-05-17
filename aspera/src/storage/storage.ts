@@ -4,6 +4,7 @@ import {
   AppSettings,
   InsightsResponse,
   MoodCheckIn,
+  NotificationSettings,
   ReservesState,
   STORAGE_KEYS,
   MAX_RESERVES_PER_WEEK,
@@ -67,23 +68,34 @@ export async function getSettings(): Promise<AppSettings> {
       morningTime: "08:00",
       eveningEnabled: true,
       eveningTime: "21:00",
+      wakeTime: "07:00",
+      sleepTime: "22:00",
       quickMoodEnabled: false,
       quickMoodFrequency: 3,
-      quickMoodWindowStart: "09:00",
-      quickMoodWindowEnd: "21:00",
       somaticInterceptorEnabled: true,
     },
   };
   if (!raw) return defaults;
   const stored = JSON.parse(raw) as Partial<AppSettings>;
-  // Deep-merge notificationSettings so older saved versions get the new
-  // quickMood* defaults instead of `undefined`.
+  // Deep-merge notificationSettings so older saved versions pick up new
+  // defaults rather than landing as `undefined`. Migrate legacy
+  // `quickMoodWindowStart`/`quickMoodWindowEnd` → `wakeTime`/`sleepTime`
+  // when the new fields are missing — keeps users who upgrade from the
+  // pre-rename build from losing their custom window settings.
+  const storedNotif = (stored.notificationSettings ?? {}) as Partial<
+    NotificationSettings
+  > & { quickMoodWindowStart?: string; quickMoodWindowEnd?: string };
+  const migratedNotif: Partial<NotificationSettings> = {
+    ...storedNotif,
+    wakeTime: storedNotif.wakeTime ?? storedNotif.quickMoodWindowStart,
+    sleepTime: storedNotif.sleepTime ?? storedNotif.quickMoodWindowEnd,
+  };
   return {
     ...defaults,
     ...stored,
     notificationSettings: {
       ...defaults.notificationSettings,
-      ...(stored.notificationSettings ?? {}),
+      ...migratedNotif,
     },
   };
 }

@@ -40,8 +40,11 @@ function parseTime(hhmm: string): { hour: number; minute: number } {
 }
 
 function parseWindow(settings: NotificationSettings): ParsedWindow {
-  const start = parseTime(settings.quickMoodWindowStart);
-  const end = parseTime(settings.quickMoodWindowEnd);
+  // Quick-mood pulses fire only inside the user's waking window. `wakeTime`
+  // and `sleepTime` replaced the older `quickMoodWindowStart/End` fields —
+  // see `getSettings` for the read-side migration that maps legacy values.
+  const start = parseTime(settings.wakeTime);
+  const end = parseTime(settings.sleepTime);
   return {
     startHour: start.hour,
     startMinute: start.minute,

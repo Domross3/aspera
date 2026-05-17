@@ -13,10 +13,11 @@ export function useSettings() {
       morningTime: "08:00",
       eveningEnabled: true,
       eveningTime: "21:00",
+      wakeTime: "07:00",
+      sleepTime: "22:00",
       quickMoodEnabled: false,
       quickMoodFrequency: 3,
-      quickMoodWindowStart: "09:00",
-      quickMoodWindowEnd: "21:00",
+      somaticInterceptorEnabled: true,
     },
   });
   const [loading, setLoading] = useState(true);

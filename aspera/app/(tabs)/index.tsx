@@ -37,11 +37,6 @@ import { DailyLog } from "../../src/types";
 function todayId() {
   return new Date().toISOString().split("T")[0];
 }
-function shortDayLabel(date: string) {
-  return new Date(`${date}T12:00:00`)
-    .toLocaleDateString("en-US", { weekday: "short" })
-    .slice(0, 2);
-}
 
 function defaultLogShell(): DailyLog {
   const id = new Date().toISOString().split("T")[0];
@@ -188,15 +183,31 @@ export default function TodayScreen() {
         )
       : null;
 
-  const trendDays = [...recentLogs].sort((a, b) => a.id.localeCompare(b.id));
-  const focusTrend: TrendPoint[] = trendDays.map((day) => ({
-    label: shortDayLabel(day.date),
-    value: day.output.focusRating,
-  }));
-  const energyTrend: TrendPoint[] = trendDays.map((day) => ({
-    label: shortDayLabel(day.date),
-    value: day.output.energyRating,
-  }));
+  // Build fixed 7-day rolling windows for the trend cards. Days without a
+  // log land as `value: null` so TrendLineCard renders a true gap rather
+  // than stretching a sparse trend across the full chart width.
+  const logsByDate = new Map(recentLogs.map((l) => [l.id, l]));
+  const trendAnchor = new Date();
+  trendAnchor.setHours(12, 0, 0, 0);
+  const focusTrend: TrendPoint[] = [];
+  const energyTrend: TrendPoint[] = [];
+  for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
+    const d = new Date(trendAnchor);
+    d.setDate(d.getDate() - daysAgo);
+    const dateStr = d.toISOString().split("T")[0];
+    const label = d
+      .toLocaleDateString("en-US", { weekday: "short" })
+      .slice(0, 2);
+    const log = logsByDate.get(dateStr);
+    focusTrend.push({
+      label,
+      value: log ? log.output.focusRating : null,
+    });
+    energyTrend.push({
+      label,
+      value: log ? log.output.energyRating : null,
+    });
+  }
 
   return (
     <LinearGradient
@@ -270,8 +281,10 @@ export default function TodayScreen() {
             }}
           />
 
-          {/* Weekly metrics */}
-          {trendDays.length > 0 && weekAvg && (
+          {/* Weekly metrics — render whenever there's at least one logged
+              day. The TrendLineCard itself handles 0/1/2+ day rendering, so
+              we just need any log in the window. */}
+          {recentLogs.length > 0 && weekAvg && (
             <>
               <SectionLabel
                 label="This Week's Metrics"
@@ -279,7 +292,7 @@ export default function TodayScreen() {
               />
               <TrendLineCard
                 title="Focus"
-                subtitle={`${trendDays.length}-day trendline with weekly average`}
+                subtitle={`${recentLogs.length}-day trendline with weekly average`}
                 accentColor={COLORS.accent}
                 points={focusTrend}
                 maxValue={10}
@@ -287,7 +300,7 @@ export default function TodayScreen() {
               />
               <TrendLineCard
                 title="Energy"
-                subtitle={`${trendDays.length}-day trendline with weekly average`}
+                subtitle={`${recentLogs.length}-day trendline with weekly average`}
                 accentColor={COLORS.warning}
                 points={energyTrend}
                 maxValue={10}

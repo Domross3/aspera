@@ -16,13 +16,41 @@ const METRICS: { key: Metric; label: string; color: string; max: number }[] = [
   { key: "tasksCompleted", label: "Tasks", color: COLORS.success, max: 20 },
 ];
 
+// Pad trends to a fixed 7-day rolling window ending today. Days without
+// a trend entry render with `value: null` so TrendBar shows an em-dash
+// and a zero-height bar — keeps the x-axis legible when the user has
+// sparse history (e.g. just started logging).
+function padToWeek(
+  trends: WeeklyTrend[],
+  metricKey: Metric,
+): { label: string; value: number | null; key: string }[] {
+  const byDate = new Map(trends.map((t) => [t.date, t]));
+  const anchor = new Date();
+  anchor.setHours(12, 0, 0, 0);
+
+  const result: { label: string; value: number | null; key: string }[] = [];
+  for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
+    const d = new Date(anchor);
+    d.setDate(d.getDate() - daysAgo);
+    const dateStr = d.toISOString().split("T")[0];
+    const label = d
+      .toLocaleDateString("en-US", { weekday: "short" })
+      .slice(0, 2);
+    const t = byDate.get(dateStr);
+    result.push({
+      label,
+      value: t ? t[metricKey] : null,
+      key: dateStr,
+    });
+  }
+  return result;
+}
+
 export default function TrendBarsSection({ trends }: Props) {
   const [activeMetric, setActiveMetric] = useState<Metric>("focusRating");
   const metric = METRICS.find((m) => m.key === activeMetric)!;
 
-  const sorted = [...trends]
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(-7);
+  const padded = padToWeek(trends, activeMetric);
 
   return (
     <View>
@@ -54,11 +82,11 @@ export default function TrendBarsSection({ trends }: Props) {
 
       {/* Bars */}
       <View style={styles.barsRow}>
-        {sorted.map((t) => (
+        {padded.map((t) => (
           <TrendBar
-            key={t.date}
-            label={t.dayLabel}
-            value={t[activeMetric]}
+            key={t.key}
+            label={t.label}
+            value={t.value}
             maxValue={metric.max}
             color={metric.color}
           />

@@ -130,12 +130,15 @@ export interface NotificationSettings {
   morningTime: string; // "HH:MM" local (display only — cron is server-side)
   eveningEnabled: boolean;
   eveningTime: string;
-  // Quick mood capture — randomized local notifications throughout the waking
-  // window. Scheduled on-device via expo-notifications (no server cron).
+  // Wake / sleep times define the user's waking window. They double as the
+  // bounds for random quick-mood notification scheduling — one mental model
+  // instead of two. (Legacy fields `quickMoodWindowStart` / `quickMoodWindowEnd`
+  // were removed in favor of these; `getSettings` migrates older saved
+  // settings on read.)
+  wakeTime: string; // "HH:MM" local, default "07:00"
+  sleepTime: string; // "HH:MM" local, default "22:00"
   quickMoodEnabled: boolean;
   quickMoodFrequency: number; // notifications per day (default 3)
-  quickMoodWindowStart: string; // "HH:MM" local, default "09:00"
-  quickMoodWindowEnd: string; // "HH:MM" local, default "21:00"
   // Somatic Interceptor — the breathe → "What are you feeling?" → reframe
   // modal triggered by the 5-minute idle timer on the Today tab. Default on;
   // user can switch it off entirely from Settings.

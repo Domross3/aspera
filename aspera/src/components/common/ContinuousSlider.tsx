@@ -25,6 +25,10 @@ interface Props {
   step?: number;
   onChange: (v: number) => void;
   accentColor?: string;
+  // Override the right-side value label. Defaults to `${value.toFixed(1)}/${max}`
+  // which matches the original Quick Mood callers; integer-only callers (e.g.
+  // notification frequency 1–8) can format as `3× / day` instead.
+  formatValue?: (value: number, max: number) => string;
 }
 
 const THUMB_SIZE = 28;
@@ -46,6 +50,7 @@ export default function ContinuousSlider({
   step = 0.1,
   onChange,
   accentColor = COLORS.accent,
+  formatValue,
 }: Props) {
   const [trackWidth, setTrackWidth] = useState(0);
   const trackWidthRef = useRef(0);
@@ -107,7 +112,7 @@ export default function ContinuousSlider({
       <View style={styles.header}>
         <Text style={styles.label}>{label}</Text>
         <Text style={[styles.value, { color: accentColor }]}>
-          {value.toFixed(1)}/{max}
+          {formatValue ? formatValue(value, max) : `${value.toFixed(1)}/${max}`}
         </Text>
       </View>
 
