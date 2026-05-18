@@ -267,6 +267,44 @@ export default function SettingsScreen() {
     });
   };
 
+  // Diagnostic: show the current state of scheduled notifications + permission,
+  // then force a fresh pulse schedule. The `>= RESCHEDULE_THRESHOLD` short-
+  // circuit in ensureQuickMoodSchedule can leave the queue stale if iOS is
+  // silently truncating or if the queued dates have already drifted past.
+  // This bypasses that check by canceling first and rebuilding from scratch.
+  const handleForcePulseReschedule = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const { status } = await Notifications.getPermissionsAsync();
+    const before = await Notifications.getAllScheduledNotificationsAsync();
+    const quickMoodBefore = before.filter(
+      (n) => (n.content.data as { kind?: string })?.kind === "quick_mood_check",
+    ).length;
+    const remindersBefore = before.filter(
+      (n) => (n.content.data as { kind?: string })?.kind === "user_reminder",
+    ).length;
+
+    await cancelAllQuickMoodNotifications();
+    await ensureQuickMoodSchedule(settings.notificationSettings);
+
+    const after = await Notifications.getAllScheduledNotificationsAsync();
+    const quickMoodAfter = after.filter(
+      (n) => (n.content.data as { kind?: string })?.kind === "quick_mood_check",
+    ).length;
+
+    Alert.alert(
+      "Pulse schedule rebuilt",
+      [
+        `iOS permission: ${status}`,
+        `Pulses enabled: ${settings.notificationSettings.quickMoodEnabled ? "yes" : "no"}`,
+        `Window: ${settings.notificationSettings.wakeTime}–${settings.notificationSettings.sleepTime}`,
+        `Frequency: ${settings.notificationSettings.quickMoodFrequency}× / day`,
+        "",
+        `Before: ${quickMoodBefore} pulses + ${remindersBefore} reminders pending`,
+        `After: ${quickMoodAfter} pulses pending`,
+      ].join("\n"),
+    );
+  };
+
   const { session, signOut } = useAuth();
 
   const handleSignOut = () => {
@@ -661,6 +699,22 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Text style={[TYPOGRAPHY.body, { color: COLORS.accent }]}>→</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleForcePulseReschedule}
+            activeOpacity={0.7}
+            style={[styles.row, { marginTop: SPACING.sm }]}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Rebuild pulse schedule
+              </Text>
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+                Cancels + reschedules the next 7 days. Shows the diagnostic
+                state for permission, window, and pending count.
+              </Text>
+            </View>
+            <Text style={[TYPOGRAPHY.body, { color: COLORS.accent }]}>↻</Text>
           </TouchableOpacity>
         </GradientCard>
 
