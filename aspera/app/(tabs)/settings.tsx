@@ -27,12 +27,22 @@ import {
   ensureQuickMoodSchedule,
 } from "../../src/lib/quickMoodNotifications";
 import { wipeUserData } from "../../src/lib/cloudStore";
+import {
+  dailyLoadOfReminder,
+} from "../../src/lib/userReminderNotifications";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
 import ContinuousSlider from "../../src/components/common/ContinuousSlider";
 import TimePickerModal from "../../src/components/settings/TimePickerModal";
-import type { NotificationSettings } from "../../src/types";
+import ReminderEditor from "../../src/components/settings/ReminderEditor";
+import type { NotificationSettings, UserReminder } from "../../src/types";
+
+// iOS caps scheduled notifications at ~64 per app. We schedule 7 days
+// ahead, so the safe per-day budget is ~9. Warn at 7 / day; hard-cap
+// new reminders that would push past 9 / day.
+const DAILY_CAP_HARD = 9;
+const DAILY_CAP_WARN = 7;
 
 // Which row's picker is open. Maps directly to the field name on
 // NotificationSettings so handlers can index by key without a switch.
@@ -79,6 +89,12 @@ export default function SettingsScreen() {
   } = useIntegrations();
   const [refreshed, setRefreshed] = useState(false);
   const [timePickerKey, setTimePickerKey] = useState<TimeKey | null>(null);
+
+  // Reminder editor target. `null` = closed; `"__new__"` = creating;
+  // any other string = editing the reminder with that id.
+  const [reminderEditorTarget, setReminderEditorTarget] = useState<
+    string | null
+  >(null);
 
   // Claude API key UI removed — the mobile app no longer holds the key.
   // All Claude calls go through the aspera-web `/api/mobile/claude` proxy.
@@ -131,6 +147,79 @@ export default function SettingsScreen() {
       await cancelAllQuickMoodNotifications();
       await ensureQuickMoodSchedule(nextSettings);
     }
+  };
+
+  // ── Reminder helpers ──────────────────────────────────────────────────
+
+  const userReminders = settings.userReminders ?? [];
+  const eventTypes = settings.eventTypes ?? [];
+
+  // Approximate per-day notification load: morning + evening + quick
+  // mood pulses + every enabled reminder's per-day contribution.
+  const baseDailyLoad =
+    (settings.notificationSettings.morningEnabled ? 1 : 0) +
+    (settings.notificationSettings.eveningEnabled ? 1 : 0) +
+    (settings.notificationSettings.quickMoodEnabled
+      ? settings.notificationSettings.quickMoodFrequency
+      : 0);
+  const reminderDailyLoad = userReminders.reduce(
+    (acc, r) => acc + dailyLoadOfReminder(r),
+    0,
+  );
+  const totalDailyLoad = baseDailyLoad + reminderDailyLoad;
+
+  const loadColor =
+    totalDailyLoad >= DAILY_CAP_HARD
+      ? COLORS.danger
+      : totalDailyLoad >= DAILY_CAP_WARN
+        ? COLORS.warning
+        : COLORS.success;
+
+  const editingReminder =
+    reminderEditorTarget && reminderEditorTarget !== "__new__"
+      ? userReminders.find((r) => r.id === reminderEditorTarget) ?? null
+      : null;
+
+  // Daily load contribution of *the reminder we're currently editing* (if
+  // any), so the "would this push over the cap" check only counts the
+  // delta when the user is editing rather than creating.
+  const draftBaselineLoad = editingReminder
+    ? dailyLoadOfReminder(editingReminder)
+    : 0;
+
+  const handleReminderSave = async (next: UserReminder) => {
+    const nextLoad =
+      totalDailyLoad - draftBaselineLoad + dailyLoadOfReminder(next);
+    if (nextLoad > DAILY_CAP_HARD) {
+      Alert.alert(
+        "Notification limit reached",
+        "iOS only lets each app schedule a limited number of notifications. Disable or delete a reminder first, then come back.",
+      );
+      return;
+    }
+    const existing = userReminders.some((r) => r.id === next.id);
+    const nextList = existing
+      ? userReminders.map((r) => (r.id === next.id ? next : r))
+      : [...userReminders, next];
+    await update({ userReminders: nextList });
+    setReminderEditorTarget(null);
+  };
+
+  const handleReminderDelete = async () => {
+    if (!editingReminder) return;
+    await update({
+      userReminders: userReminders.filter((r) => r.id !== editingReminder.id),
+    });
+    setReminderEditorTarget(null);
+  };
+
+  const handleReminderToggle = async (id: string, enabled: boolean) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    await update({
+      userReminders: userReminders.map((r) =>
+        r.id === id ? { ...r, enabled } : r,
+      ),
+    });
   };
 
   const handleTimeChange = async (key: TimeKey, hhmm: string) => {
@@ -575,6 +664,117 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </GradientCard>
 
+        {/* Reminders — user-defined habit notifications */}
+        <SectionLabel label="Reminders" />
+        <GradientCard style={{ marginBottom: SPACING.md }}>
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Daily notification load
+              </Text>
+              <Text
+                style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}
+              >
+                iOS limits scheduled notifications per app — staying under
+                ~9/day keeps everything firing reliably.
+              </Text>
+            </View>
+            <Text
+              style={[
+                TYPOGRAPHY.subtitle,
+                { color: loadColor, fontWeight: "700" },
+              ]}
+            >
+              {totalDailyLoad.toFixed(0)} / {DAILY_CAP_HARD}
+            </Text>
+          </View>
+        </GradientCard>
+
+        {userReminders.length > 0 ? (
+          <GradientCard style={{ marginBottom: SPACING.md }}>
+            {userReminders.map((reminder, idx) => {
+              const linkedType = reminder.linkedEventTypeId
+                ? eventTypes.find(
+                    (t) => t.id === reminder.linkedEventTypeId,
+                  )
+                : undefined;
+              return (
+                <View key={reminder.id}>
+                  <TouchableOpacity
+                    onPress={() => setReminderEditorTarget(reminder.id)}
+                    activeOpacity={0.7}
+                    style={styles.row}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={[TYPOGRAPHY.body, { color: COLORS.text }]}
+                      >
+                        {linkedType?.emoji ? `${linkedType.emoji} ` : ""}
+                        {reminder.label}
+                      </Text>
+                      <Text
+                        style={[
+                          TYPOGRAPHY.caption,
+                          { color: COLORS.textMuted },
+                        ]}
+                      >
+                        {reminder.schedule.kind === "fixed"
+                          ? reminder.schedule.times.join(", ")
+                          : `${reminder.schedule.count}× / day in ${reminder.schedule.windowStart}–${reminder.schedule.windowEnd}`}
+                        {reminder.weekdays.length < 7
+                          ? ` · ${reminder.weekdays.length} day${
+                              reminder.weekdays.length === 1 ? "" : "s"
+                            }/wk`
+                          : ""}
+                      </Text>
+                    </View>
+                    <Switch
+                      value={reminder.enabled}
+                      onValueChange={(v) =>
+                        void handleReminderToggle(reminder.id, v)
+                      }
+                      trackColor={{
+                        false: COLORS.border,
+                        true: COLORS.accent,
+                      }}
+                      thumbColor={COLORS.text}
+                    />
+                  </TouchableOpacity>
+                  {idx < userReminders.length - 1 ? (
+                    <View
+                      style={{
+                        height: StyleSheet.hairlineWidth,
+                        backgroundColor: COLORS.border,
+                        marginVertical: SPACING.sm,
+                      }}
+                    />
+                  ) : null}
+                </View>
+              );
+            })}
+          </GradientCard>
+        ) : null}
+
+        <TouchableOpacity
+          onPress={() => {
+            if (totalDailyLoad >= DAILY_CAP_HARD) {
+              Alert.alert(
+                "Notification limit reached",
+                "Disable or delete an existing reminder before adding a new one.",
+              );
+              return;
+            }
+            setReminderEditorTarget("__new__");
+          }}
+          activeOpacity={0.7}
+          style={[
+            styles.addReminderRow,
+            totalDailyLoad >= DAILY_CAP_HARD && styles.addReminderDisabled,
+          ]}
+        >
+          <Text style={styles.addReminderText}>+ New reminder</Text>
+        </TouchableOpacity>
+
         {/* Somatic Interceptor */}
         <SectionLabel label="Somatic Interceptor" />
         <GradientCard style={{ marginBottom: SPACING.lg }}>
@@ -704,6 +904,19 @@ export default function SettingsScreen() {
           setTimePickerKey(null);
         }}
       />
+
+      <ReminderEditor
+        visible={reminderEditorTarget !== null}
+        initial={editingReminder}
+        eventTypes={eventTypes}
+        onCancel={() => setReminderEditorTarget(null)}
+        onSave={(next) => void handleReminderSave(next)}
+        onDelete={
+          reminderEditorTarget && reminderEditorTarget !== "__new__"
+            ? () => void handleReminderDelete()
+            : undefined
+        }
+      />
     </LinearGradient>
   );
 }
@@ -716,6 +929,23 @@ const styles = StyleSheet.create({
     color: COLORS.warning,
     marginTop: SPACING.xs,
     fontSize: 11,
+  } as object,
+  addReminderRow: {
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderStyle: "dashed",
+    alignItems: "center",
+    marginBottom: SPACING.lg,
+  },
+  addReminderDisabled: {
+    opacity: 0.5,
+  },
+  addReminderText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.accent,
+    fontWeight: "700",
   } as object,
   input: {
     backgroundColor: COLORS.background,

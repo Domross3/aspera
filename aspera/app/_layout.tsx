@@ -14,6 +14,10 @@ import {
   QUICK_MOOD_NOTIFICATION_KIND,
   ensureQuickMoodSchedule,
 } from "../src/lib/quickMoodNotifications";
+import {
+  USER_REMINDER_NOTIFICATION_KIND,
+  ensureUserReminderSchedule,
+} from "../src/lib/userReminderNotifications";
 
 function AppLayout() {
   const router = useRouter();
@@ -43,6 +47,13 @@ function AppLayout() {
     void ensureQuickMoodSchedule(settings.notificationSettings);
   }, [settingsLoading, settings.notificationSettings]);
 
+  // Same for user-defined reminders. The scheduler always re-rolls the
+  // full set (cheaper to track) so any settings change naturally re-syncs.
+  useEffect(() => {
+    if (settingsLoading) return;
+    void ensureUserReminderSchedule(settings.userReminders ?? []);
+  }, [settingsLoading, settings.userReminders]);
+
   // OTA update check on launch. Skipped in dev (Metro handles reloads).
   useEffect(() => {
     if (__DEV__) return;
@@ -59,28 +70,49 @@ function AppLayout() {
     })();
   }, []);
 
-  // Notification tap handler: when a quick-mood notification is tapped from
-  // foreground or background, open the modal. (Cold-start is handled below
-  // — we need to wait for the auth gate to settle before navigating.)
+  // Resolve what to do when a notification of any kind is tapped. Quick
+  // mood pulses open the dedicated modal; user reminders deep-link to the
+  // Today tab (and if they were linked to an EventTypeDef, the user can
+  // navigate into the Log tab from there). Cold-start handled below.
+  const handleNotificationKind = (
+    data: { kind?: string; linkedEventTypeId?: string } | undefined,
+  ) => {
+    if (!data) return;
+    if (data.kind === QUICK_MOOD_NOTIFICATION_KIND) {
+      router.push("/quick-mood" as never);
+      return;
+    }
+    if (data.kind === USER_REMINDER_NOTIFICATION_KIND) {
+      // For v1 we route every user reminder back to Today. Deep-linking
+      // into a specific Log-tab section for `linkedEventTypeId` requires
+      // route params Plumbing the Log tab doesn't yet listen for — left
+      // as a follow-up; tapping the notification at minimum opens the
+      // app to the most relevant launch surface.
+      router.push("/(tabs)" as never);
+      return;
+    }
+  };
+
+  // Notification tap handler: when any tagged notification is tapped from
+  // foreground or background, route based on `data.kind`.
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
-        const kind = (
-          response.notification.request.content.data as { kind?: string }
-        )?.kind;
-        if (kind === QUICK_MOOD_NOTIFICATION_KIND) {
-          router.push("/quick-mood" as never);
-        }
+        const data = response.notification.request.content.data as
+          | { kind?: string; linkedEventTypeId?: string }
+          | undefined;
+        handleNotificationKind(data);
       },
     );
     return () => subscription.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
   // Cold-start notification handler. If the app was launched by tapping a
-  // quick-mood notification, push the modal — but ONLY after auth is
-  // resolved and the user is signed in, otherwise we race the auth gate's
-  // redirect to /sign-in and end up with a half-mounted navigation tree
-  // that renders blank. Once-per-cold-start guard via ref.
+  // notification, route accordingly — but only after auth is resolved and
+  // the user is signed in, otherwise we race the auth gate's redirect to
+  // /sign-in and end up with a half-mounted navigation tree that renders
+  // blank. Once-per-cold-start guard via ref.
   const coldStartHandled = useRef(false);
   useEffect(() => {
     if (authLoading) return;
@@ -90,15 +122,15 @@ function AppLayout() {
 
     void Notifications.getLastNotificationResponseAsync().then((response) => {
       if (!response) return;
-      const kind = (
-        response.notification.request.content.data as { kind?: string }
-      )?.kind;
-      if (kind !== QUICK_MOOD_NOTIFICATION_KIND) return;
-      // Defer a tick so the Stack has mounted (tabs) before we push the modal.
+      const data = response.notification.request.content.data as
+        | { kind?: string; linkedEventTypeId?: string }
+        | undefined;
+      // Defer a tick so the Stack has mounted (tabs) before we push.
       setTimeout(() => {
-        router.push("/quick-mood" as never);
+        handleNotificationKind(data);
       }, 50);
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, session, router]);
 
   // Splash placeholder while the persisted Supabase session is being

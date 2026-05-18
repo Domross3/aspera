@@ -166,6 +166,31 @@ export interface NotificationSettings {
   somaticInterceptorEnabled: boolean;
 }
 
+// ── User Reminders (Phase 6) ────────────────────────────────────────────
+// User-defined habit notifications. Either fire at fixed times of day
+// (with an optional weekday filter) or randomly within a chosen window.
+// Each reminder can optionally be linked to an EventTypeDef — tapping the
+// notification deep-links into the Log tab focused on that section.
+
+export type ReminderSchedule =
+  | { kind: "fixed"; times: string[] /* "HH:MM" */ }
+  | {
+      kind: "random";
+      count: number; // 1–5 per active day
+      windowStart: string; // "HH:MM"
+      windowEnd: string; // "HH:MM"
+    };
+
+export interface UserReminder {
+  id: string;
+  label: string; // becomes the notification title
+  schedule: ReminderSchedule;
+  weekdays: number[]; // 0=Sun … 6=Sat, default [0..6]
+  linkedEventTypeId?: string;
+  enabled: boolean;
+  createdAt: number;
+}
+
 // AppSettings.schemaVersion bumps each time the on-disk shape changes
 // in a way the migration helpers need to handle. `undefined` or `< 2`
 // triggers `migrateAppSettings` on read. Always bump AFTER migrations
@@ -192,6 +217,8 @@ export interface AppSettings {
   // strings that are an EventTypeDef.id render that user-defined type.
   // Empty / undefined → derive a default order in the renderer.
   logSectionOrder?: (LogSectionId | string)[];
+  // Phase 6: user-defined habit reminders (local notifications).
+  userReminders?: UserReminder[];
   notificationSettings: NotificationSettings;
 }
 

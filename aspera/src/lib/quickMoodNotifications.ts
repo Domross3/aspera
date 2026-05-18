@@ -18,99 +18,12 @@
 
 import * as Notifications from "expo-notifications";
 import { NotificationSettings } from "../types";
+import { buildDailyTriggerDates, parseWindow } from "./notificationHelpers";
 
 const NOTIFICATION_KIND = "quick_mood_check";
 const SCHEDULE_DAYS = 7;
 const MIN_HOURS_BETWEEN = 2;
 const RESCHEDULE_THRESHOLD = SCHEDULE_DAYS * 2; // re-schedule when below this many
-
-interface ParsedWindow {
-  startHour: number;
-  startMinute: number;
-  endHour: number;
-  endMinute: number;
-}
-
-function parseTime(hhmm: string): { hour: number; minute: number } {
-  const [h, m] = hhmm.split(":").map((n) => parseInt(n, 10));
-  return {
-    hour: Number.isFinite(h) ? h : 0,
-    minute: Number.isFinite(m) ? m : 0,
-  };
-}
-
-function parseWindow(settings: NotificationSettings): ParsedWindow {
-  // Quick-mood pulses fire only inside the user's waking window. `wakeTime`
-  // and `sleepTime` replaced the older `quickMoodWindowStart/End` fields —
-  // see `getSettings` for the read-side migration that maps legacy values.
-  const start = parseTime(settings.wakeTime);
-  const end = parseTime(settings.sleepTime);
-  return {
-    startHour: start.hour,
-    startMinute: start.minute,
-    endHour: end.hour,
-    endMinute: end.minute,
-  };
-}
-
-function minutesInWindow(window: ParsedWindow): number {
-  const startMin = window.startHour * 60 + window.startMinute;
-  const endMin = window.endHour * 60 + window.endMinute;
-  return Math.max(0, endMin - startMin);
-}
-
-/**
- * Pick `count` random minute offsets within [0, windowMinutes), each at
- * least `minGapMin` apart. If the window can't fit `count` notifications
- * with the requested gap, returns as many as fit.
- */
-function pickRandomOffsets(
-  count: number,
-  windowMinutes: number,
-  minGapMin: number,
-): number[] {
-  if (windowMinutes <= 0 || count <= 0) return [];
-  const offsets: number[] = [];
-  const maxAttempts = 50;
-  let attempts = 0;
-  while (offsets.length < count && attempts < maxAttempts) {
-    const candidate = Math.floor(Math.random() * windowMinutes);
-    const ok = offsets.every((o) => Math.abs(o - candidate) >= minGapMin);
-    if (ok) offsets.push(candidate);
-    attempts += 1;
-  }
-  return offsets.sort((a, b) => a - b);
-}
-
-function buildDailyTriggerDates(
-  daysAhead: number,
-  count: number,
-  window: ParsedWindow,
-): Date[] {
-  const windowMinutes = minutesInWindow(window);
-  const minGap = MIN_HOURS_BETWEEN * 60;
-  const dates: Date[] = [];
-  const now = new Date();
-
-  for (let dayOffset = 0; dayOffset < daysAhead; dayOffset += 1) {
-    const offsets = pickRandomOffsets(count, windowMinutes, minGap);
-    for (const offsetMin of offsets) {
-      const fireDate = new Date(now);
-      fireDate.setDate(fireDate.getDate() + dayOffset);
-      fireDate.setHours(
-        window.startHour,
-        window.startMinute + offsetMin,
-        0,
-        0,
-      );
-      // Skip times in the past (only affects today's schedule)
-      if (fireDate.getTime() > now.getTime() + 60_000) {
-        dates.push(fireDate);
-      }
-    }
-  }
-  return dates;
-}
 
 const COPY_OPTIONS: { title: string; body: string }[] = [
   { title: "Mood check-in", body: "How's it going right now?" },
@@ -167,11 +80,12 @@ export async function ensureQuickMoodSchedule(
 
   await cancelAllQuickMoodNotifications();
 
-  const window = parseWindow(settings);
+  const window = parseWindow(settings.wakeTime, settings.sleepTime);
   const dates = buildDailyTriggerDates(
     SCHEDULE_DAYS,
     Math.max(1, Math.min(8, settings.quickMoodFrequency)),
     window,
+    MIN_HOURS_BETWEEN * 60,
   );
 
   for (const date of dates) {
