@@ -11,7 +11,17 @@
 // the row's user_id column to match auth.uid() — Supabase doesn't auto-fill it.
 
 import { supabase } from "./supabase";
-import type { DailyLog, Moment, MoodCheckIn } from "../types";
+import type {
+  ComparisonResult,
+  DailyLog,
+  Experiment,
+  ExperimentStatus,
+  Moment,
+  MoodCheckIn,
+  OutcomeMetric,
+  Restriction,
+  RestrictionSpec,
+} from "../types";
 import { migrateDailyLog } from "../storage/migrations";
 
 // ─── Daily Logs ────────────────────────────────────────────────────────────
@@ -183,18 +193,201 @@ export async function deleteMoment(
   if (error) throw error;
 }
 
+// ─── Restrictions (Phase 8) ───────────────────────────────────────────────
+
+interface RestrictionRow {
+  id: string;
+  kind: "time_window" | "daily_limit";
+  categories: string[];
+  window_start: string | null;
+  window_end: string | null;
+  daily_limit_min: number | null;
+  weekdays: number[];
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+function rowToRestriction(row: RestrictionRow): Restriction {
+  const spec: RestrictionSpec =
+    row.kind === "time_window"
+      ? {
+          kind: "time_window",
+          windowStart: row.window_start ?? "00:00",
+          windowEnd: row.window_end ?? "00:00",
+        }
+      : {
+          kind: "daily_limit",
+          dailyLimitMin: row.daily_limit_min ?? 0,
+        };
+  return {
+    id: row.id,
+    categories: row.categories,
+    weekdays: row.weekdays,
+    active: row.active,
+    spec,
+    createdAt: new Date(row.created_at).getTime(),
+    updatedAt: new Date(row.updated_at).getTime(),
+  };
+}
+
+export async function fetchRestrictions(
+  userId: string,
+): Promise<Restriction[]> {
+  const { data, error } = await supabase
+    .from("restrictions")
+    .select(
+      "id, kind, categories, window_start, window_end, daily_limit_min, weekdays, active, created_at, updated_at",
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((row) => rowToRestriction(row as RestrictionRow));
+}
+
+export async function upsertRestriction(
+  userId: string,
+  r: Restriction,
+): Promise<void> {
+  // Flatten the discriminated `spec` union into the columnar shape the
+  // `restrictions` table uses. The CHECK constraint on the table enforces
+  // that the right per-kind columns are populated.
+  const { error } = await supabase.from("restrictions").upsert(
+    {
+      id: r.id,
+      user_id: userId,
+      kind: r.spec.kind,
+      categories: r.categories,
+      window_start:
+        r.spec.kind === "time_window" ? r.spec.windowStart : null,
+      window_end: r.spec.kind === "time_window" ? r.spec.windowEnd : null,
+      daily_limit_min:
+        r.spec.kind === "daily_limit" ? r.spec.dailyLimitMin : null,
+      weekdays: r.weekdays,
+      active: r.active,
+    },
+    { onConflict: "id" },
+  );
+  if (error) throw error;
+}
+
+export async function deleteRestriction(
+  userId: string,
+  id: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("restrictions")
+    .delete()
+    .eq("user_id", userId)
+    .eq("id", id);
+  if (error) throw error;
+}
+
+// ─── Experiments (Phase 8) ────────────────────────────────────────────────
+
+interface ExperimentRow {
+  id: string;
+  name: string;
+  hypothesis: string | null;
+  restriction_refs: string[];
+  outcome_metric: OutcomeMetric;
+  duration_days: number;
+  baseline_window_days: number;
+  started_at: string | null;
+  ends_at: string | null;
+  status: ExperimentStatus;
+  result_payload: ComparisonResult | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+function rowToExperiment(row: ExperimentRow): Experiment {
+  return {
+    id: row.id,
+    name: row.name,
+    hypothesis: row.hypothesis ?? undefined,
+    restrictionRefs: row.restriction_refs,
+    outcomeMetric: row.outcome_metric,
+    durationDays: row.duration_days,
+    baselineWindowDays: row.baseline_window_days,
+    startedAt: row.started_at
+      ? new Date(row.started_at).getTime()
+      : undefined,
+    endsAt: row.ends_at ? new Date(row.ends_at).getTime() : undefined,
+    status: row.status,
+    resultPayload: row.result_payload ?? undefined,
+    notes: row.notes ?? undefined,
+    createdAt: new Date(row.created_at).getTime(),
+    updatedAt: new Date(row.updated_at).getTime(),
+  };
+}
+
+export async function fetchExperiments(
+  userId: string,
+): Promise<Experiment[]> {
+  const { data, error } = await supabase
+    .from("experiments")
+    .select(
+      "id, name, hypothesis, restriction_refs, outcome_metric, duration_days, baseline_window_days, started_at, ends_at, status, result_payload, notes, created_at, updated_at",
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((row) => rowToExperiment(row as ExperimentRow));
+}
+
+export async function upsertExperiment(
+  userId: string,
+  e: Experiment,
+): Promise<void> {
+  const { error } = await supabase.from("experiments").upsert(
+    {
+      id: e.id,
+      user_id: userId,
+      name: e.name,
+      hypothesis: e.hypothesis ?? null,
+      restriction_refs: e.restrictionRefs,
+      outcome_metric: e.outcomeMetric,
+      duration_days: e.durationDays,
+      baseline_window_days: e.baselineWindowDays,
+      started_at: e.startedAt ? new Date(e.startedAt).toISOString() : null,
+      ends_at: e.endsAt ? new Date(e.endsAt).toISOString() : null,
+      status: e.status,
+      result_payload: e.resultPayload ?? null,
+      notes: e.notes ?? null,
+    },
+    { onConflict: "id" },
+  );
+  if (error) throw error;
+}
+
+export async function deleteExperiment(
+  userId: string,
+  id: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("experiments")
+    .delete()
+    .eq("user_id", userId)
+    .eq("id", id);
+  if (error) throw error;
+}
+
 // ─── Bulk operations ──────────────────────────────────────────────────────
 
 /**
- * Wipe ALL of a user's logs + mood entries + moments on the server. Used
- * by the Settings "Clear All Data" button when a user wants a true clean
- * slate. Service role isn't required — RLS lets the user delete their
- * own rows.
+ * Wipe ALL of a user's logs + mood entries + moments + restrictions +
+ * experiments on the server. Used by the Settings "Clear All Data" button
+ * when a user wants a true clean slate. Service role isn't required — RLS
+ * lets the user delete their own rows.
  */
 export async function wipeUserData(userId: string): Promise<void> {
   await Promise.all([
     supabase.from("daily_logs").delete().eq("user_id", userId),
     supabase.from("mood_entries").delete().eq("user_id", userId),
     supabase.from("moments").delete().eq("user_id", userId),
+    supabase.from("restrictions").delete().eq("user_id", userId),
+    supabase.from("experiments").delete().eq("user_id", userId),
   ]);
 }

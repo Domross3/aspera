@@ -166,6 +166,88 @@ export interface NotificationSettings {
   somaticInterceptorEnabled: boolean;
 }
 
+// ── Restrictions + Experiments (Phase 8) ────────────────────────────────
+// On-device app-category restrictions enforced via Apple's Family Controls
+// + ManagedSettings frameworks. Two restriction `kind`s in v1:
+//   - "time_window" → shield categories between windowStart and windowEnd
+//   - "daily_limit" → shield categories after dailyLimitMin/day
+// The native bridge in `src/lib/screenTime/` is what actually applies the
+// shield; these types are the JS representation of the persisted entities
+// in Supabase `restrictions` and `experiments` tables.
+
+export type RestrictionSpec =
+  | { kind: "time_window"; windowStart: string /* "HH:MM" */; windowEnd: string }
+  | { kind: "daily_limit"; dailyLimitMin: number };
+
+export interface Restriction {
+  id: string;
+  // System categories this restriction targets. JS speaks our locked 5-
+  // category taxonomy ("social" / "entertainment" / "productivity" /
+  // "communication" / "other"); storage is plain `text[]`. The mapping
+  // from Apple's emitted categories down to this set lives in
+  // `src/lib/screenTime/categories.ts`.
+  categories: string[];
+  weekdays: number[]; // 0=Sun … 6=Sat. [0..6] = every day.
+  active: boolean;
+  spec: RestrictionSpec;
+  createdAt: number; // ms epoch
+  updatedAt: number; // ms epoch
+}
+
+// What outcome variable an experiment compares across baseline + intervention.
+export type OutcomeMetric =
+  | {
+      kind: "daily_log_field";
+      field:
+        | "focusRating"
+        | "energyRating"
+        | "tasksCompleted"
+        | "sleepHours";
+    }
+  | { kind: "event_type_field"; eventTypeId: string; fieldId: string }
+  | { kind: "mood_avg" }
+  | { kind: "screen_time_total" }
+  | { kind: "screen_time_category"; category: string };
+
+// Result of running `compareDays()` (Phase 8 sub-phase 8e). Written to
+// `experiments.result_payload` on completion and surfaced in the readout
+// card with the standardized confidence layout.
+export interface ComparisonResult {
+  effect: number; // signed effect size (treatment minus control mean)
+  range: { low: number; high: number }; // 10th–90th percentile of bootstrap
+  confidenceLabel: "low" | "moderate" | "high" | "strong";
+  probabilityPositive: number; // 0–1, fraction of bootstrap resamples > 0
+  sampleSize: number; // intervention-period day count
+  computedAt: number; // ms epoch
+}
+
+export type ExperimentStatus =
+  | "planning"
+  | "active"
+  | "completed"
+  | "cancelled";
+
+export interface Experiment {
+  id: string;
+  name: string;
+  hypothesis?: string;
+  // `restrictions.id` values. NOT a Restriction[] — restrictions may be
+  // soft-deleted (active=false) without breaking the experiment's
+  // historical record. The lifecycle hook resolves these to live
+  // Restriction objects when rendering.
+  restrictionRefs: string[];
+  outcomeMetric: OutcomeMetric;
+  durationDays: number; // 7 / 14 / 30 per design
+  baselineWindowDays: number; // typically matches durationDays
+  startedAt?: number;
+  endsAt?: number;
+  status: ExperimentStatus;
+  resultPayload?: ComparisonResult;
+  notes?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 // ── User Reminders (Phase 6) ────────────────────────────────────────────
 // User-defined habit notifications. Either fire at fixed times of day
 // (with an optional weekday filter) or randomly within a chosen window.
