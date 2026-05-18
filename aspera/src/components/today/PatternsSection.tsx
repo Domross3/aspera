@@ -24,6 +24,7 @@ import SectionLabel from "../common/SectionLabel";
 import CorrelationCard from "../insights/CorrelationCard";
 import TrendBarsSection from "../insights/TrendBarsSection";
 import SearchBar from "../insights/SearchBar";
+import ComparePicker from "./ComparePicker";
 
 // Need at least 3 days of logs for the AI to find meaningful patterns —
 // mirrors the gate that lived in `insights.tsx`.
@@ -185,6 +186,12 @@ export default function PatternsSection() {
           </View>
         </>
       ) : null}
+
+      {/* Ad-hoc Compare surface — uses the same bootstrap engine the
+          experiment framework will use (Phase 8 sub-phase 8f). Always
+          available, even before the user has generated correlations,
+          because it runs against raw daily-log data. */}
+      <ComparePicker />
     </Animated.View>
   );
 }
