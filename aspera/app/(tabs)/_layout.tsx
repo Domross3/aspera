@@ -62,20 +62,20 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="insights"
-        options={{
-          title: "Insights",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="stats-chart" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="mood"
         options={{
           title: "Mood",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="heart" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="tech"
+        options={{
+          title: "Tech",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="phone-portrait" size={size} color={color} />
           ),
         }}
       />

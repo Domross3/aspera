@@ -25,10 +25,9 @@ import RecommendationBanner from "../../src/components/today/RecommendationBanne
 import StreakCounter from "../../src/components/today/StreakCounter";
 import SectionLabel from "../../src/components/common/SectionLabel";
 import SpotifyRecent from "../../src/components/today/SpotifyRecent";
-import BrowsingFocus from "../../src/components/today/BrowsingFocus";
-import ScreenTimeCard from "../../src/components/today/ScreenTimeCard";
 import MusicGenreInsight from "../../src/components/today/MusicGenreInsight";
 import TodayBigRocks from "../../src/components/today/TodayBigRocks";
+import PatternsSection from "../../src/components/today/PatternsSection";
 import TrendLineCard, {
   TrendPoint,
 } from "../../src/components/common/TrendLineCard";
@@ -368,10 +367,14 @@ export default function TodayScreen() {
             </GradientCard>
           )}
 
-          {/* Integration mocks (Spotify, browsing, screen time) are demo-only
-              scaffolding for real API connections that haven't shipped yet.
-              Hide in production builds; show in dev so we can keep iterating
-              on the cards. Real integrations will gate by connection status. */}
+          {/* Patterns — was the Insights tab. Relocated here in Phase 8c
+              so the bottom bar can host the new Tech tab without exceeding
+              5 slots. Same hook + components; only the header chrome
+              changed. */}
+          <PatternsSection />
+
+          {/* Spotify + music-genre demo cards are still mock-fed integrations.
+              The browsing + screen-time mocks moved to the Tech tab in 8c. */}
           {__DEV__ && (
             <>
               <View style={{ marginTop: SPACING.xl }}>
@@ -393,14 +396,6 @@ export default function TodayScreen() {
                   />
                 ) : null;
               })()}
-
-              <View style={{ marginTop: SPACING.lg }}>
-                <BrowsingFocus />
-              </View>
-
-              <View style={{ marginTop: SPACING.lg }}>
-                <ScreenTimeCard />
-              </View>
             </>
           )}
 
