@@ -176,6 +176,12 @@ export function migrateAppSettings(stored: Partial<AppSettings>): AppSettings {
     customMetrics: legacyDefs, // kept verbatim for rollback safety
     eventTypes,
     logSectionOrder,
+    userReminders: Array.isArray(stored.userReminders)
+      ? stored.userReminders
+      : undefined,
+    dismissedPromotions: Array.isArray(stored.dismissedPromotions)
+      ? stored.dismissedPromotions
+      : undefined,
     notificationSettings,
   };
 }

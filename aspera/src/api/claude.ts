@@ -1,10 +1,33 @@
 import { callClaudeViaProxy } from "./claudeProxy";
-import { DailyLog, InsightsResponse } from "../types";
+import { DailyLog, InsightsResponse, Moment } from "../types";
 import { getMockContext, MockContext, CohortTelemetry } from "../lib/mockData";
 import {
   getDailyIntegrationSummaries,
   getLatestIntegrationSummary,
 } from "../lib/integrations";
+import { getRecentMoments } from "../storage/storage";
+
+// Cap the moments block in the insights prompt to keep payload bounded.
+// 50 short labels is comfortably under any reasonable token budget.
+const MAX_MOMENTS_IN_PROMPT = 50;
+
+function formatMomentsBlock(moments: Moment[]): string {
+  if (moments.length === 0) return "";
+  const recent = [...moments]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, MAX_MOMENTS_IN_PROMPT)
+    .reverse(); // chronological for the prompt
+  const lines = recent.map((m) => {
+    const stamp = new Date(m.timestamp)
+      .toISOString()
+      .slice(0, 16)
+      .replace("T", " ");
+    const dur = m.duration ? ` (${m.duration} min)` : "";
+    const note = m.note ? ` · ${m.note}` : "";
+    return `${stamp} — ${m.label}${dur}${note}`;
+  });
+  return `\nMOMENTS (last 7 days, max ${MAX_MOMENTS_IN_PROMPT}):\n${lines.join("\n")}\n`;
+}
 
 // ── Aspera Voice ────────────────────────────────────────────────────────
 // One consistent character across every AI surface. Models the "Inner Coach"
@@ -58,6 +81,7 @@ const INSIGHTS_RETRY_MAX_TOKENS = 2800;
 function buildInsightsPrompt(
   logs: DailyLog[],
   mockContext: MockContext,
+  moments: Moment[] = [],
 ): string {
   const exampleResponse = {
     summary: "Exactly 2 concise sentences summarizing the user's patterns",
@@ -141,7 +165,7 @@ ${JSON.stringify(mockContext.browsing, null, 2)}
 
 NORMALIZED INTEGRATION SUMMARIES:
 ${JSON.stringify(integrationSummaries, null, 2)}
-
+${formatMomentsBlock(moments)}
 IMPORTANT: One insight MUST reference the user's music listening patterns (Spotify data).
 Notice that their highest-focus sessions correlate with grunge/alt-rock (Nirvana, Alice in Chains, RHCP).
 You should also look for attention patterns across productive, neutral, and distracting time where relevant.
@@ -448,6 +472,15 @@ export async function generateInsights(
   logs: DailyLog[],
 ): Promise<InsightsResponse> {
   const mockContext = getMockContext();
+  // Pull recent moments into the prompt so Claude can spot patterns
+  // (e.g. "you nap outside on high-energy days") alongside the structured
+  // daily-log data. Capped at MAX_MOMENTS_IN_PROMPT inside the formatter.
+  let recentMoments: Moment[] = [];
+  try {
+    recentMoments = await getRecentMoments(7);
+  } catch (err) {
+    console.warn("[insights] could not load recent moments", err);
+  }
 
   // Aspera voice + JSON output directive. Optional self-compassion prefix
   // engages automatically when the user's week looks rough.
@@ -455,7 +488,10 @@ export async function generateInsights(
   if (detectBadWeek(logs)) {
     systemPrompt = SELF_COMPASSION_PREFIX + "\n\n" + systemPrompt;
   }
-  const basePrompt = buildInsightsPrompt(logs, mockContext);
+  if (recentMoments.length > 0) {
+    systemPrompt = `${systemPrompt}\n\nIf the user's recent moments reveal patterns or notable events (long naps, social conflicts, sleep disruptions, unusual choices), surface them in your summary and reference them in correlations alongside the structured daily-log data.`;
+  }
+  const basePrompt = buildInsightsPrompt(logs, mockContext, recentMoments);
   const prompts = [basePrompt, buildRetryPrompt(basePrompt)];
   const maxTokens = [INSIGHTS_MAX_TOKENS, INSIGHTS_RETRY_MAX_TOKENS];
   let lastRawResponse = "";

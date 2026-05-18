@@ -11,7 +11,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import {
+  EventTypeDef,
   Moment,
   MoodCheckIn,
   MOOD_EMOJIS,
@@ -33,6 +35,12 @@ import {
 } from "../../src/lib/cloudStore";
 import MomentCapture from "../../src/components/mood/MomentCapture";
 import { useAuth } from "../../src/hooks/useAuth";
+import { useSettings } from "../../src/hooks/useSettings";
+import {
+  detectPromotionCandidate,
+  normalizeForDismissal,
+} from "../../src/lib/momentPromotion";
+import SchemaBuilder from "../../src/components/log/SchemaBuilder";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
@@ -146,9 +154,25 @@ type TimelineItem =
   | { kind: "mood"; data: MoodCheckIn }
   | { kind: "moment"; data: Moment };
 
+// Build the seed EventTypeDef the SchemaBuilder opens with when the
+// user accepts a promotion suggestion. Defaults to recurrent (since the
+// label has been logged repeatedly) and gives them a starting "Notes"
+// text field that they can extend.
+function buildPromotionSeed(label: string): EventTypeDef {
+  return {
+    id: `t-${Math.random().toString(36).slice(2, 10)}`,
+    name: label,
+    cardinality: "recurrent",
+    fields: [],
+    createdAt: Date.now(),
+  };
+}
+
 export default function MoodScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { session } = useAuth();
+  const { settings, update: updateSettings } = useSettings();
   const [mood, setMood] = useState(3);
   const [energy, setEnergy] = useState(3);
   const [stress, setStress] = useState(1);
@@ -157,6 +181,12 @@ export default function MoodScreen() {
   const [recentCheckins, setRecentCheckins] = useState<MoodCheckIn[]>([]);
   const [recentMoments, setRecentMoments] = useState<Moment[]>([]);
   const [momentSheetVisible, setMomentSheetVisible] = useState(false);
+  // When non-null, a SchemaBuilder is open with this draft preloaded —
+  // used by the promotion-nudge banner to drive event-type creation
+  // directly from the Mood tab without a tab switch.
+  const [promotionDraft, setPromotionDraft] = useState<EventTypeDef | null>(
+    null,
+  );
 
   const loadCheckins = useCallback(async () => {
     // Demo seed only runs in dev (Expo Go / dev client) for unauthenticated
@@ -229,6 +259,43 @@ export default function MoodScreen() {
       ).length,
     [recentCheckins],
   );
+
+  // Promotion candidate: scan recent moments for a label that has been
+  // logged ≥3 times in 14 days and isn't on the user's dismissed list.
+  // Returns null when nothing qualifies.
+  const promotionCandidate = useMemo(
+    () =>
+      detectPromotionCandidate(
+        recentMoments,
+        settings.dismissedPromotions ?? [],
+      ),
+    [recentMoments, settings.dismissedPromotions],
+  );
+
+  const handlePromotionAccept = () => {
+    if (!promotionCandidate) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setPromotionDraft(buildPromotionSeed(promotionCandidate.label));
+  };
+
+  const handlePromotionDismiss = async () => {
+    if (!promotionCandidate) return;
+    const dismissed = settings.dismissedPromotions ?? [];
+    const next = [
+      ...dismissed,
+      normalizeForDismissal(promotionCandidate.label),
+    ];
+    await updateSettings({ dismissedPromotions: next });
+  };
+
+  const handlePromotionSave = async (next: EventTypeDef) => {
+    const existing = settings.eventTypes ?? [];
+    await updateSettings({ eventTypes: [...existing, next] });
+    setPromotionDraft(null);
+    // Land them on the Log tab so the new metric is visible — the next
+    // section they want is structured data entry, not more moments.
+    router.navigate("/(tabs)/log" as never);
+  };
 
   // Interleaved Recent Captures: mood check-ins + moments, sorted by
   // timestamp (newest first). The renderer discriminates on `kind`.
@@ -408,6 +475,50 @@ export default function MoodScreen() {
           </GradientCard>
         )}
 
+        {promotionCandidate ? (
+          <View style={styles.promotionBanner}>
+            <View style={styles.promotionRow}>
+              <Ionicons
+                name="trending-up"
+                size={18}
+                color={COLORS.accent}
+                style={{ marginTop: 2 }}
+              />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.promotionTitle}>
+                  Track this for real?
+                </Text>
+                <Text style={styles.promotionBody}>
+                  You've logged{" "}
+                  <Text style={styles.promotionLabel}>
+                    "{promotionCandidate.label}"
+                  </Text>{" "}
+                  {promotionCandidate.count} times in the last 2 weeks. Want
+                  to turn it into a structured metric on your daily log?
+                </Text>
+              </View>
+            </View>
+            <View style={styles.promotionActions}>
+              <TouchableOpacity
+                onPress={() => void handlePromotionDismiss()}
+                activeOpacity={0.7}
+                style={styles.promotionSecondary}
+                hitSlop={4}
+              >
+                <Text style={styles.promotionSecondaryText}>Not now</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handlePromotionAccept}
+                activeOpacity={0.85}
+                style={styles.promotionPrimary}
+                hitSlop={4}
+              >
+                <Text style={styles.promotionPrimaryText}>Set it up</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.recentHeaderRow}>
           <SectionLabel
             label="Recent Captures"
@@ -571,6 +682,15 @@ export default function MoodScreen() {
         onCancel={() => setMomentSheetVisible(false)}
         onSave={handleMomentSave}
       />
+
+      <SchemaBuilder
+        visible={promotionDraft !== null}
+        initial={promotionDraft}
+        fieldsWithData={new Set<string>()}
+        hasEntries={false}
+        onCancel={() => setPromotionDraft(null)}
+        onSave={(next) => void handlePromotionSave(next)}
+      />
     </LinearGradient>
   );
 }
@@ -722,6 +842,66 @@ const styles = StyleSheet.create({
   momentButtonText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.accent,
+    fontWeight: "700",
+    fontSize: 12,
+  } as object,
+  promotionBanner: {
+    marginTop: SPACING.xl,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: "rgba(108,99,255,0.35)",
+    backgroundColor: "rgba(108,99,255,0.08)",
+    gap: SPACING.md,
+  },
+  promotionRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: SPACING.sm,
+  },
+  promotionTitle: {
+    ...TYPOGRAPHY.subtitle,
+    color: COLORS.text,
+    fontSize: 14,
+    marginBottom: 2,
+  } as object,
+  promotionBody: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    lineHeight: 17,
+  } as object,
+  promotionLabel: {
+    color: COLORS.accent,
+    fontWeight: "700",
+  } as object,
+  promotionActions: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    gap: SPACING.sm,
+  },
+  promotionSecondary: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  promotionSecondaryText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
+    fontWeight: "600",
+    fontSize: 12,
+  } as object,
+  promotionPrimary: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 6,
+    borderRadius: RADIUS.pill,
+    backgroundColor: COLORS.accent,
+  },
+  promotionPrimaryText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.text,
     fontWeight: "700",
     fontSize: 12,
   } as object,

@@ -219,6 +219,9 @@ export interface AppSettings {
   logSectionOrder?: (LogSectionId | string)[];
   // Phase 6: user-defined habit reminders (local notifications).
   userReminders?: UserReminder[];
+  // Phase 7: normalized labels the user has explicitly dismissed from
+  // the moment → event-type promotion nudge. Lowercased + trimmed.
+  dismissedPromotions?: string[];
   notificationSettings: NotificationSettings;
 }
 
