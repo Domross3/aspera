@@ -28,6 +28,7 @@ import SpotifyRecent from "../../src/components/today/SpotifyRecent";
 import MusicGenreInsight from "../../src/components/today/MusicGenreInsight";
 import TodayBigRocks from "../../src/components/today/TodayBigRocks";
 import PatternsSection from "../../src/components/today/PatternsSection";
+import QuickLogTiles from "../../src/components/today/QuickLogTiles";
 import TrendLineCard, {
   TrendPoint,
 } from "../../src/components/common/TrendLineCard";
@@ -366,6 +367,12 @@ export default function TodayScreen() {
               </View>
             </GradientCard>
           )}
+
+          {/* Quick Log — one-tap loggers for the user's recurrent event
+              types. Surfaced here so multiply-occurring things ("had
+              coffee", "took a dose") don't require scrolling to the
+              bottom of the Log tab. Silent when no recurrent types exist. */}
+          <QuickLogTiles />
 
           {/* Patterns — was the Insights tab. Relocated here in Phase 8c
               so the bottom bar can host the new Tech tab without exceeding
