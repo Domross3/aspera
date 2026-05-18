@@ -2,7 +2,7 @@ import "react-native-url-polyfill/auto";
 import { useEffect, useRef } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, AppState } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as Notifications from "expo-notifications";
 import * as Updates from "expo-updates";
@@ -53,6 +53,22 @@ function AppLayout() {
     if (settingsLoading) return;
     void ensureUserReminderSchedule(settings.userReminders ?? []);
   }, [settingsLoading, settings.userReminders]);
+
+  // Re-arm both schedules whenever the app foregrounds. Without this, a
+  // user who leaves the app backgrounded for a few days never re-rolls
+  // their pulse window — the cold-start effects above only fire on a
+  // full process launch. `ensureQuickMoodSchedule` is idempotent (it
+  // short-circuits when the pending count is healthy) so the cost on
+  // every foreground is a single notification count.
+  useEffect(() => {
+    if (settingsLoading) return;
+    const sub = AppState.addEventListener("change", (next) => {
+      if (next !== "active") return;
+      void ensureQuickMoodSchedule(settings.notificationSettings);
+      void ensureUserReminderSchedule(settings.userReminders ?? []);
+    });
+    return () => sub.remove();
+  }, [settingsLoading, settings.notificationSettings, settings.userReminders]);
 
   // OTA update check on launch. Skipped in dev (Metro handles reloads).
   useEffect(() => {
