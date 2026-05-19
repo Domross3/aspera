@@ -6,10 +6,7 @@ import {
   saveIntegrationConnections,
   saveIntegrationSummaries,
 } from "../storage/storage";
-import {
-  getDefaultIntegrationConnections,
-  getDailyIntegrationSummaries,
-} from "../lib/integrations";
+import { getDefaultIntegrationConnections } from "../lib/integrations";
 
 export function useIntegrations() {
   const [connections, setConnections] = useState<IntegrationConnection[]>(
@@ -33,16 +30,17 @@ export function useIntegrations() {
     reload();
   }, [reload]);
 
+  // Previously synthesized a week of integration summaries from mock
+  // data — removed so the UI reflects only real integration writes.
+  // Kept as a no-op so existing callers still type-check; consider
+  // removing the entire callsite once real integrations land.
   const refreshFromMocks = useCallback(async () => {
     const nextConnections = getDefaultIntegrationConnections();
-    const nextSummaries = getDailyIntegrationSummaries();
-
     setConnections(nextConnections);
-    setSummaries(nextSummaries);
-
+    setSummaries([]);
     await Promise.all([
       saveIntegrationConnections(nextConnections),
-      saveIntegrationSummaries(nextSummaries),
+      saveIntegrationSummaries([]),
     ]);
   }, []);
 

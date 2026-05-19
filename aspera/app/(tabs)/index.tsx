@@ -16,7 +16,6 @@ import {
   getMorningBriefing,
   generateAnxiousReappraisal,
 } from "../../src/api/claude";
-import { generateCohortTelemetry } from "../../src/lib/mockData";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import SomaticInterceptor from "../../src/components/interceptor/SomaticInterceptor";
 import GradientCard from "../../src/components/common/GradientCard";
@@ -24,8 +23,6 @@ import SummaryPill from "../../src/components/today/SummaryPill";
 import RecommendationBanner from "../../src/components/today/RecommendationBanner";
 import StreakCounter from "../../src/components/today/StreakCounter";
 import SectionLabel from "../../src/components/common/SectionLabel";
-import SpotifyRecent from "../../src/components/today/SpotifyRecent";
-import MusicGenreInsight from "../../src/components/today/MusicGenreInsight";
 import TodayBigRocks from "../../src/components/today/TodayBigRocks";
 import PatternsSection from "../../src/components/today/PatternsSection";
 import QuickLogTiles from "../../src/components/today/QuickLogTiles";
@@ -96,19 +93,11 @@ export default function TodayScreen() {
     setReappraisalLoading(true);
     try {
       const bigRocks = todayLog?.bigRocks ?? [];
-      const cohort = generateCohortTelemetry({
-        missedBigRock:
-          bigRocks.length > 0 && (todayLog?.output.tasksCompleted ?? 0) === 0,
-        avgFocus: todayLog?.output.focusRating ?? 5,
-        avgSleep: 7,
-        streak,
-        avgEnergy: todayLog?.output.energyRating ?? 5,
-      });
-      const result = await generateAnxiousReappraisal(
-        feeling,
-        bigRocks,
-        cohort,
-      );
+      // Cohort telemetry was a mock data structure ("X other users also
+      // missed a Big Rock today"). Until we have a real cohort signal,
+      // call the reappraisal without it and let the model speak only
+      // from the user's own state.
+      const result = await generateAnxiousReappraisal(feeling, bigRocks);
       setReappraisal(result);
     } catch {
       setReappraisal(
@@ -380,31 +369,9 @@ export default function TodayScreen() {
               changed. */}
           <PatternsSection />
 
-          {/* Spotify + music-genre demo cards are still mock-fed integrations.
-              The browsing + screen-time mocks moved to the Tech tab in 8c. */}
-          {__DEV__ && (
-            <>
-              <View style={{ marginTop: SPACING.xl }}>
-                <SpotifyRecent />
-              </View>
-
-              {/* Genre insight — derived from recent logs, always shown if music data exists */}
-              {(() => {
-                const genres =
-                  log?.music ??
-                  recentLogs
-                    .flatMap((l) => l.music)
-                    .filter((g) => g !== "none");
-                const unique = [...new Set(genres)];
-                return unique.length > 0 ? (
-                  <MusicGenreInsight
-                    currentGenres={unique}
-                    recentLogs={recentLogs}
-                  />
-                ) : null;
-              })()}
-            </>
-          )}
+          {/* Spotify recents + genre insight previously rendered here off
+              mock data. Removed so the Today surface reflects only real
+              data; the cards return once a real Spotify integration lands. */}
 
           {/* Inputs go lower in the layout */}
           {log && (

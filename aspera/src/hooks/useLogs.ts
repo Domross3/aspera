@@ -4,7 +4,6 @@ import {
   getLog,
   getRecentLogs,
   saveLog,
-  seedMockDataIfEmpty,
   getReserves,
 } from "../storage/storage";
 import {
@@ -46,13 +45,8 @@ export function useLogs() {
   });
 
   const reload = useCallback(async () => {
-    // Demo seed only runs in dev (Expo Go / dev client) when there's no
-    // session — i.e. you're poking at the empty-state UI without signing in.
-    // Production builds gate every screen behind the auth wall.
-    if (__DEV__ && !session) {
-      await seedMockDataIfEmpty();
-    }
-
+    // Mock-seed removed — the user wants the real state of their data
+    // so they can see exactly what's captured vs. what still needs work.
     const res = await getReserves();
     setReserves(res);
 

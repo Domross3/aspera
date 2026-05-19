@@ -25,7 +25,6 @@ import {
   getRecentMoodCheckIns,
   saveMoment,
   getRecentMoments,
-  seedMockMoodData,
 } from "../../src/storage/storage";
 import {
   fetchRecentMoodCheckIns,
@@ -189,19 +188,10 @@ export default function MoodScreen() {
   );
 
   const loadCheckins = useCallback(async () => {
-    // Demo seed only runs in dev (Expo Go / dev client) for unauthenticated
-    // sessions. Production builds gate everything behind sign-in.
-    if (__DEV__ && !session) {
-      await seedMockMoodData();
-      const [recent, moments] = await Promise.all([
-        getRecentMoodCheckIns(14),
-        getRecentMoments(14),
-      ]);
-      setRecentCheckins(recent);
-      setRecentMoments(moments);
-      return;
-    }
-
+    // Mock-seed removed — the user wants the real state of their data
+    // so they can see what's actually captured. If unauthenticated we
+    // still hydrate from local AsyncStorage (will be empty until the
+    // user has logged something).
     if (!session) {
       const [recent, moments] = await Promise.all([
         getRecentMoodCheckIns(14),

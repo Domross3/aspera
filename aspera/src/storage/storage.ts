@@ -11,10 +11,7 @@ import {
   IntegrationConnection,
   DailyIntegrationSummary,
 } from "../types";
-import {
-  getDefaultIntegrationConnections,
-  getDailyIntegrationSummaries,
-} from "../lib/integrations";
+import { getDefaultIntegrationConnections } from "../lib/integrations";
 import {
   migrateAppSettings,
   migrateDailyLog,
@@ -176,8 +173,12 @@ export async function saveIntegrationSummaries(
 export async function getIntegrationSummaries(): Promise<
   DailyIntegrationSummary[]
 > {
+  // Mock-fallback removed — previously, an empty cache fell back to a
+  // synthesized week of mock integration data. Now: empty cache → empty
+  // array, so the UI reflects the real state ("no integration data yet")
+  // until a real source writes summaries via saveIntegrationSummaries.
   const raw = await AsyncStorage.getItem(STORAGE_KEYS.INTEGRATION_SUMMARIES);
-  return raw ? JSON.parse(raw) : getDailyIntegrationSummaries();
+  return raw ? JSON.parse(raw) : [];
 }
 
 export async function clearIntegrationData(): Promise<void> {

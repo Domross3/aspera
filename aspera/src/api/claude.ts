@@ -1,10 +1,12 @@
 import { callClaudeViaProxy } from "./claudeProxy";
 import { DailyLog, InsightsResponse, Moment } from "../types";
-import { getMockContext, MockContext, CohortTelemetry } from "../lib/mockData";
-import {
-  getDailyIntegrationSummaries,
-  getLatestIntegrationSummary,
-} from "../lib/integrations";
+// Mock-data imports intentionally removed: insights, the morning briefing,
+// and the anxious-reappraisal cohort line all flow off REAL user data now.
+// `src/lib/mockData.ts` remains in the codebase as scaffolding for future
+// real integrations (Spotify, HealthKit, Calendar) but nothing in the
+// runtime should pull from it — that way the user sees the actual state
+// of their data and knows exactly what's missing.
+import type { CohortTelemetry } from "../lib/mockData";
 import { getRecentMoments } from "../storage/storage";
 
 // Cap the moments block in the insights prompt to keep payload bounded.
@@ -80,7 +82,6 @@ const INSIGHTS_RETRY_MAX_TOKENS = 2800;
 
 function buildInsightsPrompt(
   logs: DailyLog[],
-  mockContext: MockContext,
   moments: Moment[] = [],
 ): string {
   const exampleResponse = {
@@ -120,10 +121,12 @@ function buildInsightsPrompt(
       tasksCompleted: l.output.tasksCompleted,
       focusRating: l.output.focusRating,
     }));
-  const integrationSummaries = getDailyIntegrationSummaries().slice(-7);
 
-  return `Analyze this user's lifestyle and performance data from multiple sources.
-Identify 3–5 correlations between their inputs and outputs.
+  return `Analyze this user's lifestyle and performance data.
+Identify 3–5 correlations between their inputs and outputs — using ONLY the
+self-reported data below. Do not invent integrations (Spotify, HealthKit,
+Calendar, browsing telemetry) that aren't present in the data. If the data
+is too sparse to support 3 correlations, return fewer.
 
 DAILY LOGS (self-reported):
 ${JSON.stringify(logs, null, 2)}
@@ -138,38 +141,7 @@ If so, note this as a correlation.
 `
     : ""
 }
-
-SPOTIFY RECENTLY PLAYED:
-${JSON.stringify(mockContext.spotify, null, 2)}
-
-HEALTHKIT SLEEP (7 days):
-${JSON.stringify(mockContext.sleep, null, 2)}
-
-HEALTHKIT TIME IN DAYLIGHT (7 days, minutes of outdoor UV exposure):
-${JSON.stringify(mockContext.daylight, null, 2)}
-
-HEALTHKIT WORKOUTS:
-${JSON.stringify(mockContext.workouts, null, 2)}
-
-GOOGLE CALENDAR (today):
-${JSON.stringify(mockContext.calendar, null, 2)}
-
-GOOGLE TASKS:
-${JSON.stringify(mockContext.tasks, null, 2)}
-
-STATE OF MIND (7 days):
-${JSON.stringify(mockContext.mood, null, 2)}
-
-BROWSING FOCUS TELEMETRY:
-${JSON.stringify(mockContext.browsing, null, 2)}
-
-NORMALIZED INTEGRATION SUMMARIES:
-${JSON.stringify(integrationSummaries, null, 2)}
 ${formatMomentsBlock(moments)}
-IMPORTANT: One insight MUST reference the user's music listening patterns (Spotify data).
-Notice that their highest-focus sessions correlate with grunge/alt-rock (Nirvana, Alice in Chains, RHCP).
-You should also look for attention patterns across productive, neutral, and distracting time where relevant.
-
 KEYSTONE HABIT DETECTION:
 Look for habits that create positive cascading effects across multiple outputs.
 A Keystone Habit is a single input that, when present, correlates with improvements in 2+ output metrics simultaneously.
@@ -471,7 +443,6 @@ RETRY FORMAT RULES:
 export async function generateInsights(
   logs: DailyLog[],
 ): Promise<InsightsResponse> {
-  const mockContext = getMockContext();
   // Pull recent moments into the prompt so Claude can spot patterns
   // (e.g. "you nap outside on high-energy days") alongside the structured
   // daily-log data. Capped at MAX_MOMENTS_IN_PROMPT inside the formatter.
@@ -491,7 +462,7 @@ export async function generateInsights(
   if (recentMoments.length > 0) {
     systemPrompt = `${systemPrompt}\n\nIf the user's recent moments reveal patterns or notable events (long naps, social conflicts, sleep disruptions, unusual choices), surface them in your summary and reference them in correlations alongside the structured daily-log data.`;
   }
-  const basePrompt = buildInsightsPrompt(logs, mockContext, recentMoments);
+  const basePrompt = buildInsightsPrompt(logs, recentMoments);
   const prompts = [basePrompt, buildRetryPrompt(basePrompt)];
   const maxTokens = [INSIGHTS_MAX_TOKENS, INSIGHTS_RETRY_MAX_TOKENS];
   let lastRawResponse = "";
@@ -539,9 +510,6 @@ export async function getMorningBriefing(
   log: DailyLog | null,
   recentLogs: DailyLog[],
 ): Promise<string> {
-  const mockContext = getMockContext();
-  const latestIntegrationSummary = getLatestIntegrationSummary();
-
   const context = log ?? recentLogs[0];
   if (!context) {
     return "Once we have a day or two of data, your briefing will appear here. For now, head to the Log tab and tell me about today.";
@@ -601,12 +569,8 @@ Today's log so far: ${JSON.stringify({
           daylight: context.daylightMinutes,
           mood: context.output,
         })}
-Recent sleep (last 2 days): ${JSON.stringify(mockContext.sleep.slice(-2))}
-Recent mood: ${JSON.stringify(mockContext.mood.slice(-2))}
-Calendar today: ${JSON.stringify(mockContext.calendar)}
-Attention summary: ${JSON.stringify(latestIntegrationSummary?.attention ?? null)}
 
-Format: 2–3 sentences. No headers, no markdown, no preamble like "Here's your briefing." Just speak as Aspera.`,
+Format: 2–3 sentences. Speak only from the data above — do NOT mention integrations (Spotify, HealthKit, Calendar) we don't have. No headers, no markdown, no preamble like "Here's your briefing." Just speak as Aspera.`,
       },
     ],
   });
@@ -623,8 +587,14 @@ export const getTodayRecommendation = getMorningBriefing;
 export async function generateAnxiousReappraisal(
   feeling: string,
   bigRocks: string[],
-  cohortTelemetry: CohortTelemetry,
+  // Cohort telemetry was previously synthesized from mock data — kept as
+  // optional so callers can still pass real cohort context when we have
+  // it. Today's caller passes undefined and the line is dropped.
+  cohortTelemetry?: CohortTelemetry,
 ): Promise<string> {
+  const cohortLine = cohortTelemetry
+    ? `Cohort context: ${cohortTelemetry.missedBigRockCount > 0 ? `${cohortTelemetry.missedBigRockCount} other users also missed a Big Rock today.` : ""} ${cohortTelemetry.commonStruggle}. ${cohortTelemetry.streakContext}.`
+    : "";
   const message = await callClaudeViaProxy({
     model: "claude-sonnet-4-6",
     max_tokens: 150,
@@ -641,8 +611,7 @@ Do NOT mention productivity, goals, or optimization. This is about breaking the 
         content: `I'm feeling: "${feeling}"
 
 My Big Rocks for today: ${bigRocks.length > 0 ? bigRocks.join(", ") : "None set"}
-
-Cohort context: ${cohortTelemetry.missedBigRockCount > 0 ? `${cohortTelemetry.missedBigRockCount} other users also missed a Big Rock today.` : ""} ${cohortTelemetry.commonStruggle}. ${cohortTelemetry.streakContext}.
+${cohortLine}
 
 Help me break out of this loop.`,
       },
