@@ -30,6 +30,10 @@ import { wipeUserData } from "../../src/lib/cloudStore";
 import {
   dailyLoadOfReminder,
 } from "../../src/lib/userReminderNotifications";
+import {
+  ensureDailyLogSchedule,
+  cancelAllDailyLogNotifications,
+} from "../../src/lib/dailyLogNotifications";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
@@ -238,6 +242,41 @@ export default function SettingsScreen() {
       await cancelAllQuickMoodNotifications();
       await ensureQuickMoodSchedule(nextSettings);
     }
+    // Morning/evening times reschedule the daily-log notifications.
+    if (key === "morningTime" || key === "eveningTime") {
+      await ensureDailyLogSchedule(nextSettings);
+    }
+  };
+
+  // Toggling morning/evening enables/cancels the daily-log notification
+  // for that kind. Re-uses the existing `update` flow for the Switch's
+  // onValueChange handler; the Switches inline-spread their own patch
+  // (legacy pattern) so we wrap with this helper to keep the scheduler
+  // call alongside the settings write.
+  const handleToggleDailyLog = async (
+    key: "morningEnabled" | "eveningEnabled",
+    enabled: boolean,
+  ) => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const nextSettings: NotificationSettings = {
+      ...settings.notificationSettings,
+      [key]: enabled,
+    };
+    if (enabled) {
+      const { status } = await Notifications.getPermissionsAsync();
+      if (status !== "granted") {
+        const result = await Notifications.requestPermissionsAsync();
+        if (result.status !== "granted") {
+          Alert.alert(
+            "Notifications disabled",
+            "Enable notifications for Aspera in iOS Settings to schedule daily check-ins.",
+          );
+          return;
+        }
+      }
+    }
+    await update({ notificationSettings: nextSettings });
+    await ensureDailyLogSchedule(nextSettings);
   };
 
   const handleSendTestMoodNotification = async () => {
@@ -268,9 +307,9 @@ export default function SettingsScreen() {
   };
 
   // Diagnostic: show the current state of scheduled notifications + permission,
-  // then force a fresh pulse schedule. The `>= RESCHEDULE_THRESHOLD` short-
-  // circuit in ensureQuickMoodSchedule can leave the queue stale if iOS is
-  // silently truncating or if the queued dates have already drifted past.
+  // then force a fresh pulse + daily-log schedule. The `>= RESCHEDULE_THRESHOLD`
+  // short-circuit in ensureQuickMoodSchedule can leave the queue stale if iOS
+  // is silently truncating or if the queued dates have already drifted past.
   // This bypasses that check by canceling first and rebuilding from scratch.
   const handleForcePulseReschedule = async () => {
     await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -282,25 +321,41 @@ export default function SettingsScreen() {
     const remindersBefore = before.filter(
       (n) => (n.content.data as { kind?: string })?.kind === "user_reminder",
     ).length;
+    const morningBefore = before.filter(
+      (n) => (n.content.data as { kind?: string })?.kind === "morning_log",
+    ).length;
+    const eveningBefore = before.filter(
+      (n) => (n.content.data as { kind?: string })?.kind === "evening_log",
+    ).length;
 
     await cancelAllQuickMoodNotifications();
     await ensureQuickMoodSchedule(settings.notificationSettings);
+    await cancelAllDailyLogNotifications();
+    await ensureDailyLogSchedule(settings.notificationSettings);
 
     const after = await Notifications.getAllScheduledNotificationsAsync();
     const quickMoodAfter = after.filter(
       (n) => (n.content.data as { kind?: string })?.kind === "quick_mood_check",
     ).length;
+    const morningAfter = after.filter(
+      (n) => (n.content.data as { kind?: string })?.kind === "morning_log",
+    ).length;
+    const eveningAfter = after.filter(
+      (n) => (n.content.data as { kind?: string })?.kind === "evening_log",
+    ).length;
 
     Alert.alert(
-      "Pulse schedule rebuilt",
+      "Schedules rebuilt",
       [
         `iOS permission: ${status}`,
         `Pulses enabled: ${settings.notificationSettings.quickMoodEnabled ? "yes" : "no"}`,
         `Window: ${settings.notificationSettings.wakeTime}–${settings.notificationSettings.sleepTime}`,
         `Frequency: ${settings.notificationSettings.quickMoodFrequency}× / day`,
+        `Morning: ${settings.notificationSettings.morningEnabled ? settings.notificationSettings.morningTime : "off"}`,
+        `Evening: ${settings.notificationSettings.eveningEnabled ? settings.notificationSettings.eveningTime : "off"}`,
         "",
-        `Before: ${quickMoodBefore} pulses + ${remindersBefore} reminders pending`,
-        `After: ${quickMoodAfter} pulses pending`,
+        `Before: ${quickMoodBefore} pulses · ${morningBefore} AM · ${eveningBefore} PM · ${remindersBefore} reminders`,
+        `After: ${quickMoodAfter} pulses · ${morningAfter} AM · ${eveningAfter} PM`,
       ].join("\n"),
     );
   };
@@ -579,14 +634,7 @@ export default function SettingsScreen() {
             </TouchableOpacity>
             <Switch
               value={settings.notificationSettings.morningEnabled}
-              onValueChange={(v) =>
-                update({
-                  notificationSettings: {
-                    ...settings.notificationSettings,
-                    morningEnabled: v,
-                  },
-                })
-              }
+              onValueChange={(v) => void handleToggleDailyLog("morningEnabled", v)}
               trackColor={{ false: COLORS.border, true: COLORS.accent }}
               thumbColor={COLORS.text}
             />
@@ -614,14 +662,7 @@ export default function SettingsScreen() {
             </TouchableOpacity>
             <Switch
               value={settings.notificationSettings.eveningEnabled}
-              onValueChange={(v) =>
-                update({
-                  notificationSettings: {
-                    ...settings.notificationSettings,
-                    eveningEnabled: v,
-                  },
-                })
-              }
+              onValueChange={(v) => void handleToggleDailyLog("eveningEnabled", v)}
               trackColor={{ false: COLORS.border, true: COLORS.accent }}
               thumbColor={COLORS.text}
             />

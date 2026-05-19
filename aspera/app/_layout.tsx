@@ -18,6 +18,11 @@ import {
   USER_REMINDER_NOTIFICATION_KIND,
   ensureUserReminderSchedule,
 } from "../src/lib/userReminderNotifications";
+import {
+  MORNING_LOG_NOTIFICATION_KIND,
+  EVENING_LOG_NOTIFICATION_KIND,
+  ensureDailyLogSchedule,
+} from "../src/lib/dailyLogNotifications";
 
 function AppLayout() {
   const router = useRouter();
@@ -54,18 +59,26 @@ function AppLayout() {
     void ensureUserReminderSchedule(settings.userReminders ?? []);
   }, [settingsLoading, settings.userReminders]);
 
-  // Re-arm both schedules whenever the app foregrounds. Without this, a
+  // Morning + evening daily-log notifications. CALENDAR-repeating, so a
+  // single schedule per kind lives until cancelled — but we re-sync on
+  // launch in case the user changed times in Settings.
+  useEffect(() => {
+    if (settingsLoading) return;
+    void ensureDailyLogSchedule(settings.notificationSettings);
+  }, [settingsLoading, settings.notificationSettings]);
+
+  // Re-arm every schedule whenever the app foregrounds. Without this, a
   // user who leaves the app backgrounded for a few days never re-rolls
   // their pulse window — the cold-start effects above only fire on a
-  // full process launch. `ensureQuickMoodSchedule` is idempotent (it
-  // short-circuits when the pending count is healthy) so the cost on
-  // every foreground is a single notification count.
+  // full process launch. All three helpers are idempotent so the cost
+  // on every foreground is just a few getAllScheduledNotifications calls.
   useEffect(() => {
     if (settingsLoading) return;
     const sub = AppState.addEventListener("change", (next) => {
       if (next !== "active") return;
       void ensureQuickMoodSchedule(settings.notificationSettings);
       void ensureUserReminderSchedule(settings.userReminders ?? []);
+      void ensureDailyLogSchedule(settings.notificationSettings);
     });
     return () => sub.remove();
   }, [settingsLoading, settings.notificationSettings, settings.userReminders]);
@@ -105,6 +118,13 @@ function AppLayout() {
       // as a follow-up; tapping the notification at minimum opens the
       // app to the most relevant launch surface.
       router.push("/(tabs)" as never);
+      return;
+    }
+    if (
+      data.kind === MORNING_LOG_NOTIFICATION_KIND ||
+      data.kind === EVENING_LOG_NOTIFICATION_KIND
+    ) {
+      router.push("/(tabs)/log" as never);
       return;
     }
   };
