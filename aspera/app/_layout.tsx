@@ -121,10 +121,9 @@ function AppLayout() {
       return;
     }
     if (data.kind === MORNING_LOG_NOTIFICATION_KIND) {
-      // The morning check-in is a mood prompt ("How are you starting the
-      // day?"), so it opens the quick-mood poll — the same modal the random
-      // pulses use — rather than dropping the user into the Log tab.
-      router.push("/quick-mood" as never);
+      // The morning check-in is its own fixed-time flow: mood + energy plus
+      // subjective sleep quality + duration. Distinct from the random pulses.
+      router.push("/morning-checkin" as never);
       return;
     }
     if (data.kind === EVENING_LOG_NOTIFICATION_KIND) {
@@ -206,6 +205,14 @@ function AppLayout() {
             // gesture that ignores React Navigation's gestureEnabled flag.
             // fullScreenModal is a full-screen overlay with no native drag
             // behavior; only the in-app "Not now" / "Save" buttons dismiss.
+            presentation: "fullScreenModal",
+            animation: "slide_from_bottom",
+            gestureEnabled: false,
+          }}
+        />
+        <Stack.Screen
+          name="morning-checkin"
+          options={{
             presentation: "fullScreenModal",
             animation: "slide_from_bottom",
             gestureEnabled: false,

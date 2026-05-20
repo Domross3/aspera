@@ -44,6 +44,9 @@ export interface DailyLog {
   };
   drinks: number; // alcoholic drinks consumed
   sleepHours: number; // time in bed (from HealthKit or manual)
+  // Subjective sleep quality 1–5, captured in the morning check-in. Distinct
+  // from any duration-derived proxy — this is how rested the user *felt*.
+  sleepQuality?: number;
   daylightMinutes: number; // time in daylight (from HealthKit or manual)
   /** @deprecated Use eventEntries. Retained one release for rollback safety. */
   customMetrics: { name: string; value: number }[];
