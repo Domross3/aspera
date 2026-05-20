@@ -24,7 +24,7 @@ export const EVENING_LOG_NOTIFICATION_KIND = "evening_log";
 
 const MORNING_COPY = {
   title: "Morning check-in",
-  body: "How are you starting the day?",
+  body: "Tap to log how you're starting the day — mood + energy.",
 };
 const EVENING_COPY = {
   title: "Evening reflection",

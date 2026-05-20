@@ -120,11 +120,16 @@ function AppLayout() {
       router.push("/(tabs)" as never);
       return;
     }
-    if (
-      data.kind === MORNING_LOG_NOTIFICATION_KIND ||
-      data.kind === EVENING_LOG_NOTIFICATION_KIND
-    ) {
-      router.push("/(tabs)/log" as never);
+    if (data.kind === MORNING_LOG_NOTIFICATION_KIND) {
+      // The morning check-in is a mood prompt ("How are you starting the
+      // day?"), so it opens the quick-mood poll — the same modal the random
+      // pulses use — rather than dropping the user into the Log tab.
+      router.push("/quick-mood" as never);
+      return;
+    }
+    if (data.kind === EVENING_LOG_NOTIFICATION_KIND) {
+      // Evening reflection is about logging the day — route to the Log tab.
+      router.navigate("/(tabs)/log" as never);
       return;
     }
   };
