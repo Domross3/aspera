@@ -60,11 +60,14 @@ const INSIGHTS_JSON_DIRECTIVE = `You MUST respond with ONLY valid JSON matching 
 // Uses three pillars: Self-Kindness, Common Humanity, Mindfulness.
 
 function detectBadWeek(logs: DailyLog[]): boolean {
-  if (logs.length < 3) return false;
+  // Only days the user explicitly rated count — auto-seeded 5/5/0 shells
+  // would otherwise drag the average toward a false "okay" reading.
+  const rated = logs.filter((l) => l.outputRated !== false);
+  if (rated.length < 3) return false;
   const avgFocus =
-    logs.reduce((s, l) => s + l.output.focusRating, 0) / logs.length;
+    rated.reduce((s, l) => s + l.output.focusRating, 0) / rated.length;
   const avgEnergy =
-    logs.reduce((s, l) => s + l.output.energyRating, 0) / logs.length;
+    rated.reduce((s, l) => s + l.output.energyRating, 0) / rated.length;
   return avgFocus < 5 || avgEnergy < 5;
 }
 

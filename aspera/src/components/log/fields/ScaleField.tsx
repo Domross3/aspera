@@ -1,7 +1,11 @@
 // Scale field — integer 1–N rating with tappable dots + −/+ adjusters.
 // Default range is 1–10 (matches the existing RatingSlider feel) but
-// honors `field.config.min/max` when set. Renders nothing if the stored
-// value isn't a number — caller is expected to seed mid-range.
+// honors `field.config.min/max` when set.
+//
+// A fresh field starts UNSET (no value) rather than pre-selecting a
+// midpoint — the user shouldn't have a number fabricated for them. The
+// header shows "—" until they pick, and tapping the currently-selected
+// dot clears the value back to unset.
 
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
@@ -12,22 +16,22 @@ import type { FieldDef } from "../../../types";
 interface Props {
   field: FieldDef;
   value: unknown;
-  onChange: (next: number) => void;
+  onChange: (next: number | undefined) => void;
 }
 
 export default function ScaleField({ field, value, onChange }: Props) {
   const min = field.config?.min ?? 1;
   const max = field.config?.max ?? 10;
   const current =
-    typeof value === "number" && Number.isFinite(value)
-      ? value
-      : Math.round((min + max) / 2);
+    typeof value === "number" && Number.isFinite(value) ? value : null;
 
-  const set = (n: number) => {
-    const clamped = Math.max(min, Math.min(max, n));
-    if (clamped === current) return;
+  const set = (n: number | undefined) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onChange(clamped);
+    if (n === undefined) {
+      onChange(undefined);
+      return;
+    }
+    onChange(Math.max(min, Math.min(max, n)));
   };
 
   const ticks = max - min + 1;
@@ -37,19 +41,24 @@ export default function ScaleField({ field, value, onChange }: Props) {
     <View style={styles.wrap}>
       <View style={styles.headerRow}>
         <Text style={styles.label}>{field.name}</Text>
-        <Text style={styles.value}>
-          {current}
-          <Text style={styles.valueMuted}>/{max}</Text>
-        </Text>
+        {current === null ? (
+          <Text style={styles.valueMuted}>—</Text>
+        ) : (
+          <Text style={styles.value}>
+            {current}
+            <Text style={styles.valueMuted}>/{max}</Text>
+          </Text>
+        )}
       </View>
       <View style={styles.dotsRow}>
         {dots.map((n) => {
-          const active = n <= current;
+          const active = current !== null && n <= current;
           return (
             <TouchableOpacity
               key={n}
               style={[styles.dot, active && styles.dotActive]}
-              onPress={() => set(n)}
+              // Tapping the current top value clears it back to unset.
+              onPress={() => set(n === current ? undefined : n)}
               activeOpacity={0.7}
             />
           );
@@ -58,14 +67,23 @@ export default function ScaleField({ field, value, onChange }: Props) {
       <View style={styles.adjRow}>
         <TouchableOpacity
           style={styles.adjBtn}
-          onPress={() => set(current - 1)}
+          onPress={() => set(current === null ? min : current - 1)}
           hitSlop={6}
         >
           <Text style={styles.adjText}>−</Text>
         </TouchableOpacity>
+        {current !== null ? (
+          <TouchableOpacity
+            style={styles.clearBtn}
+            onPress={() => set(undefined)}
+            hitSlop={6}
+          >
+            <Text style={styles.clearText}>Clear</Text>
+          </TouchableOpacity>
+        ) : null}
         <TouchableOpacity
           style={styles.adjBtn}
-          onPress={() => set(current + 1)}
+          onPress={() => set(current === null ? min : current + 1)}
           hitSlop={6}
         >
           <Text style={styles.adjText}>+</Text>
@@ -115,8 +133,18 @@ const styles = StyleSheet.create({
   adjRow: {
     flexDirection: "row",
     justifyContent: "center",
+    alignItems: "center",
     gap: SPACING.md,
   },
+  clearBtn: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 6,
+  },
+  clearText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    fontSize: 12,
+  } as object,
   adjBtn: {
     width: 32,
     height: 32,

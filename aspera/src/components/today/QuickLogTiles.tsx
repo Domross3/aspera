@@ -63,6 +63,9 @@ function blankLogShell(date: string): DailyLog {
     daylightMinutes: 0,
     customMetrics: [],
     eventEntries: [],
+    // A quick-log tile only records an event entry — it must not imply the
+    // user rated their day's focus/energy. Excluded from trends until rated.
+    outputRated: false,
   };
 }
 

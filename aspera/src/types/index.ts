@@ -58,6 +58,13 @@ export interface DailyLog {
     focusRating: number; // 1–10
     energyRating: number; // 1–10
   };
+  // True once the user has explicitly rated the day's output (saved from the
+  // Log tab's Performance Output). Logs auto-created as a side effect — e.g.
+  // setting a Big Rock or tapping a Today quick-log tile — set this `false`
+  // so their default 5/5/0 values don't masquerade as real ratings in the
+  // trend, weekly average, or Peak Day. `undefined` (legacy rows) is treated
+  // as rated, so existing real data is never hidden.
+  outputRated?: boolean;
   tags: string[];
   bigRocks: string[]; // 1–3 most important tasks for the day
   // Evening reflection — captured at end of day when wrapping up
@@ -290,6 +297,11 @@ export interface AppSettings {
   // known LogSectionId (built-in section) or an EventTypeDef.id (user-
   // defined type) — the renderer dispatches on which.
   hiddenLogSections: (LogSectionId | string)[];
+  // Individual fields within multi-field system sections that the user has
+  // hidden. Keys are dotted paths like "output.tasksCompleted". Lets the
+  // user drop, e.g., Tasks Completed from Performance Output without hiding
+  // the whole section or rebuilding anything.
+  hiddenSystemFields?: string[];
   /** @deprecated Use eventTypes. Migrated on read by `migrateAppSettings`. */
   customMetrics: CustomMetricDef[];
   // Phase 2 schema — user-defined event types (multi-field schemas).

@@ -43,23 +43,23 @@ export default function FieldRenderer({ field, value, onChange }: Props) {
 // Default value the editor seeds for a freshly-created entry. Used both
 // for "Add entry" on recurrent types and the implicit first entry of a
 // single type when the user starts touching its fields.
+//
+// Numeric widgets (scale / counter / duration) seed `undefined` — the user
+// shouldn't have a value fabricated for them. They render an explicit
+// "unset" state until tapped. Toggle stays `false` (a real off-state) and
+// chips/text start empty, which already reads as "nothing selected."
 export function defaultValueFor(field: FieldDef): unknown {
   switch (field.kind) {
     case "toggle":
       return false;
-    case "scale": {
-      const min = field.config?.min ?? 1;
-      const max = field.config?.max ?? 10;
-      return Math.round((min + max) / 2);
-    }
     case "chips":
       return [];
-    case "counter":
-      return field.config?.min ?? 0;
     case "text":
       return "";
+    case "scale":
+    case "counter":
     case "duration":
-      return field.config?.min ?? 0;
+      return undefined;
     default:
       return null;
   }

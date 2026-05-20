@@ -12,7 +12,7 @@ import type { FieldDef } from "../../../types";
 interface Props {
   field: FieldDef;
   value: unknown;
-  onChange: (next: number) => void;
+  onChange: (next: number | undefined) => void;
 }
 
 function formatCount(n: number): string {
@@ -27,16 +27,22 @@ export default function CounterField({ field, value, onChange }: Props) {
   const max = field.config?.max ?? Number.POSITIVE_INFINITY;
   const unit = field.config?.unit ?? "";
 
+  // Starts UNSET — the user shouldn't have a count fabricated for them.
+  // The display shows "—" until they tap +, and Clear returns to unset.
   const current =
-    typeof value === "number" && Number.isFinite(value) ? value : min;
+    typeof value === "number" && Number.isFinite(value) ? value : null;
 
   const set = (n: number) => {
     const clamped = Math.max(min, Math.min(max, n));
     // Avoid floating-point drift (e.g. 0.1 + 0.2). Snap to one decimal.
     const snapped = Math.round(clamped * 10) / 10;
-    if (snapped === current) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onChange(snapped);
+  };
+
+  const clear = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onChange(undefined);
   };
 
   return (
@@ -44,21 +50,36 @@ export default function CounterField({ field, value, onChange }: Props) {
       <Text style={styles.label}>{field.name}</Text>
       <View style={styles.stepper}>
         <TouchableOpacity
-          style={[styles.adjBtn, current <= min && styles.adjBtnDisabled]}
-          onPress={() => set(current - step)}
-          disabled={current <= min}
+          style={[
+            styles.adjBtn,
+            current !== null && current <= min && styles.adjBtnDisabled,
+          ]}
+          onPress={() => (current === null ? clear() : set(current - step))}
+          disabled={current !== null && current <= min}
           hitSlop={6}
         >
           <Text style={styles.adjText}>−</Text>
         </TouchableOpacity>
-        <Text style={styles.value}>
-          {formatCount(current)}
-          {unit ? <Text style={styles.unit}> {unit}</Text> : null}
-        </Text>
         <TouchableOpacity
-          style={[styles.adjBtn, current >= max && styles.adjBtnDisabled]}
-          onPress={() => set(current + step)}
-          disabled={current >= max}
+          activeOpacity={current === null ? 1 : 0.6}
+          onPress={current === null ? undefined : clear}
+        >
+          {current === null ? (
+            <Text style={styles.valueMuted}>—</Text>
+          ) : (
+            <Text style={styles.value}>
+              {formatCount(current)}
+              {unit ? <Text style={styles.unit}> {unit}</Text> : null}
+            </Text>
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.adjBtn,
+            current !== null && current >= max && styles.adjBtnDisabled,
+          ]}
+          onPress={() => set(current === null ? min : current + step)}
+          disabled={current !== null && current >= max}
           hitSlop={6}
         >
           <Text style={styles.adjText}>+</Text>
@@ -107,6 +128,13 @@ const styles = StyleSheet.create({
   value: {
     ...TYPOGRAPHY.subtitle,
     color: COLORS.accent,
+    fontWeight: "700",
+    minWidth: 40,
+    textAlign: "center",
+  } as object,
+  valueMuted: {
+    ...TYPOGRAPHY.subtitle,
+    color: COLORS.textMuted,
     fontWeight: "700",
     minWidth: 40,
     textAlign: "center",

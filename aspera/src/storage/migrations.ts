@@ -173,6 +173,9 @@ export function migrateAppSettings(stored: Partial<AppSettings>): AppSettings {
     hiddenLogSections: Array.isArray(stored.hiddenLogSections)
       ? stored.hiddenLogSections
       : [],
+    hiddenSystemFields: Array.isArray(stored.hiddenSystemFields)
+      ? stored.hiddenSystemFields
+      : undefined,
     customMetrics: legacyDefs, // kept verbatim for rollback safety
     eventTypes,
     logSectionOrder,

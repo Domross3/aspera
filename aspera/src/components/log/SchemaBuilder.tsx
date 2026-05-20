@@ -236,26 +236,36 @@ export default function SchemaBuilder({
             >
               {/* Name + emoji */}
               <View style={styles.nameRow}>
-                <TextInput
-                  placeholder="🙂"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={draft.emoji ?? ""}
-                  onChangeText={(v) =>
-                    setDraft((d) => ({ ...d, emoji: v.slice(0, 2) }))
-                  }
-                  style={styles.emojiInput}
-                  maxLength={2}
-                />
-                <TextInput
-                  placeholder="Metric name (e.g. Lion's mane, Workout)"
-                  placeholderTextColor={COLORS.textMuted}
-                  value={draft.name}
-                  onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))}
-                  style={styles.nameInput}
-                  maxLength={40}
-                  returnKeyType="done"
-                />
+                <View>
+                  <Text style={styles.miniLabel}>Icon</Text>
+                  <TextInput
+                    placeholder="🙂"
+                    placeholderTextColor={COLORS.textMuted}
+                    value={draft.emoji ?? ""}
+                    onChangeText={(v) =>
+                      setDraft((d) => ({ ...d, emoji: v.slice(0, 2) }))
+                    }
+                    style={styles.emojiInput}
+                    maxLength={2}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.miniLabel}>Name</Text>
+                  <TextInput
+                    placeholder="e.g. Lion's mane, Workout, Sex"
+                    placeholderTextColor={COLORS.textMuted}
+                    value={draft.name}
+                    onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))}
+                    style={styles.nameInput}
+                    maxLength={40}
+                    returnKeyType="done"
+                    autoFocus
+                  />
+                </View>
               </View>
+              <Text style={styles.fieldHelp}>
+                Tap the icon box to pick an emoji from your keyboard (optional).
+              </Text>
 
               {/* Cardinality */}
               <Text style={styles.sectionLabel}>How often?</Text>
@@ -679,12 +689,20 @@ const styles = StyleSheet.create({
   emojiInput: {
     ...TYPOGRAPHY.subtitle,
     width: 56,
+    paddingVertical: SPACING.sm + 2,
     textAlign: "center",
     backgroundColor: COLORS.surfaceElevated,
     borderColor: COLORS.border,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: RADIUS.md,
     color: COLORS.text,
+  } as object,
+  fieldHelp: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    fontStyle: "italic",
+    marginTop: -SPACING.md,
+    marginBottom: SPACING.lg,
   } as object,
   nameInput: {
     ...TYPOGRAPHY.body,

@@ -52,6 +52,10 @@ function defaultLogShell(): DailyLog {
     sleepHours: 0,
     daylightMinutes: 0,
     customMetrics: [],
+    // Not a real rating — this shell exists only so a Big Rock can be
+    // attached before the user has opened the Log tab. Excluded from
+    // trends/averages until the user rates the day explicitly.
+    outputRated: false,
   };
 }
 
@@ -142,29 +146,35 @@ export default function TodayScreen() {
 
   const log = todayLog;
 
-  // Compute weekly averages from recentLogs
+  // Only days the user actually rated count toward trends/averages/peak.
+  // Auto-seeded shells (Big Rock, quick-log tile) carry `outputRated: false`
+  // and their default 5/5/0 values would otherwise pollute every metric.
+  // Legacy rows (undefined) are treated as rated so real history survives.
+  const ratedLogs = recentLogs.filter((l) => l.outputRated !== false);
+
+  // Compute weekly averages from rated logs
   const weekAvg =
-    recentLogs.length > 0
+    ratedLogs.length > 0
       ? {
           focus: +(
-            recentLogs.reduce((s, l) => s + l.output.focusRating, 0) /
-            recentLogs.length
+            ratedLogs.reduce((s, l) => s + l.output.focusRating, 0) /
+            ratedLogs.length
           ).toFixed(1),
           energy: +(
-            recentLogs.reduce((s, l) => s + l.output.energyRating, 0) /
-            recentLogs.length
+            ratedLogs.reduce((s, l) => s + l.output.energyRating, 0) /
+            ratedLogs.length
           ).toFixed(1),
           tasks: +(
-            recentLogs.reduce((s, l) => s + l.output.tasksCompleted, 0) /
-            recentLogs.length
+            ratedLogs.reduce((s, l) => s + l.output.tasksCompleted, 0) /
+            ratedLogs.length
           ).toFixed(1),
         }
       : null;
 
   // Best and worst days
   const bestDay =
-    recentLogs.length > 0
-      ? recentLogs.reduce((best, l) =>
+    ratedLogs.length > 0
+      ? ratedLogs.reduce((best, l) =>
           l.output.focusRating + l.output.energyRating >
           best.output.focusRating + best.output.energyRating
             ? l
@@ -175,7 +185,7 @@ export default function TodayScreen() {
   // Build fixed 7-day rolling windows for the trend cards. Days without a
   // log land as `value: null` so TrendLineCard renders a true gap rather
   // than stretching a sparse trend across the full chart width.
-  const logsByDate = new Map(recentLogs.map((l) => [l.id, l]));
+  const logsByDate = new Map(ratedLogs.map((l) => [l.id, l]));
   const trendAnchor = new Date();
   trendAnchor.setHours(12, 0, 0, 0);
   const focusTrend: TrendPoint[] = [];

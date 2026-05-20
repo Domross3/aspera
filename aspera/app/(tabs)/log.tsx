@@ -86,7 +86,7 @@ function buildSections(
   const sysById = new Map(LOG_SECTIONS.map((s) => [s.id, s]));
   const userById = new Map(eventTypes.map((t) => [t.id, t]));
 
-  return base
+  const ordered = base
     .filter((id) => !hidden.includes(id))
     .map<SectionDescriptor | null>((id) => {
       const sys = sysById.get(id as LogSectionId);
@@ -97,6 +97,19 @@ function buildSections(
       return null;
     })
     .filter((d): d is SectionDescriptor => d !== null);
+
+  // Hoist recurrent event types to the very top so multiply-occurring things
+  // (workout, dose, etc.) are the first thing the user sees + logs — above
+  // the Evening Reflection — rather than buried under a dozen system
+  // sections. Single-cardinality user types keep their place in the order.
+  // Stable partition preserves relative ordering within each group.
+  const recurrent = ordered.filter(
+    (d) => d.kind === "user" && d.type.cardinality === "recurrent",
+  );
+  const rest = ordered.filter(
+    (d) => !(d.kind === "user" && d.type.cardinality === "recurrent"),
+  );
+  return [...recurrent, ...rest];
 }
 
 // ── Default values + helpers ─────────────────────────────────────────────
@@ -202,7 +215,9 @@ export default function LogScreen() {
   };
 
   const handleSave = async () => {
-    const log: DailyLog = { ...form, createdAt: Date.now() };
+    // Saving from the Log tab means the user has reviewed Performance Output,
+    // so the day's focus/energy/tasks count as a real rating from here on.
+    const log: DailyLog = { ...form, createdAt: Date.now(), outputRated: true };
     await save(log);
     // Retroactive edits invalidate the insights cache so the next Insights
     // view regenerates against the corrected history. Today-day saves
@@ -239,6 +254,18 @@ export default function LogScreen() {
     void updateSettings({
       hiddenLogSections: toggleSection(settings.hiddenLogSections, id),
     });
+  };
+
+  // Per-field hiding within multi-field system sections (e.g. dropping
+  // "Tasks Completed" from Performance Output). Keyed by dotted path.
+  const hiddenSystemFields = settings.hiddenSystemFields ?? [];
+  const isFieldHidden = (key: string) => hiddenSystemFields.includes(key);
+  const toggleFieldHidden = (key: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const next = hiddenSystemFields.includes(key)
+      ? hiddenSystemFields.filter((k) => k !== key)
+      : [...hiddenSystemFields, key];
+    void updateSettings({ hiddenSystemFields: next });
   };
 
   const moveSection = (index: number, direction: -1 | 1) => {
@@ -482,36 +509,77 @@ export default function LogScreen() {
             />
           </GradientCard>
         );
-      case "output":
+      case "output": {
+        // Each sub-field can be hidden via edit mode. Outside edit mode a
+        // hidden field renders nothing; inside edit mode it stays visible
+        // (dimmed) with a toggle so the user can bring it back.
+        const renderOutputField = (
+          key: string,
+          node: React.ReactElement,
+        ): React.ReactElement | null => {
+          const hidden = isFieldHidden(key);
+          if (hidden && !editMode) return null;
+          return (
+            <View key={key} style={hidden ? { opacity: 0.4 } : undefined}>
+              {editMode ? (
+                <TouchableOpacity
+                  onPress={() => toggleFieldHidden(key)}
+                  hitSlop={6}
+                  style={styles.fieldHideToggle}
+                >
+                  <Ionicons
+                    name={hidden ? "eye-off" : "remove-circle"}
+                    size={14}
+                    color={hidden ? COLORS.textMuted : COLORS.danger}
+                  />
+                  <Text style={styles.fieldHideText}>
+                    {hidden ? "Hidden — tap to show" : "Hide this field"}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+              {node}
+            </View>
+          );
+        };
         return (
           <GradientCard style={{ marginBottom: 0, gap: SPACING.lg }}>
-            <RatingSlider
-              label="Focus Rating"
-              value={form.output.focusRating}
-              onChange={(v) =>
-                patch("output", { ...form.output, focusRating: v })
-              }
-              accentColor={COLORS.accent}
-            />
-            <RatingSlider
-              label="Energy Rating"
-              value={form.output.energyRating}
-              onChange={(v) =>
-                patch("output", { ...form.output, energyRating: v })
-              }
-              accentColor={COLORS.warning}
-            />
-            <RatingSlider
-              label="Tasks Completed"
-              value={form.output.tasksCompleted}
-              max={20}
-              onChange={(v) =>
-                patch("output", { ...form.output, tasksCompleted: v })
-              }
-              accentColor={COLORS.success}
-            />
+            {renderOutputField(
+              "output.focusRating",
+              <RatingSlider
+                label="Focus Rating"
+                value={form.output.focusRating}
+                onChange={(v) =>
+                  patch("output", { ...form.output, focusRating: v })
+                }
+                accentColor={COLORS.accent}
+              />,
+            )}
+            {renderOutputField(
+              "output.energyRating",
+              <RatingSlider
+                label="Energy Rating"
+                value={form.output.energyRating}
+                onChange={(v) =>
+                  patch("output", { ...form.output, energyRating: v })
+                }
+                accentColor={COLORS.warning}
+              />,
+            )}
+            {renderOutputField(
+              "output.tasksCompleted",
+              <RatingSlider
+                label="Tasks Completed"
+                value={form.output.tasksCompleted}
+                max={20}
+                onChange={(v) =>
+                  patch("output", { ...form.output, tasksCompleted: v })
+                }
+                accentColor={COLORS.success}
+              />,
+            )}
           </GradientCard>
         );
+      }
       case "tags":
         return (
           <GradientCard style={{ marginBottom: 0 }}>
@@ -887,6 +955,17 @@ const styles = StyleSheet.create({
   editIconBtnDanger: {
     borderColor: "rgba(248,113,113,0.4)",
   },
+  fieldHideToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  fieldHideText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    fontSize: 11,
+  } as object,
   newTypeTile: {
     flexDirection: "row",
     alignItems: "center",

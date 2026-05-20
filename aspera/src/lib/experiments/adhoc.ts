@@ -77,18 +77,22 @@ function evalTreatment(log: DailyLog, opt: TreatmentOption): boolean {
  * the comparison so the engine sees only valid samples.
  */
 function extractOutcome(log: DailyLog, opt: OutcomeOption): number | null {
+  // Days auto-seeded (Big Rock / quick-log) but never explicitly rated carry
+  // default 5/5/0 output values. Exclude their performance ratings from
+  // comparisons so they don't bias the result toward the mean.
+  const outputUnrated = log.outputRated === false;
   if (opt.kind === "daily_log_number") {
     switch (opt.field) {
       case "focusRating":
-        return Number.isFinite(log.output?.focusRating)
+        return !outputUnrated && Number.isFinite(log.output?.focusRating)
           ? log.output.focusRating
           : null;
       case "energyRating":
-        return Number.isFinite(log.output?.energyRating)
+        return !outputUnrated && Number.isFinite(log.output?.energyRating)
           ? log.output.energyRating
           : null;
       case "tasksCompleted":
-        return Number.isFinite(log.output?.tasksCompleted)
+        return !outputUnrated && Number.isFinite(log.output?.tasksCompleted)
           ? log.output.tasksCompleted
           : null;
       case "sleepHours":

@@ -4,7 +4,6 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  TextInput,
   StyleSheet,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
@@ -21,7 +20,6 @@ import {
   STRESS_EMOJIS,
 } from "../../src/types";
 import {
-  saveMoodCheckIn,
   getRecentMoodCheckIns,
   saveMoment,
   getRecentMoments,
@@ -30,7 +28,6 @@ import {
   fetchRecentMoodCheckIns,
   fetchRecentMoments,
   insertMoment,
-  insertMoodCheckIn,
 } from "../../src/lib/cloudStore";
 import MomentCapture from "../../src/components/mood/MomentCapture";
 import { useAuth } from "../../src/hooks/useAuth";
@@ -172,11 +169,6 @@ export default function MoodScreen() {
   const router = useRouter();
   const { session } = useAuth();
   const { settings, update: updateSettings } = useSettings();
-  const [mood, setMood] = useState(3);
-  const [energy, setEnergy] = useState(3);
-  const [stress, setStress] = useState(1);
-  const [note, setNote] = useState("");
-  const [saved, setSaved] = useState(false);
   const [recentCheckins, setRecentCheckins] = useState<MoodCheckIn[]>([]);
   const [recentMoments, setRecentMoments] = useState<Moment[]>([]);
   const [momentSheetVisible, setMomentSheetVisible] = useState(false);
@@ -310,31 +302,6 @@ export default function MoodScreen() {
     () => buildTrend(snapshots, "avgStress"),
     [snapshots],
   );
-
-  const handleSave = async () => {
-    const checkIn: MoodCheckIn = {
-      id: new Date().toISOString(),
-      timestamp: Date.now(),
-      mood,
-      energy,
-      stress,
-      note: note.trim() || undefined,
-      source: "full",
-    };
-
-    // Optimistic local write, then background cloud sync.
-    await saveMoodCheckIn(checkIn);
-    if (session) {
-      insertMoodCheckIn(session.user.id, checkIn).catch((err) => {
-        console.warn("[mood] cloud sync failed; cached locally", err);
-      });
-    }
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setSaved(true);
-    setNote("");
-    await loadCheckins();
-    setTimeout(() => setSaved(false), 2500);
-  };
 
   const handleMomentSave = async (moment: Moment) => {
     // Optimistic local write, then background cloud sync — mirror the
@@ -596,75 +563,6 @@ export default function MoodScreen() {
           })
         )}
 
-        <SectionLabel label="Quick Capture" style={{ marginTop: SPACING.xl }} />
-        <GradientCard style={{ marginBottom: SPACING.md }}>
-          <Text style={styles.quickIntro}>
-            Use this to feed the timeline without treating the whole tab like a
-            log.
-          </Text>
-
-          <Text style={styles.scaleSectionLabel}>Mood</Text>
-          <EmojiScale
-            value={mood}
-            onChange={setMood}
-            emojis={MOOD_EMOJIS}
-            labels={["Awful", "Low", "Okay", "Good", "Great"]}
-          />
-
-          <View style={styles.divider} />
-
-          <Text style={styles.scaleSectionLabel}>Energy</Text>
-          <EmojiScale
-            value={energy}
-            onChange={setEnergy}
-            emojis={ENERGY_EMOJIS}
-            labels={["Drained", "Tired", "Steady", "Fired up", "Peak"]}
-          />
-
-          <View style={styles.divider} />
-
-          <Text style={styles.scaleSectionLabel}>Stress</Text>
-          <EmojiScale
-            value={stress}
-            onChange={setStress}
-            emojis={STRESS_EMOJIS}
-            labels={["Calm", "Relaxed", "Tense", "Anxious", "Overwhelmed"]}
-          />
-
-          <View style={styles.divider} />
-
-          <Text style={styles.scaleSectionLabel}>Note (optional)</Text>
-          <TextInput
-            style={styles.noteInput}
-            value={note}
-            onChangeText={setNote}
-            placeholder="What shifted?"
-            placeholderTextColor={COLORS.textMuted}
-            multiline
-            scrollEnabled
-            textAlignVertical="top"
-            blurOnSubmit
-            returnKeyType="done"
-            onSubmitEditing={() => {}}
-          />
-        </GradientCard>
-
-        <TouchableOpacity onPress={handleSave} activeOpacity={0.85}>
-          <LinearGradient
-            colors={
-              saved
-                ? (COLORS.gradients.success as [string, string])
-                : (COLORS.gradients.accent as [string, string])
-            }
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.saveButton}
-          >
-            <Text style={styles.saveButtonText}>
-              {saved ? "✓ Capture Saved" : "Save Quick Capture"}
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
       </ScrollView>
 
       <MomentCapture
@@ -682,46 +580,6 @@ export default function MoodScreen() {
         onSave={(next) => void handlePromotionSave(next)}
       />
     </LinearGradient>
-  );
-}
-
-function EmojiScale({
-  value,
-  onChange,
-  emojis,
-  labels,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  emojis: Record<number, string>;
-  labels: string[];
-}) {
-  return (
-    <View>
-      <View style={styles.scaleRow}>
-        {[1, 2, 3, 4, 5].map((option) => {
-          const active = option === value;
-          return (
-            <TouchableOpacity
-              key={option}
-              onPress={() => {
-                onChange(option);
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }}
-              style={[styles.emojiButton, active && styles.emojiButtonActive]}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[styles.emojiText, active && styles.emojiTextActive]}
-              >
-                {emojis[option]}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-      <Text style={styles.scaleLabel}>{labels[value - 1]}</Text>
-    </View>
   );
 }
 
@@ -907,74 +765,5 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginTop: SPACING.sm,
     lineHeight: 20,
-  } as object,
-  quickIntro: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
-  } as object,
-  scaleSectionLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textMuted,
-    marginBottom: SPACING.sm,
-  } as object,
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.border,
-    marginVertical: SPACING.md,
-  },
-  scaleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    gap: SPACING.sm,
-  },
-  emojiButton: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: SPACING.sm + 2,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  emojiButtonActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
-  },
-  emojiText: {
-    fontSize: 24,
-    opacity: 0.5,
-  },
-  emojiTextActive: {
-    fontSize: 28,
-    opacity: 1,
-  },
-  scaleLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    textAlign: "center",
-    marginTop: SPACING.sm,
-  } as object,
-  noteInput: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    height: 72,
-    maxHeight: 72,
-  } as object,
-  saveButton: {
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md + 2,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-    fontWeight: "700",
   } as object,
 });
