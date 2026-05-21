@@ -2,7 +2,7 @@
   "expo": {
     "name": "Aspera",
     "slug": "aspera",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "scheme": "aspera",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -21,6 +21,12 @@
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.family-controls": true,
+        "com.apple.security.application-groups": [
+          "group.com.dominicross.aspera"
+        ]
       }
     },
     "android": {
@@ -30,7 +36,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.dominicross.aspera"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -46,7 +53,8 @@
         }
       ],
       "expo-apple-authentication",
-      "expo-secure-store"
+      "expo-secure-store",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true
