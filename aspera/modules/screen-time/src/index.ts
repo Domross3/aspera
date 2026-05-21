@@ -36,7 +36,11 @@ export function getAuthorizationStatus(): ScreenTimeAuthStatus {
 
 export async function requestAuthorization(): Promise<ScreenTimeAuthStatus> {
   if (!native) return "unavailable";
-  return native.requestAuthorization();
+  try {
+    return await native.requestAuthorization();
+  } catch {
+    return getAuthorizationStatus();
+  }
 }
 
 export async function presentPicker(

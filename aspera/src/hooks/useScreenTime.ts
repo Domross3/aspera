@@ -40,6 +40,8 @@ export function useScreenTime() {
     try {
       const next = await requestAuthorization();
       setAuthStatus(next);
+    } catch {
+      setAuthStatus(getAuthorizationStatus());
     } finally {
       setRequesting(false);
     }
