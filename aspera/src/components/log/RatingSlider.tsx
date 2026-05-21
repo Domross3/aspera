@@ -20,7 +20,7 @@ interface Props {
 export default function RatingSlider({
   label,
   value,
-  max = 10,
+  max = 5,
   onChange,
   accentColor = COLORS.accent,
 }: Props) {

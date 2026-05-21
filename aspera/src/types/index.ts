@@ -58,8 +58,8 @@ export interface DailyLog {
   eventEntries?: EventEntry[];
   output: {
     tasksCompleted: number; // 0–20
-    focusRating: number; // 1–10
-    energyRating: number; // 1–10
+    focusRating: number; // 1–5
+    energyRating: number; // 1–5
   };
   // True once the user has explicitly rated the day's output (saved from the
   // Log tab's Performance Output). Logs auto-created as a side effect — e.g.

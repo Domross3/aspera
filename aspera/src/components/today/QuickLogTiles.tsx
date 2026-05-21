@@ -55,7 +55,7 @@ function blankLogShell(date: string): DailyLog {
     workout: { type: "none", intensity: 0 },
     music: [],
     nutrition: { mealQuality: 3, hydration: 0 },
-    output: { tasksCompleted: 0, focusRating: 5, energyRating: 5 },
+    output: { tasksCompleted: 0, focusRating: 3, energyRating: 3 },
     tags: [],
     bigRocks: [],
     drinks: 0,

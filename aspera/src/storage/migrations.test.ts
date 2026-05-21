@@ -290,6 +290,17 @@ describe("migrateDailyLog", () => {
     expect(migrated.customMetricValues).toEqual(log.customMetricValues);
   });
 
+  it("normalizes legacy 10-point focus and energy ratings to 5-point ratings", () => {
+    const migrated = migrateDailyLog({
+      ...baseLog(),
+      output: { tasksCompleted: 4, focusRating: 7, energyRating: 10 },
+    });
+
+    expect(migrated.output.focusRating).toBe(4);
+    expect(migrated.output.energyRating).toBe(5);
+    expect(migrated.output.tasksCompleted).toBe(4);
+  });
+
   it("is idempotent — pre-migrated logs pass through unchanged", () => {
     const log: DailyLog = {
       ...baseLog(),

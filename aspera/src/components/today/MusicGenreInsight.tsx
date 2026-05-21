@@ -105,8 +105,8 @@ export default function MusicGenreInsight({
   const leadGenreLabel = formatGenreLabel(leadGenre.genre);
   const body =
     leadGenre.count > 1
-      ? `${leadGenreLabel} days are averaging ${leadGenre.avgFocus.toFixed(1)}/10 focus, ${leadGenre.avgEnergy.toFixed(1)}/10 energy, and ${leadGenre.avgTasks.toFixed(1)} tasks across ${leadGenre.count} logs.`
-      : `${leadGenreLabel} is only logged once so far, but it landed at ${leadGenre.avgFocus.toFixed(1)}/10 focus and ${leadGenre.avgTasks.toFixed(1)} tasks.`;
+      ? `${leadGenreLabel} days are averaging ${leadGenre.avgFocus.toFixed(1)}/5 focus, ${leadGenre.avgEnergy.toFixed(1)}/5 energy, and ${leadGenre.avgTasks.toFixed(1)} tasks across ${leadGenre.count} logs.`
+      : `${leadGenreLabel} is only logged once so far, but it landed at ${leadGenre.avgFocus.toFixed(1)}/5 focus and ${leadGenre.avgTasks.toFixed(1)} tasks.`;
 
   return (
     <GradientCard style={styles.card}>

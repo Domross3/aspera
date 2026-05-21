@@ -42,6 +42,20 @@ function fieldIdFor(defId: string): string {
   return `${defId}-field`;
 }
 
+function normalizeDailyOutputRating(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return 3;
+  const migrated = value > 5 ? Math.round(value / 2) : Math.round(value);
+  return Math.max(1, Math.min(5, migrated));
+}
+
+function normalizeDailyOutput(log: DailyLog): DailyLog["output"] {
+  return {
+    ...log.output,
+    focusRating: normalizeDailyOutputRating(log.output?.focusRating),
+    energyRating: normalizeDailyOutputRating(log.output?.energyRating),
+  };
+}
+
 // Map an old CustomMetricKind onto the new FieldKind. The four legacy
 // kinds correspond 1:1 to four of the six new kinds (text + duration are
 // genuinely new and have no legacy equivalent).
@@ -193,8 +207,10 @@ export function migrateAppSettings(stored: Partial<AppSettings>): AppSettings {
 // exists, the legacy customMetricValues are ignored (we trust the new
 // shape). Otherwise we synthesize eventEntries from the legacy array.
 export function migrateDailyLog(log: DailyLog): DailyLog {
+  const output = normalizeDailyOutput(log);
+
   if (Array.isArray(log.eventEntries)) {
-    return log; // already in the new shape; leave legacy fields untouched
+    return { ...log, output }; // already in the new shape; leave legacy fields untouched
   }
 
   const legacyValues = Array.isArray(log.customMetricValues)
@@ -222,6 +238,7 @@ export function migrateDailyLog(log: DailyLog): DailyLog {
 
   return {
     ...log,
+    output,
     eventEntries,
   };
 }

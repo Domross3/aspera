@@ -45,7 +45,7 @@ function defaultLogShell(): DailyLog {
     workout: { type: "none", intensity: 0 },
     music: [],
     nutrition: { mealQuality: 3, hydration: 0 },
-    output: { tasksCompleted: 0, focusRating: 5, energyRating: 5 },
+    output: { tasksCompleted: 0, focusRating: 3, energyRating: 3 },
     tags: [],
     bigRocks: [],
     drinks: 0,
@@ -294,7 +294,7 @@ export default function TodayScreen() {
                 subtitle={`${recentLogs.length}-day trendline with weekly average`}
                 accentColor={COLORS.accent}
                 points={focusTrend}
-                maxValue={10}
+                maxValue={5}
                 formatValue={(value) => value.toFixed(1)}
               />
               <TrendLineCard
@@ -302,7 +302,7 @@ export default function TodayScreen() {
                 subtitle={`${recentLogs.length}-day trendline with weekly average`}
                 accentColor={COLORS.warning}
                 points={energyTrend}
-                maxValue={10}
+                maxValue={5}
                 formatValue={(value) => value.toFixed(1)}
               />
             </>
@@ -332,11 +332,11 @@ export default function TodayScreen() {
               </Text>
               <View style={styles.peakRow}>
                 <Text style={styles.peakStat}>
-                  Focus {bestDay.output.focusRating}/10
+                  Focus {bestDay.output.focusRating}/5
                 </Text>
                 <Text style={styles.peakDot}>·</Text>
                 <Text style={styles.peakStat}>
-                  Energy {bestDay.output.energyRating}/10
+                  Energy {bestDay.output.energyRating}/5
                 </Text>
                 <Text style={styles.peakDot}>·</Text>
                 <Text style={styles.peakStat}>

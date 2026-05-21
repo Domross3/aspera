@@ -11,8 +11,8 @@ interface Props {
 type Metric = "focusRating" | "energyRating" | "tasksCompleted";
 
 const METRICS: { key: Metric; label: string; color: string; max: number }[] = [
-  { key: "focusRating", label: "Focus", color: COLORS.accent, max: 10 },
-  { key: "energyRating", label: "Energy", color: COLORS.warning, max: 10 },
+  { key: "focusRating", label: "Focus", color: COLORS.accent, max: 5 },
+  { key: "energyRating", label: "Energy", color: COLORS.warning, max: 5 },
   { key: "tasksCompleted", label: "Tasks", color: COLORS.success, max: 20 },
 ];
 

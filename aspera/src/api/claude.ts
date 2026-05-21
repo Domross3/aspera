@@ -68,7 +68,9 @@ function detectBadWeek(logs: DailyLog[]): boolean {
     rated.reduce((s, l) => s + l.output.focusRating, 0) / rated.length;
   const avgEnergy =
     rated.reduce((s, l) => s + l.output.energyRating, 0) / rated.length;
-  return avgFocus < 5 || avgEnergy < 5;
+  // Ratings are on a 1–5 scale; below the 3 midpoint is a genuinely rough
+  // stretch (was `< 5` back when the scale ran 1–10).
+  return avgFocus < 3 || avgEnergy < 3;
 }
 
 const SELF_COMPASSION_PREFIX = `IMPORTANT INTENSITY MODULATION: The user's data indicates a difficult stretch — low energy or focus across recent days. Soften your voice further than baseline:
@@ -107,8 +109,8 @@ function buildInsightsPrompt(
       {
         date: "2026-03-22",
         dayLabel: "Sun",
-        focusRating: 7,
-        energyRating: 8,
+        focusRating: 4,
+        energyRating: 4,
         tasksCompleted: 9,
       },
     ],
@@ -531,7 +533,7 @@ export async function getMorningBriefing(
 
   const yesterday = recentLogs.find((l) => l.id !== context.id) ?? null;
   const yesterdaySummary = yesterday
-    ? `Yesterday — sleep: ${yesterday.sleepHours}h, focus: ${yesterday.output.focusRating}/10, energy: ${yesterday.output.energyRating}/10, tasks: ${yesterday.output.tasksCompleted}.`
+    ? `Yesterday — sleep: ${yesterday.sleepHours}h, focus: ${yesterday.output.focusRating}/5, energy: ${yesterday.output.energyRating}/5, tasks: ${yesterday.output.tasksCompleted}.`
     : "No prior-day log to reference.";
 
   const reflectionNote = (
