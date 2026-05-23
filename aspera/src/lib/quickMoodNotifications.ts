@@ -18,12 +18,27 @@
 
 import * as Notifications from "expo-notifications";
 import { NotificationSettings } from "../types";
-import { buildDailyTriggerDates, parseWindow } from "./notificationHelpers";
+import {
+  buildDailyTriggerDates,
+  minutesInWindow,
+  parseWindow,
+  type ParsedWindow,
+} from "./notificationHelpers";
 
 const NOTIFICATION_KIND = "quick_mood_check";
 const SCHEDULE_DAYS = 7;
 const MIN_HOURS_BETWEEN = 2;
 const RESCHEDULE_THRESHOLD = SCHEDULE_DAYS * 2; // re-schedule when below this many
+// If the user's wake→sleep window is inverted or too small to hold even a
+// single pulse, fall back to a sane daytime window so pulses never silently
+// drop to zero (a real failure mode when wake/sleep got mis-set).
+const FALLBACK_WINDOW: ParsedWindow = {
+  startHour: 9,
+  startMinute: 0,
+  endHour: 21,
+  endMinute: 0,
+};
+const MIN_GAP_FLOOR_MIN = 15;
 
 const COPY_OPTIONS: { title: string; body: string }[] = [
   { title: "Mood check-in", body: "How's it going right now?" },
@@ -80,12 +95,32 @@ export async function ensureQuickMoodSchedule(
 
   await cancelAllQuickMoodNotifications();
 
-  const window = parseWindow(settings.wakeTime, settings.sleepTime);
+  const frequency = Math.max(1, Math.min(8, settings.quickMoodFrequency));
+
+  // Guard a degenerate window: if wake→sleep is inverted, zero, or too tight
+  // to hold a single pulse, fall back to a daytime window. Otherwise a
+  // mis-set wake/sleep silently produces no pulses at all.
+  let window = parseWindow(settings.wakeTime, settings.sleepTime);
+  if (minutesInWindow(window) < 30) {
+    window = FALLBACK_WINDOW;
+  }
+
+  // Shrink the inter-pulse gap if the window can't fit `frequency` pulses at
+  // the default 2h spacing — without this, a 12h window with frequency 8
+  // (needs 7×120m = 840m > 720m) silently schedules fewer than requested.
+  const winMin = minutesInWindow(window);
+  const fitGap =
+    frequency > 1 ? Math.floor(winMin / (frequency - 1)) : winMin;
+  const gapMin = Math.max(
+    MIN_GAP_FLOOR_MIN,
+    Math.min(MIN_HOURS_BETWEEN * 60, fitGap),
+  );
+
   const dates = buildDailyTriggerDates(
     SCHEDULE_DAYS,
-    Math.max(1, Math.min(8, settings.quickMoodFrequency)),
+    frequency,
     window,
-    MIN_HOURS_BETWEEN * 60,
+    gapMin,
   );
 
   for (const date of dates) {
