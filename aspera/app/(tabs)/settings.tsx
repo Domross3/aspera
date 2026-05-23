@@ -19,6 +19,7 @@ import { useAuth } from "../../src/hooks/useAuth";
 import {
   clearAllLogs,
   clearAllMoodCheckIns,
+  clearAllMoments,
   clearInsights,
   clearIntegrationData,
 } from "../../src/storage/storage";
@@ -392,19 +393,30 @@ export default function SettingsScreen() {
           onPress: async () => {
             await clearAllLogs();
             await clearAllMoodCheckIns();
+            await clearAllMoments();
             await clearInsights();
             await clearIntegrationData();
             // Also wipe the cloud copy so a re-fetch doesn't repopulate.
+            let cloudWipeFailed = false;
             if (session) {
               try {
                 await wipeUserData(session.user.id);
               } catch (err) {
                 console.warn("[settings] cloud wipe failed", err);
+                cloudWipeFailed = true;
               }
             }
             await Haptics.notificationAsync(
               Haptics.NotificationFeedbackType.Warning,
             );
+            // Surface a partial-wipe so the user knows the cloud copy may
+            // re-sync on next launch, rather than silently leaving it.
+            if (cloudWipeFailed) {
+              Alert.alert(
+                "Local data cleared",
+                "Your on-device data is gone, but the cloud copy couldn't be reached. It will be retried — if it re-syncs, open Clear All Data again once you're back online.",
+              );
+            }
           },
         },
       ],

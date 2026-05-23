@@ -236,6 +236,26 @@ export async function getRecentMoodCheckIns(days = 7): Promise<MoodCheckIn[]> {
   return all.sort((a, b) => a.timestamp - b.timestamp);
 }
 
+// Overwrite the local cache with cloud-fetched mood check-ins. Groups by day
+// and SETs each bucket (vs. saveMoodCheckIn which appends), so warming the
+// cache from a cloud read is idempotent — repeated calls never duplicate.
+// Days not present in the input are left untouched.
+export async function replaceCachedMoodCheckIns(
+  checkIns: MoodCheckIn[],
+): Promise<void> {
+  const byDay = new Map<string, MoodCheckIn[]>();
+  for (const c of checkIns) {
+    const date = new Date(c.timestamp).toISOString().split("T")[0];
+    const bucket = byDay.get(date) ?? [];
+    bucket.push(c);
+    byDay.set(date, bucket);
+  }
+  const entries: [string, string][] = [...byDay.entries()].map(
+    ([date, list]) => [`${STORAGE_KEYS.MOOD_PREFIX}${date}`, JSON.stringify(list)],
+  );
+  if (entries.length > 0) await AsyncStorage.multiSet(entries);
+}
+
 // ─── Moments ──────────────────────────────────────────────────────────────
 // Free-form timestamped events that live on the Mood tab timeline. Storage
 // shape mirrors mood check-ins exactly: one AsyncStorage key per day,
@@ -272,6 +292,25 @@ export async function getRecentMoments(days = 14): Promise<Moment[]> {
     if (v) all.push(...JSON.parse(v));
   }
   return all.sort((a, b) => a.timestamp - b.timestamp);
+}
+
+// Idempotent cloud→cache warm for moments. Same overwrite-by-day approach
+// as replaceCachedMoodCheckIns — no duplicates on repeated calls.
+export async function replaceCachedMoments(moments: Moment[]): Promise<void> {
+  const byDay = new Map<string, Moment[]>();
+  for (const m of moments) {
+    const date = new Date(m.timestamp).toISOString().split("T")[0];
+    const bucket = byDay.get(date) ?? [];
+    bucket.push(m);
+    byDay.set(date, bucket);
+  }
+  const entries: [string, string][] = [...byDay.entries()].map(
+    ([date, list]) => [
+      `${STORAGE_KEYS.MOMENT_PREFIX}${date}`,
+      JSON.stringify(list),
+    ],
+  );
+  if (entries.length > 0) await AsyncStorage.multiSet(entries);
 }
 
 export async function deleteMoment(id: string): Promise<void> {

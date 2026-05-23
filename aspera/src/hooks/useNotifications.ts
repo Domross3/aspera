@@ -78,17 +78,27 @@ async function registerForPushNotificationsAsync() {
   try {
     const token = (await Notifications.getExpoPushTokenAsync({ projectId }))
       .data;
-    await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
 
     const apiUrl = process.env.EXPO_PUBLIC_API_URL;
-    if (apiUrl) {
-      await fetch(`${apiUrl}/api/push/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token }),
-      });
+    if (!apiUrl) {
+      // No backend configured (dev) — cache so we don't re-ask every launch.
+      await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
+      return;
+    }
+
+    // Server expects `expo_token` (not `token`). Only cache AFTER the server
+    // confirms it stored the token — otherwise a failed POST would still be
+    // cached and the `if (cached) return` guard above would never retry.
+    const res = await fetch(`${apiUrl}/api/push/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ expo_token: token }),
+    });
+    if (res.ok) {
+      await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
     }
   } catch {
-    // Silently ignore — simulator or permissions issue
+    // Silently ignore — simulator / network blip. Nothing cached, so the
+    // next launch retries.
   }
 }

@@ -23,6 +23,8 @@ import {
   getRecentMoodCheckIns,
   saveMoment,
   getRecentMoments,
+  replaceCachedMoodCheckIns,
+  replaceCachedMoments,
 } from "../../src/storage/storage";
 import {
   fetchRecentMoodCheckIns,
@@ -201,9 +203,15 @@ export default function MoodScreen() {
       ]);
       setRecentCheckins(cloudCheckins);
       setRecentMoments(cloudMoments);
-      // (Skipping cache warming for mood: saveMoodCheckIn appends to a day's
-      // array, so iterating cloud entries would create duplicates. Mood
-      // offline support is a P2 — fixable with a different cache layout.)
+      // Warm the local cache idempotently so offline fallback + the local-only
+      // AI prompt paths see cloud data. These overwrite per-day buckets (vs.
+      // append), so repeated warms never duplicate.
+      void Promise.all([
+        replaceCachedMoodCheckIns(cloudCheckins),
+        replaceCachedMoments(cloudMoments),
+      ]).catch((err) =>
+        console.warn("[mood] cache warm failed (non-fatal)", err),
+      );
     } catch (err) {
       console.warn("[mood] cloud fetch failed, falling back to cache", err);
       const [recent, moments] = await Promise.all([

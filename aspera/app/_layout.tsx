@@ -104,14 +104,20 @@ function AppLayout() {
   // Today tab (and if they were linked to an EventTypeDef, the user can
   // navigate into the Log tab from there). Cold-start handled below.
   const handleNotificationKind = (
-    data: { kind?: string; linkedEventTypeId?: string } | undefined,
+    data:
+      | { kind?: string; type?: string; linkedEventTypeId?: string }
+      | undefined,
   ) => {
     if (!data) return;
-    if (data.kind === QUICK_MOOD_NOTIFICATION_KIND) {
+    // Local notifications carry `data.kind`; remote pushes from the web cron
+    // carry `data.type`. Accept either so a tapped remote morning/evening
+    // push deep-links the same as the locally-scheduled one.
+    const kind = data.kind ?? data.type;
+    if (kind === QUICK_MOOD_NOTIFICATION_KIND) {
       router.push("/quick-mood" as never);
       return;
     }
-    if (data.kind === USER_REMINDER_NOTIFICATION_KIND) {
+    if (kind === USER_REMINDER_NOTIFICATION_KIND) {
       // For v1 we route every user reminder back to Today. Deep-linking
       // into a specific Log-tab section for `linkedEventTypeId` requires
       // route params Plumbing the Log tab doesn't yet listen for — left
@@ -120,13 +126,13 @@ function AppLayout() {
       router.push("/(tabs)" as never);
       return;
     }
-    if (data.kind === MORNING_LOG_NOTIFICATION_KIND) {
+    if (kind === MORNING_LOG_NOTIFICATION_KIND) {
       // The morning check-in is its own fixed-time flow: mood + energy plus
       // subjective sleep quality + duration. Distinct from the random pulses.
       router.push("/morning-checkin" as never);
       return;
     }
-    if (data.kind === EVENING_LOG_NOTIFICATION_KIND) {
+    if (kind === EVENING_LOG_NOTIFICATION_KIND) {
       // Evening reflection is about logging the day — route to the Log tab.
       router.navigate("/(tabs)/log" as never);
       return;
@@ -139,7 +145,7 @@ function AppLayout() {
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const data = response.notification.request.content.data as
-          | { kind?: string; linkedEventTypeId?: string }
+          | { kind?: string; type?: string; linkedEventTypeId?: string }
           | undefined;
         handleNotificationKind(data);
       },
@@ -163,7 +169,7 @@ function AppLayout() {
     void Notifications.getLastNotificationResponseAsync().then((response) => {
       if (!response) return;
       const data = response.notification.request.content.data as
-        | { kind?: string; linkedEventTypeId?: string }
+        | { kind?: string; type?: string; linkedEventTypeId?: string }
         | undefined;
       // Defer a tick so the Stack has mounted (tabs) before we push.
       setTimeout(() => {

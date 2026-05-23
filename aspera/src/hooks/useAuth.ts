@@ -7,6 +7,7 @@
 
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import * as Notifications from "expo-notifications";
 import { supabase } from "../lib/supabase";
 import {
   clearAllLogs,
@@ -51,6 +52,15 @@ export function useAuth() {
       clearAllMoodCheckIns(),
       clearInsights(),
     ]);
+    // Cancel every scheduled local notification. Quick-mood pulses, daily-log
+    // reminders, and user reminders are all driven by settings, not auth — so
+    // without this they'd keep firing on the device after sign-out (and a new
+    // user signing in would inherit the previous user's schedule).
+    try {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    } catch {
+      // Non-fatal — proceed with sign-out regardless.
+    }
     await supabase.auth.signOut();
     // The onAuthStateChange listener above will null out the session.
   };
