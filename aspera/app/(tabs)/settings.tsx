@@ -305,6 +305,55 @@ export default function SettingsScreen() {
     });
   };
 
+  // Canary diagnostic: the 2-second test uses a TIME_INTERVAL trigger, which
+  // fires while the app is foregrounded. But pulses use DATE triggers and the
+  // morning/evening reminders use CALENDAR triggers — if THOSE silently fail
+  // to deliver, the 2s test wouldn't catch it. This schedules one of each,
+  // ~60s out, so we can see (with the phone locked) which trigger types
+  // actually fire on this device/build.
+  const handleScheduledCanary = async () => {
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Notifications disabled",
+        "Enable notifications for Aspera in iOS Settings to run the test.",
+      );
+      return;
+    }
+    const when = new Date(Date.now() + 60_000);
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Canary · DATE",
+        body: "DATE triggers (mood pulses) are firing.",
+        data: { kind: "quick_mood_check" },
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: when,
+      },
+    });
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: "Canary · CALENDAR",
+        body: "CALENDAR triggers (morning/evening) are firing.",
+        data: { kind: "morning_log" },
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.CALENDAR,
+        hour: when.getHours(),
+        minute: when.getMinutes(),
+        repeats: false,
+      },
+    });
+    Alert.alert(
+      "Two canaries scheduled (~1 min)",
+      "One via DATE (mood-pulse trigger), one via CALENDAR (morning/evening trigger). Lock your phone and wait ~1 minute. Then tell me which arrive — both, one, or neither. That pins the bug exactly.",
+    );
+  };
+
   // Diagnostic: show the current state of scheduled notifications + permission,
   // then force a fresh pulse + daily-log schedule. The `>= RESCHEDULE_THRESHOLD`
   // short-circuit in ensureQuickMoodSchedule can leave the queue stale if iOS
@@ -765,6 +814,22 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <Text style={[TYPOGRAPHY.body, { color: COLORS.accent }]}>↻</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleScheduledCanary}
+            activeOpacity={0.7}
+            style={[styles.row, { marginTop: SPACING.sm }]}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                Test scheduled delivery (~1 min)
+              </Text>
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+                Fires a DATE + a CALENDAR notification in ~1 min — the trigger
+                types pulses + daily logs use. Lock your phone and watch.
+              </Text>
+            </View>
+            <Text style={[TYPOGRAPHY.body, { color: COLORS.accent }]}>⏱</Text>
           </TouchableOpacity>
         </GradientCard>
 
