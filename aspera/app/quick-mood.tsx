@@ -104,7 +104,10 @@ export default function QuickMoodModal() {
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            { paddingTop: insets.top + SPACING.xl, paddingBottom: insets.bottom + SPACING.xl },
+            {
+              paddingTop: insets.top + SPACING.xl,
+              paddingBottom: insets.bottom + SPACING.xl,
+            },
           ]}
           keyboardShouldPersistTaps="handled"
           // No iOS bounce — gives the illusion of swiping the modal down

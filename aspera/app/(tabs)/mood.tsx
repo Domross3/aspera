@@ -450,16 +450,14 @@ export default function MoodScreen() {
                 style={{ marginTop: 2 }}
               />
               <View style={{ flex: 1 }}>
-                <Text style={styles.promotionTitle}>
-                  Track this for real?
-                </Text>
+                <Text style={styles.promotionTitle}>Track this for real?</Text>
                 <Text style={styles.promotionBody}>
                   You've logged{" "}
                   <Text style={styles.promotionLabel}>
                     "{promotionCandidate.label}"
                   </Text>{" "}
-                  {promotionCandidate.count} times in the last 2 weeks. Want
-                  to turn it into a structured metric on your daily log?
+                  {promotionCandidate.count} times in the last 2 weeks. Want to
+                  turn it into a structured metric on your daily log?
                 </Text>
               </View>
             </View>
@@ -504,8 +502,8 @@ export default function MoodScreen() {
         {recentEntries.length === 0 ? (
           <GradientCard style={{ marginBottom: SPACING.sm }}>
             <Text style={styles.captureNote}>
-              No captures yet. Log a mood pulse below or tap “Moment” to
-              note something that just happened.
+              No captures yet. Log a mood pulse below or tap “Moment” to note
+              something that just happened.
             </Text>
           </GradientCard>
         ) : (
@@ -547,11 +545,7 @@ export default function MoodScreen() {
               >
                 <View style={styles.captureRow}>
                   <View style={styles.momentLabelRow}>
-                    <Ionicons
-                      name="bookmark"
-                      size={14}
-                      color={COLORS.accent}
-                    />
+                    <Ionicons name="bookmark" size={14} color={COLORS.accent} />
                     <Text style={styles.momentLabel}>{m.label}</Text>
                     {typeof m.duration === "number" ? (
                       <Text style={styles.momentDuration}>
@@ -570,7 +564,6 @@ export default function MoodScreen() {
             );
           })
         )}
-
       </ScrollView>
 
       <MomentCapture

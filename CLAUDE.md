@@ -1,5 +1,12 @@
 # Aspera
 
+## Working style
+
+- **Think first**: state assumptions before coding. If a request has multiple readings, or a simpler path exists, say so — don't silently pick one.
+- **Simplicity**: write the minimum that solves the problem. No speculative features, no abstractions for single-use code, no error handling for impossible cases.
+- **Surgical edits**: touch only what the request needs. Don't refactor or reformat adjacent code. Only remove orphans your own change created; flag unrelated dead code, don't delete it.
+- **Verify, don't assume done**: turn each task into a concrete check (`npm run mobile:typecheck`, observed device behavior, a failing-then-passing repro) and loop until it passes.
+
 ## Project structure
 
 Three codebases in one repo:

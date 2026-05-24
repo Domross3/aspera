@@ -75,9 +75,8 @@ export default function TechScreen() {
         <GradientCard style={{ marginBottom: SPACING.md }}>
           <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
             Time-window blocks + daily-limit caps land in Phase 8 · 8d.
-            Persistence is wired (Supabase `restrictions` table +
-            cloudStore helpers) but the UI + native shield bridge are
-            not built yet.
+            Persistence is wired (Supabase `restrictions` table + cloudStore
+            helpers) but the UI + native shield bridge are not built yet.
           </Text>
         </GradientCard>
 
@@ -86,9 +85,9 @@ export default function TechScreen() {
           <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
             Self-experimentation UI ships in Phase 8 · 8f. The bootstrap
             comparison engine + confidence labeling is already in place
-            (`src/lib/experiments/`), 37 jest tests passing — you can
-            already use the ad-hoc Compare surface on Today's Patterns
-            section to feed it real data.
+            (`src/lib/experiments/`), 37 jest tests passing — you can already
+            use the ad-hoc Compare surface on Today's Patterns section to feed
+            it real data.
           </Text>
         </GradientCard>
       </ScrollView>
@@ -108,8 +107,8 @@ function ScreenTimeAuthCard() {
           Update required
         </Text>
         <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
-          Screen Time controls need the latest native build of Aspera. This
-          copy of the app doesn&apos;t include the module yet.
+          Screen Time controls need the latest native build of Aspera. This copy
+          of the app doesn&apos;t include the module yet.
         </Text>
       </GradientCard>
     );

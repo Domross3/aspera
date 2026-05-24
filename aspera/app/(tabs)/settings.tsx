@@ -28,9 +28,7 @@ import {
   ensureQuickMoodSchedule,
 } from "../../src/lib/quickMoodNotifications";
 import { wipeUserData } from "../../src/lib/cloudStore";
-import {
-  dailyLoadOfReminder,
-} from "../../src/lib/userReminderNotifications";
+import { dailyLoadOfReminder } from "../../src/lib/userReminderNotifications";
 import {
   ensureDailyLogSchedule,
   cancelAllDailyLogNotifications,
@@ -182,7 +180,7 @@ export default function SettingsScreen() {
 
   const editingReminder =
     reminderEditorTarget && reminderEditorTarget !== "__new__"
-      ? userReminders.find((r) => r.id === reminderEditorTarget) ?? null
+      ? (userReminders.find((r) => r.id === reminderEditorTarget) ?? null)
       : null;
 
   // Daily load contribution of *the reminder we're currently editing* (if
@@ -589,8 +587,7 @@ export default function SettingsScreen() {
               { color: COLORS.textSecondary, marginBottom: SPACING.md },
             ]}
           >
-            Your waking window. Quick mood pulses fire only between these
-            times.
+            Your waking window. Quick mood pulses fire only between these times.
           </Text>
           <TouchableOpacity
             onPress={() => setTimePickerKey("wakeTime")}
@@ -646,7 +643,9 @@ export default function SettingsScreen() {
             </TouchableOpacity>
             <Switch
               value={settings.notificationSettings.morningEnabled}
-              onValueChange={(v) => void handleToggleDailyLog("morningEnabled", v)}
+              onValueChange={(v) =>
+                void handleToggleDailyLog("morningEnabled", v)
+              }
               trackColor={{ false: COLORS.border, true: COLORS.accent }}
               thumbColor={COLORS.text}
             />
@@ -674,7 +673,9 @@ export default function SettingsScreen() {
             </TouchableOpacity>
             <Switch
               value={settings.notificationSettings.eveningEnabled}
-              onValueChange={(v) => void handleToggleDailyLog("eveningEnabled", v)}
+              onValueChange={(v) =>
+                void handleToggleDailyLog("eveningEnabled", v)
+              }
               trackColor={{ false: COLORS.border, true: COLORS.accent }}
               thumbColor={COLORS.text}
             />
@@ -717,15 +718,11 @@ export default function SettingsScreen() {
           </View>
           <View
             style={{
-              opacity: settings.notificationSettings.quickMoodEnabled
-                ? 1
-                : 0.5,
+              opacity: settings.notificationSettings.quickMoodEnabled ? 1 : 0.5,
               marginBottom: SPACING.sm,
             }}
             pointerEvents={
-              settings.notificationSettings.quickMoodEnabled
-                ? "auto"
-                : "none"
+              settings.notificationSettings.quickMoodEnabled ? "auto" : "none"
             }
           >
             <ContinuousSlider
@@ -779,9 +776,7 @@ export default function SettingsScreen() {
               <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
                 Daily notification load
               </Text>
-              <Text
-                style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}
-              >
+              <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
                 iOS limits scheduled notifications per app — staying under
                 ~9/day keeps everything firing reliably.
               </Text>
@@ -801,9 +796,7 @@ export default function SettingsScreen() {
           <GradientCard style={{ marginBottom: SPACING.md }}>
             {userReminders.map((reminder, idx) => {
               const linkedType = reminder.linkedEventTypeId
-                ? eventTypes.find(
-                    (t) => t.id === reminder.linkedEventTypeId,
-                  )
+                ? eventTypes.find((t) => t.id === reminder.linkedEventTypeId)
                 : undefined;
               return (
                 <View key={reminder.id}>
@@ -813,9 +806,7 @@ export default function SettingsScreen() {
                     style={styles.row}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text
-                        style={[TYPOGRAPHY.body, { color: COLORS.text }]}
-                      >
+                      <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
                         {linkedType?.emoji ? `${linkedType.emoji} ` : ""}
                         {reminder.label}
                       </Text>
@@ -891,9 +882,9 @@ export default function SettingsScreen() {
               { color: COLORS.textSecondary, marginBottom: SPACING.md },
             ]}
           >
-            After 5 minutes of inactivity on Today, a short breathe → name
-            your feeling → reframe modal appears. Switch it off here if you
-            don't want it interrupting you.
+            After 5 minutes of inactivity on Today, a short breathe → name your
+            feeling → reframe modal appears. Switch it off here if you don't
+            want it interrupting you.
           </Text>
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
@@ -998,9 +989,7 @@ export default function SettingsScreen() {
       <TimePickerModal
         visible={timePickerKey !== null}
         initial={
-          timePickerKey
-            ? settings.notificationSettings[timePickerKey]
-            : "07:00"
+          timePickerKey ? settings.notificationSettings[timePickerKey] : "07:00"
         }
         title={timePickerKey ? TIME_KEY_TITLES[timePickerKey] : "Pick a time"}
         onCancel={() => setTimePickerKey(null)}

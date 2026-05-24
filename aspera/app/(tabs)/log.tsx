@@ -305,7 +305,8 @@ export default function LogScreen() {
 
   const schemaBuilderInitial =
     editingTypeId && editingTypeId !== "__new__"
-      ? (settings.eventTypes ?? []).find((t) => t.id === editingTypeId) ?? null
+      ? ((settings.eventTypes ?? []).find((t) => t.id === editingTypeId) ??
+        null)
       : null;
 
   // Identify field ids that have stored values across all of today's
@@ -684,10 +685,7 @@ export default function LogScreen() {
 
           {/* 7-day week strip — taps switch which day's log is being edited. */}
           <View style={{ marginTop: SPACING.md }}>
-            <WeekStrip
-              selectedDate={selectedDate}
-              onSelect={setSelectedDate}
-            />
+            <WeekStrip selectedDate={selectedDate} onSelect={setSelectedDate} />
           </View>
 
           {/* Past-day banner — only when not on today. Includes a fast
@@ -695,11 +693,7 @@ export default function LogScreen() {
               for today is small. */}
           {isPastDay ? (
             <View style={styles.pastDayBanner}>
-              <Ionicons
-                name="time-outline"
-                size={16}
-                color={COLORS.warning}
-              />
+              <Ionicons name="time-outline" size={16} color={COLORS.warning} />
               <Text style={styles.pastDayText}>
                 Editing a past day · changes here will refresh your insights
               </Text>
@@ -715,8 +709,7 @@ export default function LogScreen() {
           )}
 
           {sections.map((section, index) => {
-            const id =
-              section.kind === "system" ? section.id : section.type.id;
+            const id = section.kind === "system" ? section.id : section.type.id;
             const label = sectionLabelFor(section);
             const isUser = section.kind === "user";
             const canMoveUp = index > 0;
