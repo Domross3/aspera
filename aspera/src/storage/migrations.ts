@@ -24,6 +24,7 @@
 import {
   AppSettings,
   APP_SETTINGS_SCHEMA_VERSION,
+  CheatPolicy,
   CustomMetricDef,
   CustomMetricValue,
   DailyLog,
@@ -34,6 +35,8 @@ import {
   FieldKind,
   NotificationSettings,
 } from "../types";
+
+const DEFAULT_CHEAT_WEEKLY_CAP = 1;
 
 // Deterministic field id per migrated def. Two passes over the same input
 // produce the same id, which is what lets `migrateDailyLog` reuse them
@@ -53,6 +56,56 @@ function normalizeDailyOutput(log: DailyLog): DailyLog["output"] {
     ...log.output,
     focusRating: normalizeDailyOutputRating(log.output?.focusRating),
     energyRating: normalizeDailyOutputRating(log.output?.energyRating),
+  };
+}
+
+function pad2(n: number): string {
+  return n.toString().padStart(2, "0");
+}
+
+function localDateString(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(
+    date.getDate(),
+  )}`;
+}
+
+function currentMondayString(now = new Date()): string {
+  const monday = new Date(now);
+  const day = monday.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  monday.setDate(monday.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+  return localDateString(monday);
+}
+
+function positiveIntOr(value: unknown, fallback: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) return fallback;
+  return Math.max(0, Math.floor(value));
+}
+
+function migrateCheatPolicy(policy: unknown): CheatPolicy {
+  const currentWeek = currentMondayString();
+  if (!policy || typeof policy !== "object") {
+    return {
+      weeklyCap: DEFAULT_CHEAT_WEEKLY_CAP,
+      weekStart: currentWeek,
+      spentThisWeek: 0,
+    };
+  }
+
+  const raw = policy as Partial<CheatPolicy>;
+  return {
+    weeklyCap: positiveIntOr(raw.weeklyCap, DEFAULT_CHEAT_WEEKLY_CAP),
+    pendingCap:
+      typeof raw.pendingCap === "number" && Number.isFinite(raw.pendingCap)
+        ? Math.max(0, Math.floor(raw.pendingCap))
+        : undefined,
+    pendingCapEffectiveWeek:
+      typeof raw.pendingCapEffectiveWeek === "string"
+        ? raw.pendingCapEffectiveWeek
+        : undefined,
+    weekStart: typeof raw.weekStart === "string" ? raw.weekStart : currentWeek,
+    spentThisWeek: positiveIntOr(raw.spentThisWeek, 0),
   };
 }
 
@@ -199,6 +252,7 @@ export function migrateAppSettings(stored: Partial<AppSettings>): AppSettings {
     dismissedPromotions: Array.isArray(stored.dismissedPromotions)
       ? stored.dismissedPromotions
       : undefined,
+    cheatPolicy: migrateCheatPolicy(stored.cheatPolicy),
     notificationSettings,
   };
 }

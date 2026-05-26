@@ -56,6 +56,7 @@ The Chrome extension is loaded manually via chrome://extensions (developer mode,
 - **Storage**: per-user cloud-backed via Supabase, server-encrypted, scoped via RLS. AsyncStorage acts as a write-through cache (Phase B-2). Mobile reads cloud first, falls back to cache on network failure; writes go to both.
 - **API keys**: never bundled into the mobile binary. Claude calls go through aspera-web's `/api/mobile/claude` proxy with a bearer secret (`EXPO_PUBLIC_MOBILE_API_SECRET`). Anthropic key only lives server-side on Vercel.
 - **Mocks**: `src/lib/mockData.ts` and mock-backed integrations are dev-only scaffolding. They render only when `__DEV__` is true. Production builds start empty until real integrations land.
+- **Native Screen Time work**: `aspera/ios/` is committed state. Do not run `expo prebuild --clean` for Screen Controls work; edit native files directly and use full EAS/native builds because Family Controls, DeviceActivity, ManagedSettings, App Groups, and extensions cannot ship over OTA.
 
 ## AI layer (`src/api/claude.ts`)
 

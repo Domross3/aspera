@@ -26,6 +26,19 @@ export interface ScreenTimeDayTotals {
   totalMinutes: number;
 }
 
+export interface NativeRestrictionConfig {
+  id: string;
+  active: boolean;
+  mode: "time_window" | "daily_limit";
+  weekdays: number[]; // 0=Sun … 6=Sat
+  windowStart?: string; // "HH:MM"
+  windowEnd?: string; // "HH:MM"
+  dailyLimitMin?: number;
+  selectedAppCount: number;
+  selectedCategoryCount: number;
+  updatedAt: number;
+}
+
 export interface ScreenTimeNativeModule {
   getAuthorizationStatus(): ScreenTimeAuthStatus;
   requestAuthorization(): Promise<ScreenTimeAuthStatus>;

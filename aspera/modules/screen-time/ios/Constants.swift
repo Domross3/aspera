@@ -8,6 +8,7 @@ enum ScreenTimeConstants {
   static let appGroupId = "group.com.dominicross.aspera"
 
   static func selectionKey(_ id: String) -> String { "selection:\(id)" }
+  static func configKey(_ id: String) -> String { "config:\(id)" }
   static func activeKey(_ id: String) -> String { "activeRestriction:\(id)" }
   static func cheatExpiryKey(_ id: String) -> String { "cheatExpiry:\(id)" }
   static func lastAppliedReasonKey(_ id: String) -> String { "lastAppliedReason:\(id)" }
@@ -15,6 +16,9 @@ enum ScreenTimeConstants {
 
   static func windowActivity(_ id: String) -> String { "restriction-window-\(id)" }
   static func capActivity(_ id: String) -> String { "restriction-cap-\(id)" }
+  static func capEvent(_ id: String, appIndex: Int) -> String {
+    "restriction-cap-\(id)-app-\(appIndex)"
+  }
   static func cheatRearmActivity(_ id: String) -> String { "restriction-cheat-rearm-\(id)" }
 
   static func shieldStoreName(_ id: String) -> String { "restriction-\(id)" }

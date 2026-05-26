@@ -119,6 +119,11 @@ describe("migrateAppSettings", () => {
     expect(result.notificationSettings.wakeTime).toBe("07:00");
     expect(result.notificationSettings.sleepTime).toBe("22:00");
     expect(result.notificationSettings.somaticInterceptorEnabled).toBe(true);
+    expect(result.cheatPolicy).toMatchObject({
+      weeklyCap: 1,
+      spentThisWeek: 0,
+    });
+    expect(result.cheatPolicy?.weekStart).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
   it("migrates legacy customMetrics into eventTypes (preserving id)", () => {
@@ -219,6 +224,26 @@ describe("migrateAppSettings", () => {
       logSectionOrder: order as never,
     });
     expect(result.logSectionOrder).toEqual(order);
+  });
+
+  it("preserves and normalizes an existing cheatPolicy", () => {
+    const result = migrateAppSettings({
+      cheatPolicy: {
+        weeklyCap: 3,
+        pendingCap: 5,
+        pendingCapEffectiveWeek: "2026-05-25",
+        weekStart: "2026-05-18",
+        spentThisWeek: 2,
+      },
+    });
+
+    expect(result.cheatPolicy).toEqual({
+      weeklyCap: 3,
+      pendingCap: 5,
+      pendingCapEffectiveWeek: "2026-05-25",
+      weekStart: "2026-05-18",
+      spentThisWeek: 2,
+    });
   });
 });
 

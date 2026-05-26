@@ -121,8 +121,8 @@ function ScreenTimeAuthCard() {
           Connected
         </Text>
         <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
-          Screen Time is authorized. You can set app limits below; per-category
-          data ingestion follows in a later build.
+          Screen Time is authorized. App-limit setup comes next; per-category
+          data ingestion follows after the report-extension spike.
         </Text>
       </GradientCard>
     );

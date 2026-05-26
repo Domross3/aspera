@@ -1,6 +1,6 @@
 {
   "name": "aspera",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "expo-router/entry",
   "scripts": {
     "doctor:expo": "node ./scripts/ensure-expo-cli.js",
@@ -13,6 +13,7 @@
     "preweb": "node ./scripts/ensure-expo-cli.js",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "mobile:typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch"
   },

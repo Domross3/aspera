@@ -1,8 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
-import { AppSettings } from "../types";
+import { APP_SETTINGS_SCHEMA_VERSION, AppSettings } from "../types";
 import { getSettings, saveSettings } from "../storage/storage";
 
+function currentMondayString(): string {
+  const now = new Date();
+  const monday = new Date(now);
+  const diff = monday.getDay() === 0 ? -6 : 1 - monday.getDay();
+  monday.setDate(monday.getDate() + diff);
+  monday.setHours(0, 0, 0, 0);
+  const mm = String(monday.getMonth() + 1).padStart(2, "0");
+  const dd = String(monday.getDate()).padStart(2, "0");
+  return `${monday.getFullYear()}-${mm}-${dd}`;
+}
+
 const DEFAULT_SETTINGS: AppSettings = {
+  schemaVersion: APP_SETTINGS_SCHEMA_VERSION,
   onboardingComplete: false,
   moodNotificationsEnabled: false,
   hiddenLogSections: [],
@@ -17,6 +29,11 @@ const DEFAULT_SETTINGS: AppSettings = {
     quickMoodEnabled: false,
     quickMoodFrequency: 3,
     somaticInterceptorEnabled: true,
+  },
+  cheatPolicy: {
+    weeklyCap: 1,
+    weekStart: currentMondayString(),
+    spentThisWeek: 0,
   },
 };
 

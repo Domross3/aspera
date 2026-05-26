@@ -177,13 +177,17 @@ export interface NotificationSettings {
 }
 
 // ── Restrictions + Experiments (Phase 8) ────────────────────────────────
-// On-device app-category restrictions enforced via Apple's Family Controls
-// + ManagedSettings frameworks. Two restriction `kind`s in v1:
-//   - "time_window" → shield categories between windowStart and windowEnd
-//   - "daily_limit" → shield categories after dailyLimitMin/day
-// The native bridge in `src/lib/screenTime/` is what actually applies the
-// shield; these types are the JS representation of the persisted entities
-// in Supabase `restrictions` and `experiments` tables.
+// On-device app restrictions enforced via Apple's Family Controls +
+// ManagedSettings frameworks. The actual enforcement target is the opaque
+// FamilyActivitySelection stored device-local in the App Group; Supabase never
+// sees app names or tokens. `categories` is only a coarse optional summary for
+// analytics/experiments, not the source of truth for shielding.
+//
+// Two restriction `kind`s in v1:
+//   - "time_window" → shield selected apps/categories between windowStart/end
+//   - "daily_limit" → shield each selected app after dailyLimitMin/day
+// The native bridge in `src/lib/screenTime/` applies the shield; these types are
+// metadata persisted in Supabase `restrictions` and `experiments` tables.
 
 export type RestrictionSpec =
   | { kind: "time_window"; windowStart: string /* "HH:MM" */; windowEnd: string }
@@ -191,12 +195,14 @@ export type RestrictionSpec =
 
 export interface Restriction {
   id: string;
-  // System categories this restriction targets. JS speaks our locked 5-
-  // category taxonomy ("social" / "entertainment" / "productivity" /
-  // "communication" / "other"); storage is plain `text[]`. The mapping
-  // from Apple's emitted categories down to this set lives in
-  // `src/lib/screenTime/categories.ts`.
+  name: string;
+  // Coarse summary tags using Aspera's locked 5-category taxonomy ("social" /
+  // "entertainment" / "productivity" / "communication" / "other"). This is
+  // optional metadata; the device-local FamilyActivitySelection is what native
+  // enforcement actually uses.
   categories: string[];
+  selectedAppCount: number;
+  selectedCategoryCount: number;
   weekdays: number[]; // 0=Sun … 6=Sat. [0..6] = every day.
   active: boolean;
   spec: RestrictionSpec;
@@ -283,11 +289,18 @@ export interface UserReminder {
   createdAt: number;
 }
 
-// AppSettings.schemaVersion bumps each time the on-disk shape changes
-// in a way the migration helpers need to handle. `undefined` or `< 2`
-// triggers `migrateAppSettings` on read. Always bump AFTER migrations
-// stabilize on a release, not in the same release as the new shape.
-export const APP_SETTINGS_SCHEMA_VERSION = 2;
+export interface CheatPolicy {
+  weeklyCap: number;
+  pendingCap?: number;
+  pendingCapEffectiveWeek?: string; // ISO Monday (YYYY-MM-DD)
+  weekStart: string; // current week anchor (YYYY-MM-DD Monday)
+  spentThisWeek: number;
+}
+
+// AppSettings.schemaVersion bumps each time the on-disk shape changes in a way
+// the migration helpers need to handle. `undefined` or `< 3` triggers
+// `migrateAppSettings` on read.
+export const APP_SETTINGS_SCHEMA_VERSION = 3;
 
 export interface AppSettings {
   // claudeApiKey removed: Claude calls go through aspera-web's
@@ -319,6 +332,9 @@ export interface AppSettings {
   // Phase 7: normalized labels the user has explicitly dismissed from
   // the moment → event-type promotion nudge. Lowercased + trimmed.
   dismissedPromotions?: string[];
+  // Phase 8: global weekly budget for commitment-code bypasses. Local-only in
+  // v1; Supabase stores restriction metadata but not cheat budget state.
+  cheatPolicy?: CheatPolicy;
   notificationSettings: NotificationSettings;
 }
 

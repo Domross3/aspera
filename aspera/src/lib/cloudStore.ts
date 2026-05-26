@@ -197,8 +197,11 @@ export async function deleteMoment(
 
 interface RestrictionRow {
   id: string;
+  name: string | null;
   kind: "time_window" | "daily_limit";
   categories: string[];
+  selected_app_count: number | null;
+  selected_category_count: number | null;
   window_start: string | null;
   window_end: string | null;
   daily_limit_min: number | null;
@@ -222,7 +225,10 @@ function rowToRestriction(row: RestrictionRow): Restriction {
         };
   return {
     id: row.id,
+    name: row.name ?? "Restriction",
     categories: row.categories,
+    selectedAppCount: row.selected_app_count ?? 0,
+    selectedCategoryCount: row.selected_category_count ?? 0,
     weekdays: row.weekdays,
     active: row.active,
     spec,
@@ -237,7 +243,7 @@ export async function fetchRestrictions(
   const { data, error } = await supabase
     .from("restrictions")
     .select(
-      "id, kind, categories, window_start, window_end, daily_limit_min, weekdays, active, created_at, updated_at",
+      "id, name, kind, categories, selected_app_count, selected_category_count, window_start, window_end, daily_limit_min, weekdays, active, created_at, updated_at",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: true });
@@ -256,8 +262,11 @@ export async function upsertRestriction(
     {
       id: r.id,
       user_id: userId,
+      name: r.name,
       kind: r.spec.kind,
       categories: r.categories,
+      selected_app_count: r.selectedAppCount,
+      selected_category_count: r.selectedCategoryCount,
       window_start:
         r.spec.kind === "time_window" ? r.spec.windowStart : null,
       window_end: r.spec.kind === "time_window" ? r.spec.windowEnd : null,

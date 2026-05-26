@@ -15,6 +15,9 @@ export const APP_GROUP_ID = "group.com.dominicross.aspera";
 export const APP_GROUP_KEYS = {
   // Encoded FamilyActivitySelection (opaque app/category tokens) per restriction.
   selection: (id: string) => `selection:${id}`,
+  // Native-readable restriction metadata needed by the extensions when the JS
+  // process is not alive: active flag, mode, weekdays, window, and cap.
+  config: (id: string) => `config:${id}`,
   // Whether the shield is currently applied for this restriction.
   activeRestriction: (id: string) => `activeRestriction:${id}`,
   // Epoch ms when an active cheat's 30-min break ends.
@@ -30,6 +33,8 @@ export const APP_GROUP_KEYS = {
 export const ACTIVITY_NAMES = {
   window: (id: string) => `restriction-window-${id}`,
   cap: (id: string) => `restriction-cap-${id}`,
+  capEvent: (id: string, appIndex: number) =>
+    `restriction-cap-${id}-app-${appIndex}`,
   cheatRearm: (id: string) => `restriction-cheat-rearm-${id}`,
 } as const;
 
