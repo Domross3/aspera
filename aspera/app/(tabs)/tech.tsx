@@ -4,16 +4,16 @@
 //   - BrowsingFocus card (relocated from Today's __DEV__ block)
 //   - ScreenTimeCard (relocated; still mock-fed until 8b wires the real
 //     native data source)
-//   - Placeholder cards for Screen Time auth, Restrictions, and
-//     Experiments — implemented in 8a/8b/8d/8f
+//   - Screen Time auth + restriction draft CRUD
+//   - Placeholder card for Experiments — implemented in 8f
 //
 // Future sub-phases fill in:
 //   - 8a → FamilyControls auth flow lives in the top status card
 //   - 8b → ScreenTimeCard switches to real per-category data + warmup count
-//   - 8d → RestrictionList replaces the Restrictions placeholder
+//   - 8d-B → native picker + shielding wires into the restriction drafts
 //   - 8f → ExperimentList replaces the Experiments placeholder
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Text,
   ScrollView,
@@ -28,10 +28,55 @@ import * as Haptics from "expo-haptics";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
+import RestrictionEditor from "../../src/components/tech/RestrictionEditor";
+import RestrictionList from "../../src/components/tech/RestrictionList";
+import { useRestrictions } from "../../src/hooks/useRestrictions";
 import { useScreenTime } from "../../src/hooks/useScreenTime";
+import type { Restriction } from "../../src/types";
 
 export default function TechScreen() {
   const insets = useSafeAreaInsets();
+  const screenTime = useScreenTime();
+  const restrictionState = useRestrictions();
+  const [editorVisible, setEditorVisible] = useState(false);
+  const [editingRestriction, setEditingRestriction] =
+    useState<Restriction | null>(null);
+
+  const openCreateRestriction = () => {
+    void Haptics.selectionAsync();
+    setEditingRestriction(null);
+    setEditorVisible(true);
+  };
+
+  const openEditRestriction = (restriction: Restriction) => {
+    void Haptics.selectionAsync();
+    setEditingRestriction(restriction);
+    setEditorVisible(true);
+  };
+
+  const closeEditor = () => {
+    setEditorVisible(false);
+    setEditingRestriction(null);
+  };
+
+  const handleSaveRestriction = async (restriction: Restriction) => {
+    try {
+      await restrictionState.saveRestriction(restriction);
+      closeEditor();
+    } catch {
+      // The hook surfaces the message on the list. Keep the sheet open so the
+      // draft is still editable after a failed save.
+    }
+  };
+
+  const handleDeleteRestriction = async (id: string) => {
+    try {
+      await restrictionState.deleteRestriction(id);
+      closeEditor();
+    } catch {
+      // Same as save: leave the draft visible and surface the hook error.
+    }
+  };
 
   return (
     <LinearGradient
@@ -69,16 +114,36 @@ export default function TechScreen() {
             everything downstream — restrictions + data ingestion both gate
             on `approved`. */}
         <SectionLabel label="Screen Time" />
-        <ScreenTimeAuthCard />
+        <ScreenTimeAuthCard screenTime={screenTime} />
 
         <SectionLabel label="Restrictions" />
-        <GradientCard style={{ marginBottom: SPACING.md }}>
-          <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
-            Time-window blocks + daily-limit caps land in Phase 8 · 8d.
-            Persistence is wired (Supabase `restrictions` table + cloudStore
-            helpers) but the UI + native shield bridge are not built yet.
-          </Text>
-        </GradientCard>
+        {screenTime.authStatus === "approved" ? (
+          <RestrictionList
+            restrictions={restrictionState.restrictions}
+            loading={restrictionState.loading}
+            saving={restrictionState.saving}
+            error={restrictionState.error}
+            onCreate={openCreateRestriction}
+            onEdit={openEditRestriction}
+            onRefresh={() => void restrictionState.refresh()}
+          />
+        ) : (
+          <GradientCard style={{ marginBottom: SPACING.md }}>
+            <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.text }]}>
+              Connect Screen Time first
+            </Text>
+            <Text
+              style={[
+                TYPOGRAPHY.caption,
+                { color: COLORS.textMuted, marginTop: SPACING.xs },
+              ]}
+            >
+              Once authorization is approved, you can draft app-limit
+              configuration here. The Apple app picker and real shielding land
+              in the next native build.
+            </Text>
+          </GradientCard>
+        )}
 
         <SectionLabel label="Experiments" />
         <GradientCard>
@@ -91,15 +156,27 @@ export default function TechScreen() {
           </Text>
         </GradientCard>
       </ScrollView>
+
+      <RestrictionEditor
+        visible={editorVisible}
+        initial={editingRestriction}
+        saving={restrictionState.saving}
+        onCancel={closeEditor}
+        onSave={handleSaveRestriction}
+        onDelete={handleDeleteRestriction}
+      />
     </LinearGradient>
   );
 }
 
 // ── Screen Time authorization card ─────────────────────────────────────────
 
-function ScreenTimeAuthCard() {
-  const { available, authStatus, requesting, connect } = useScreenTime();
-
+function ScreenTimeAuthCard({
+  screenTime,
+}: {
+  screenTime: ReturnType<typeof useScreenTime>;
+}) {
+  const { available, authStatus, requesting, connect } = screenTime;
   if (!available) {
     return (
       <GradientCard style={{ marginBottom: SPACING.md }}>
