@@ -34,17 +34,20 @@ async function seedLog(log: DailyLog): Promise<void> {
   await AsyncStorage.setItem(key, JSON.stringify(log));
 }
 
-/** Generate an ISO date string offset from a base date. */
+/** Generate an ISO date string offset from a base date. UTC-consistent:
+ * mixing local setDate/getDate with UTC toISOString drifts the date by a day
+ * in non-UTC environments, which silently shifted seeded logs out of the
+ * query range (truncation test got [07,08,09] instead of [08,09,10]). */
 function offsetDate(base: string, days: number): string {
   const d = new Date(base);
-  d.setDate(d.getDate() + days);
+  d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().split("T")[0];
 }
 
 // ── Tests ──────────────────────────────────────────────────────────────
 
-beforeEach(() => {
-  AsyncStorage.clear();
+beforeEach(async () => {
+  await AsyncStorage.clear();
 });
 
 describe("getLogsForQuery", () => {

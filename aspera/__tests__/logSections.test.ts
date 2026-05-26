@@ -1,7 +1,7 @@
 import {
   isSectionHidden,
   toggleSection,
-  visibleSections,
+  visibleSystemSections,
 } from "../src/lib/logSections";
 import { LOG_SECTIONS, LogSectionId } from "../src/types";
 
@@ -32,12 +32,12 @@ describe("logSections", () => {
 
   it("returns visible sections in the canonical order", () => {
     const hidden: LogSectionId[] = ["drinks", "music"];
-    const visible = visibleSections(hidden);
+    const visible = visibleSystemSections(hidden);
     const expected = LOG_SECTIONS.filter((s) => !hidden.includes(s.id));
     expect(visible).toEqual(expected);
   });
 
   it("returns all sections when nothing is hidden", () => {
-    expect(visibleSections([])).toEqual(LOG_SECTIONS);
+    expect(visibleSystemSections([])).toEqual(LOG_SECTIONS);
   });
 });

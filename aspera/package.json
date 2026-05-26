@@ -68,11 +68,11 @@
   "devDependencies": {
     "@babel/core": "^7.25.0",
     "@testing-library/react-native": "^13.3.3",
-    "@types/jest": "^30.0.0",
+    "@types/jest": "^29.5.14",
     "@types/react": "~19.1.10",
     "babel-preset-expo": "~54.0.0",
     "jest": "^29.7.0",
-    "jest-expo": "^55.0.15",
+    "jest-expo": "~54.0.17",
     "typescript": "~5.9.2"
   },
   "private": true
