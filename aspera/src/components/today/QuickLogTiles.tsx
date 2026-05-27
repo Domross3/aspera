@@ -25,12 +25,7 @@ import SectionLabel from "../common/SectionLabel";
 import { useLogs } from "../../hooks/useLogs";
 import { useSettings } from "../../hooks/useSettings";
 import { defaultValueFor } from "../log/fields";
-import type {
-  DailyLog,
-  EventEntry,
-  EventTypeDef,
-  FieldDef,
-} from "../../types";
+import type { DailyLog, EventEntry, EventTypeDef, FieldDef } from "../../types";
 
 function todayId(): string {
   return new Date().toISOString().split("T")[0];

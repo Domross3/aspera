@@ -28,19 +28,26 @@ import * as Haptics from "expo-haptics";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
+import CheatUnlockSheet from "../../src/components/tech/CheatUnlockSheet";
 import RestrictionEditor from "../../src/components/tech/RestrictionEditor";
 import RestrictionList from "../../src/components/tech/RestrictionList";
 import { useRestrictions } from "../../src/hooks/useRestrictions";
 import { useScreenTime } from "../../src/hooks/useScreenTime";
-import type { Restriction } from "../../src/types";
+import { useSettings } from "../../src/hooks/useSettings";
+import { grantCheat } from "../../modules/screen-time/src";
+import type { CheatPolicy, Restriction } from "../../src/types";
 
 export default function TechScreen() {
   const insets = useSafeAreaInsets();
   const screenTime = useScreenTime();
   const restrictionState = useRestrictions();
+  const settingsState = useSettings();
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingRestriction, setEditingRestriction] =
     useState<Restriction | null>(null);
+  const [cheatRestriction, setCheatRestriction] = useState<Restriction | null>(
+    null,
+  );
 
   const openCreateRestriction = () => {
     void Haptics.selectionAsync();
@@ -76,6 +83,14 @@ export default function TechScreen() {
     } catch {
       // Same as save: leave the draft visible and surface the hook error.
     }
+  };
+
+  const handleCheatUnlock = async (
+    restriction: Restriction,
+    nextPolicy: CheatPolicy,
+  ) => {
+    await grantCheat(restriction.id, 30);
+    await settingsState.update({ cheatPolicy: nextPolicy });
   };
 
   return (
@@ -125,6 +140,10 @@ export default function TechScreen() {
             error={restrictionState.error}
             onCreate={openCreateRestriction}
             onEdit={openEditRestriction}
+            onCheat={(restriction) => {
+              void Haptics.selectionAsync();
+              setCheatRestriction(restriction);
+            }}
             onRefresh={() => void restrictionState.refresh()}
           />
         ) : (
@@ -164,6 +183,14 @@ export default function TechScreen() {
         onCancel={closeEditor}
         onSave={handleSaveRestriction}
         onDelete={handleDeleteRestriction}
+        onPickApps={(restriction) => restrictionState.pickApps(restriction)}
+      />
+      <CheatUnlockSheet
+        visible={cheatRestriction != null}
+        restriction={cheatRestriction}
+        policy={settingsState.settings.cheatPolicy}
+        onCancel={() => setCheatRestriction(null)}
+        onUnlock={handleCheatUnlock}
       />
     </LinearGradient>
   );
@@ -198,8 +225,8 @@ function ScreenTimeAuthCard({
           Connected
         </Text>
         <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
-          Screen Time is authorized. App-limit setup comes next; per-category
-          data ingestion follows after the report-extension spike.
+          Screen Time is authorized. You can choose apps, save active limits,
+          and open Aspera to spend a cheat when you need a 30-minute lift.
         </Text>
       </GradientCard>
     );

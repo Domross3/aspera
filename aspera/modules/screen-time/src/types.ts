@@ -47,8 +47,9 @@ export interface ScreenTimeNativeModule {
   presentPicker(restrictionId: string): Promise<PickerResult>;
   applyShield(restrictionId: string): Promise<void>;
   clearShield(restrictionId: string): Promise<void>;
-  startMonitoring(restrictionId: string): Promise<void>;
+  startMonitoring(config: NativeRestrictionConfig): Promise<void>;
   stopMonitoring(restrictionId: string): Promise<void>;
+  clearRestrictionState(restrictionId: string): Promise<void>;
   // Clears the shield + starts a guarded transient re-arm schedule.
   grantCheat(restrictionId: string, minutes: number): Promise<void>;
   readDailyTotals(): Promise<ScreenTimeDayTotals[]>;

@@ -27,9 +27,10 @@ interface Props {
   bigRocks: string[];
   outcomes: BigRockOutcome[] | undefined;
   reflectionNote: string | undefined;
-  onChange: (
-    next: { outcomes: BigRockOutcome[]; reflectionNote: string },
-  ) => void;
+  onChange: (next: {
+    outcomes: BigRockOutcome[];
+    reflectionNote: string;
+  }) => void;
 }
 
 const OUTCOME_BUTTONS: {
@@ -98,10 +99,7 @@ export default function EveningReflection({
   if (bigRocks.length === 0) {
     return (
       <View style={{ marginBottom: SPACING.lg }}>
-        <SectionLabel
-          label="Wrap up today"
-          style={{ marginTop: SPACING.sm }}
-        />
+        <SectionLabel label="Wrap up today" style={{ marginTop: SPACING.sm }} />
         <GradientCard>
           <Text style={styles.gentlePrompt}>
             Tomorrow, try setting one Big Rock in the morning on the Today tab.
@@ -114,10 +112,7 @@ export default function EveningReflection({
 
   return (
     <View style={{ marginBottom: SPACING.lg }}>
-      <SectionLabel
-        label="Wrap up today"
-        style={{ marginTop: SPACING.sm }}
-      />
+      <SectionLabel label="Wrap up today" style={{ marginTop: SPACING.sm }} />
       <GradientCard>
         <Text style={styles.hint}>
           How did today's Big Rocks land? No judgement — honest data helps.
@@ -168,7 +163,9 @@ export default function EveningReflection({
         })}
 
         <View style={styles.noteWrap}>
-          <Text style={styles.noteLabel}>Anything for tomorrow? (optional)</Text>
+          <Text style={styles.noteLabel}>
+            Anything for tomorrow? (optional)
+          </Text>
           <TextInput
             style={styles.noteInput}
             value={localNote}

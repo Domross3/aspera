@@ -67,8 +67,7 @@ export default function TrendLineCard({
     return sum / finiteCount;
   }, [points, finiteIndices, finiteCount]);
 
-  const usableHeight =
-    CHART_HEIGHT - TOP_PADDING - LABEL_ROW_HEIGHT - DOT_SIZE;
+  const usableHeight = CHART_HEIGHT - TOP_PADDING - LABEL_ROW_HEIGHT - DOT_SIZE;
   const range = Math.max(maxValue - minValue, 1);
 
   // plottedPoints uses the FULL window length for x-axis spacing, so a

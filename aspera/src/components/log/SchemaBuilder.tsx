@@ -86,7 +86,9 @@ export default function SchemaBuilder({
   onSave,
   onDelete,
 }: Props) {
-  const [draft, setDraft] = useState<EventTypeDef>(() => initial ?? emptyDraft());
+  const [draft, setDraft] = useState<EventTypeDef>(
+    () => initial ?? emptyDraft(),
+  );
 
   // Reset draft each time the sheet opens for a different target.
   useEffect(() => {
@@ -167,7 +169,10 @@ export default function SchemaBuilder({
       ...draft,
       name: draft.name.trim(),
       emoji: draft.emoji?.trim() || undefined,
-      fields: draft.fields.map((f) => ({ ...f, name: f.name.trim() || f.kind })),
+      fields: draft.fields.map((f) => ({
+        ...f,
+        name: f.name.trim() || f.kind,
+      })),
     });
   };
 
@@ -411,11 +416,7 @@ function FieldEditor({
       <View style={styles.fieldHeaderRow}>
         <Text style={styles.fieldIndex}>Field {index + 1}</Text>
         <TouchableOpacity onPress={onRemove} hitSlop={8}>
-          <Ionicons
-            name="close-circle"
-            size={20}
-            color={COLORS.textMuted}
-          />
+          <Ionicons name="close-circle" size={20} color={COLORS.textMuted} />
         </TouchableOpacity>
       </View>
 
@@ -527,9 +528,7 @@ function KindConfigEditor({
     case "chips":
       return (
         <View>
-          <Text style={styles.miniLabel}>
-            Options (comma-separated)
-          </Text>
+          <Text style={styles.miniLabel}>Options (comma-separated)</Text>
           <TextInput
             placeholder="e.g. run, lift, yoga, walk"
             placeholderTextColor={COLORS.textMuted}

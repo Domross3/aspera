@@ -6,6 +6,7 @@ import {
   Platform,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -35,6 +36,7 @@ interface Props {
   onCancel: () => void;
   onSave: (restriction: Restriction) => void | Promise<void>;
   onDelete?: (id: string) => void | Promise<void>;
+  onPickApps?: (restriction: Restriction) => Promise<Restriction>;
 }
 
 type TimePickerField = "start" | "end" | null;
@@ -46,16 +48,19 @@ export default function RestrictionEditor({
   onCancel,
   onSave,
   onDelete,
+  onPickApps,
 }: Props) {
   const [draft, setDraft] = useState<Restriction>(() =>
     createDefaultRestriction("time_window"),
   );
   const [timePickerField, setTimePickerField] = useState<TimePickerField>(null);
+  const [pickingApps, setPickingApps] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setDraft(initial ?? createDefaultRestriction("time_window"));
       setTimePickerField(null);
+      setPickingApps(false);
     }
   }, [visible, initial]);
 
@@ -83,6 +88,23 @@ export default function RestrictionEditor({
     if (!canSave) return;
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await onSave(normalizeRestrictionForSave(draft));
+  };
+
+  const handlePickApps = async () => {
+    if (!onPickApps || pickingApps) return;
+    void Haptics.selectionAsync();
+    setPickingApps(true);
+    try {
+      const next = await onPickApps(draft);
+      setDraft(next);
+    } catch (error) {
+      Alert.alert(
+        "App selection failed",
+        error instanceof Error ? error.message : "Try again from the editor.",
+      );
+    } finally {
+      setPickingApps(false);
+    }
   };
 
   const handleDelete = () => {
@@ -152,7 +174,9 @@ export default function RestrictionEditor({
             <Text style={styles.label}>Name</Text>
             <TextInput
               value={draft.name}
-              onChangeText={(name) => setDraft((current) => ({ ...current, name }))}
+              onChangeText={(name) =>
+                setDraft((current) => ({ ...current, name }))
+              }
               placeholder="Evening social limit"
               placeholderTextColor={COLORS.textMuted}
               style={styles.input}
@@ -173,6 +197,29 @@ export default function RestrictionEditor({
                 icon="hourglass-outline"
                 active={draft.spec.kind === "daily_limit"}
                 onPress={() => setKind("daily_limit")}
+              />
+            </View>
+
+            <View style={styles.activeRow}>
+              <View style={styles.activeCopy}>
+                <Text style={styles.activeTitle}>Active</Text>
+                <Text style={styles.helperText}>
+                  Off keeps this as a draft. On starts native enforcement after
+                  save.
+                </Text>
+              </View>
+              <Switch
+                value={draft.active}
+                onValueChange={(active) => {
+                  void Haptics.selectionAsync();
+                  setDraft((current) => ({ ...current, active }));
+                }}
+                disabled={saving}
+                trackColor={{
+                  false: "rgba(255,255,255,0.16)",
+                  true: "rgba(108,99,255,0.55)",
+                }}
+                thumbColor={draft.active ? COLORS.accent : COLORS.textMuted}
               />
             </View>
 
@@ -247,20 +294,38 @@ export default function RestrictionEditor({
               </Text>
             </View>
 
-            <View style={styles.disabledPickerRow}>
-              <View style={styles.disabledPickerIcon}>
-                <Ionicons name="apps-outline" size={18} color={COLORS.textMuted} />
+            <TouchableOpacity
+              activeOpacity={0.82}
+              onPress={() => void handlePickApps()}
+              disabled={!onPickApps || pickingApps}
+              style={[
+                styles.pickerRow,
+                (!onPickApps || pickingApps) && styles.disabled,
+              ]}
+            >
+              <View style={styles.pickerIcon}>
+                <Ionicons
+                  name="apps-outline"
+                  size={18}
+                  color={onPickApps ? COLORS.accent : COLORS.textMuted}
+                />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.disabledPickerTitle}>
+                <Text style={styles.pickerTitle}>
                   {formatSelectionSummary(draft)}
                 </Text>
                 <Text style={styles.helperText}>
-                  App picker lands in the native shield build.
+                  {pickingApps
+                    ? "Opening Apple's app picker..."
+                    : "Choose apps/categories. Aspera only sees counts."}
                 </Text>
               </View>
-              <Ionicons name="lock-closed-outline" size={18} color={COLORS.textMuted} />
-            </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={COLORS.textMuted}
+              />
+            </TouchableOpacity>
 
             {errors.length > 0 ? (
               <View style={styles.errorBox}>
@@ -279,7 +344,11 @@ export default function RestrictionEditor({
                 disabled={saving}
                 style={styles.deleteButton}
               >
-                <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
+                <Ionicons
+                  name="trash-outline"
+                  size={18}
+                  color={COLORS.danger}
+                />
                 <Text style={styles.deleteText}>Delete limit</Text>
               </TouchableOpacity>
             ) : null}
@@ -351,7 +420,11 @@ function TimeField({
   onPress: () => void;
 }) {
   return (
-    <TouchableOpacity activeOpacity={0.82} onPress={onPress} style={styles.timeField}>
+    <TouchableOpacity
+      activeOpacity={0.82}
+      onPress={onPress}
+      style={styles.timeField}
+    >
       <Text style={styles.timeLabel}>{label}</Text>
       <Text style={styles.timeValue}>{value}</Text>
     </TouchableOpacity>
@@ -396,6 +469,9 @@ const styles = StyleSheet.create({
   } as object,
   saveDisabled: {
     color: COLORS.textMuted,
+  },
+  disabled: {
+    opacity: 0.55,
   },
   content: {
     padding: SPACING.lg,
@@ -502,7 +578,28 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     lineHeight: 18,
   } as object,
-  disabledPickerRow: {
+  activeRow: {
+    marginTop: SPACING.lg,
+    minHeight: 74,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surfaceElevated,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.md,
+  },
+  activeCopy: {
+    flex: 1,
+    minWidth: 0,
+  },
+  activeTitle: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.text,
+    fontWeight: "800",
+  } as object,
+  pickerRow: {
     marginTop: SPACING.lg,
     minHeight: 68,
     borderRadius: RADIUS.lg,
@@ -513,9 +610,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: SPACING.md,
-    opacity: 0.72,
   },
-  disabledPickerIcon: {
+  pickerIcon: {
     width: 36,
     height: 36,
     borderRadius: 18,
@@ -523,7 +619,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  disabledPickerTitle: {
+  pickerTitle: {
     ...TYPOGRAPHY.body,
     color: COLORS.text,
     fontWeight: "700",

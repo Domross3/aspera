@@ -56,10 +56,7 @@ export default function PatternsSection() {
 
   return (
     <Animated.View style={{ opacity: fadeAnim }}>
-      <SectionLabel
-        label="Patterns"
-        style={{ marginTop: SPACING.xl }}
-      />
+      <SectionLabel label="Patterns" style={{ marginTop: SPACING.xl }} />
 
       {/* Natural-language search — works without generated insights. */}
       <SearchBar />
@@ -90,8 +87,8 @@ export default function PatternsSection() {
           ) : !hasEnoughData ? (
             <Text style={styles.genButtonText}>
               Log {MIN_LOGS_FOR_INSIGHTS - recentLogs.length} more day
-              {MIN_LOGS_FOR_INSIGHTS - recentLogs.length === 1 ? "" : "s"}{" "}
-              to unlock insights
+              {MIN_LOGS_FOR_INSIGHTS - recentLogs.length === 1 ? "" : "s"} to
+              unlock insights
             </Text>
           ) : (
             <Text style={styles.genButtonText}>

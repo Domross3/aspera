@@ -61,9 +61,7 @@ function evalTreatment(log: DailyLog, opt: TreatmentOption): boolean {
       return entry?.fieldValues?.[opt.fieldId] === true;
     }
     case "event_present":
-      return (log.eventEntries ?? []).some(
-        (e) => e.typeId === opt.eventTypeId,
-      );
+      return (log.eventEntries ?? []).some((e) => e.typeId === opt.eventTypeId);
     case "daily_log_truthy":
       if (opt.field === "drinks") return (log.drinks ?? 0) > 0;
       return false;

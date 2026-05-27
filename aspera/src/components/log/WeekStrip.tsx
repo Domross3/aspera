@@ -40,9 +40,7 @@ function buildDays(windowDays: number): DayTile[] {
     const dateStr = d.toISOString().split("T")[0];
     tiles.push({
       date: dateStr,
-      dayLabel: d
-        .toLocaleDateString("en-US", { weekday: "short" })
-        .slice(0, 2),
+      dayLabel: d.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2),
       dayNumber: d.getDate(),
       isToday: dateStr === todayStr,
     });

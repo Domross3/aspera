@@ -9,17 +9,11 @@ import { LogSectionId, LOG_SECTIONS } from "../types";
 
 export type SectionId = LogSectionId | string;
 
-export function isSectionHidden(
-  hidden: SectionId[],
-  id: SectionId,
-): boolean {
+export function isSectionHidden(hidden: SectionId[], id: SectionId): boolean {
   return hidden.includes(id);
 }
 
-export function toggleSection(
-  hidden: SectionId[],
-  id: SectionId,
-): SectionId[] {
+export function toggleSection(hidden: SectionId[], id: SectionId): SectionId[] {
   if (hidden.includes(id)) return hidden.filter((h) => h !== id);
   return [...hidden, id];
 }

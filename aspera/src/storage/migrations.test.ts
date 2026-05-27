@@ -178,9 +178,7 @@ describe("migrateAppSettings", () => {
 
   it("is idempotent on already-migrated settings", () => {
     const migrated = migrateAppSettings({
-      customMetrics: [
-        { id: "x", name: "X", kind: "toggle", createdAt: 100 },
-      ],
+      customMetrics: [{ id: "x", name: "X", kind: "toggle", createdAt: 100 }],
     });
 
     // Run again. Should be a no-op (same schemaVersion, same shape).

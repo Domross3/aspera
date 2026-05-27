@@ -22,7 +22,7 @@ They share a single Supabase project for auth + per-user data. The mobile app ca
 The strategic frame these decisions hang off — refer here when in doubt about what "in character" means for Aspera.
 
 - **Target user**: A primary — Quantified Self burnout (Whoop/Oura/Apple Watch refugees who want signal without anxiety theater). E secondary halo — wellness-curious who tried Calm/Headspace and want more agency.
-- **Killer feature**: the AI cross-source synthesizer + behavioral intervention engine. Aspera is a *technological relationship manager*, not a tracker.
+- **Killer feature**: the AI cross-source synthesizer + behavioral intervention engine. Aspera is a _technological relationship manager_, not a tracker.
 - **Self-binding philosophy**: users set their own limits. Aspera is the lock, not the warden. Default friction (Tier 2) is on; users can opt into harder contract tiers (3/4) per-contract. Aspera never coerces the user — the user coerces themselves through Aspera.
 - **Home model — Living Briefing**: Today tab opens with 2–3 sentences in Aspera's voice that reference real data. Below that, today's Big Rocks. Cards below as supporting evidence.
 - **Daily rhythm — Bookended Day**: morning Big Rocks → optional quick captures → evening reflection (outcomes + tomorrow note). Two anchors. Reserves applied liberally (no streak shame).
@@ -56,7 +56,7 @@ The Chrome extension is loaded manually via chrome://extensions (developer mode,
 - **Storage**: per-user cloud-backed via Supabase, server-encrypted, scoped via RLS. AsyncStorage acts as a write-through cache (Phase B-2). Mobile reads cloud first, falls back to cache on network failure; writes go to both.
 - **API keys**: never bundled into the mobile binary. Claude calls go through aspera-web's `/api/mobile/claude` proxy with a bearer secret (`EXPO_PUBLIC_MOBILE_API_SECRET`). Anthropic key only lives server-side on Vercel.
 - **Mocks**: `src/lib/mockData.ts` and mock-backed integrations are dev-only scaffolding. They render only when `__DEV__` is true. Production builds start empty until real integrations land.
-- **Native Screen Time work**: `aspera/ios/` is committed state. Do not run `expo prebuild --clean` for Screen Controls work; edit native files directly and use full EAS/native builds because Family Controls, DeviceActivity, ManagedSettings, App Groups, and extensions cannot ship over OTA.
+- **Native Screen Time work**: `aspera/ios/` is committed state. Do not run `expo prebuild --clean` for Screen Controls work; edit native files directly and use full EAS/native builds because Family Controls, DeviceActivity, ManagedSettings, App Groups, and extensions cannot ship over OTA. Phase 8d-B implementation details live in `aspera/docs/phase-8d-b-screen-controls.md`.
 
 ## AI layer (`src/api/claude.ts`)
 

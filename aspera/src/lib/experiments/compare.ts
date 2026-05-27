@@ -105,8 +105,7 @@ export function compareDays(
     (v) => v === treatmentValues[0],
   );
   if (controlConstant && treatmentConstant) {
-    const probPositive =
-      observedEffect > 0 ? 1 : observedEffect < 0 ? 0 : 0.5;
+    const probPositive = observedEffect > 0 ? 1 : observedEffect < 0 ? 0 : 0.5;
     return {
       effect: observedEffect,
       range: { low: observedEffect, high: observedEffect },

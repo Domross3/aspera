@@ -190,7 +190,11 @@ export interface NotificationSettings {
 // metadata persisted in Supabase `restrictions` and `experiments` tables.
 
 export type RestrictionSpec =
-  | { kind: "time_window"; windowStart: string /* "HH:MM" */; windowEnd: string }
+  | {
+      kind: "time_window";
+      windowStart: string /* "HH:MM" */;
+      windowEnd: string;
+    }
   | { kind: "daily_limit"; dailyLimitMin: number };
 
 export interface Restriction {
@@ -214,11 +218,7 @@ export interface Restriction {
 export type OutcomeMetric =
   | {
       kind: "daily_log_field";
-      field:
-        | "focusRating"
-        | "energyRating"
-        | "tasksCompleted"
-        | "sleepHours";
+      field: "focusRating" | "energyRating" | "tasksCompleted" | "sleepHours";
     }
   | { kind: "event_type_field"; eventTypeId: string; fieldId: string }
   | { kind: "mood_avg" }
@@ -408,7 +408,7 @@ export interface FieldConfig {
 }
 
 export interface FieldDef {
-  id: string;       // stable within the EventTypeDef; deterministic for migrated types
+  id: string; // stable within the EventTypeDef; deterministic for migrated types
   name: string;
   kind: FieldKind;
   required: boolean;
@@ -416,7 +416,7 @@ export interface FieldDef {
 }
 
 export interface EventTypeDef {
-  id: string;       // stable uuid (preserved across migration from CustomMetricDef.id)
+  id: string; // stable uuid (preserved across migration from CustomMetricDef.id)
   name: string;
   emoji?: string;
   cardinality: "single" | "recurrent";
@@ -430,9 +430,9 @@ export interface EventTypeDef {
 export interface EventEntry {
   id: string;
   typeId: string;
-  date: string;                          // "YYYY-MM-DD"
-  timestamp?: number;                    // ms epoch, required when type is recurrent
-  fieldValues: Record<string, unknown>;  // keyed by FieldDef.id
+  date: string; // "YYYY-MM-DD"
+  timestamp?: number; // ms epoch, required when type is recurrent
+  fieldValues: Record<string, unknown>; // keyed by FieldDef.id
   createdAt: number;
 }
 

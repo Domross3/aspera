@@ -1,4 +1,5 @@
 import type { Restriction, RestrictionSpec } from "../types";
+import type { NativeRestrictionConfig } from "../../modules/screen-time/src/types";
 
 export const ALL_WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 export const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -93,7 +94,9 @@ export function restrictionWithKind(
 
 function normalizeWeekdays(weekdays: number[]): number[] {
   const uniqueValid = Array.from(
-    new Set(weekdays.filter((day) => Number.isInteger(day) && day >= 0 && day <= 6)),
+    new Set(
+      weekdays.filter((day) => Number.isInteger(day) && day >= 0 && day <= 6),
+    ),
   ).sort((a, b) => a - b);
   return uniqueValid.length > 0 ? uniqueValid : [...ALL_WEEKDAYS];
 }
@@ -106,7 +109,10 @@ export function normalizeRestrictionForSave(
     ...restriction,
     name: restriction.name.trim(),
     categories: restriction.categories ?? [],
-    selectedAppCount: Math.max(0, Math.round(restriction.selectedAppCount ?? 0)),
+    selectedAppCount: Math.max(
+      0,
+      Math.round(restriction.selectedAppCount ?? 0),
+    ),
     selectedCategoryCount: Math.max(
       0,
       Math.round(restriction.selectedCategoryCount ?? 0),
@@ -129,6 +135,11 @@ export function normalizeRestrictionForSave(
 
 export function validateRestrictionDraft(restriction: Restriction): string[] {
   const errors: string[] = [];
+  const selectedAppCount = Math.max(0, restriction.selectedAppCount ?? 0);
+  const selectedCategoryCount = Math.max(
+    0,
+    restriction.selectedCategoryCount ?? 0,
+  );
 
   if (restriction.name.trim().length === 0) {
     errors.push("Name is required.");
@@ -151,11 +162,16 @@ export function validateRestrictionDraft(restriction: Restriction): string[] {
     if (restriction.spec.windowStart === restriction.spec.windowEnd) {
       errors.push("Start and end times must differ.");
     }
+    if (restriction.active && selectedAppCount + selectedCategoryCount === 0) {
+      errors.push("Choose at least one app or category before activating.");
+    }
   } else if (
     !Number.isFinite(restriction.spec.dailyLimitMin) ||
     restriction.spec.dailyLimitMin <= 0
   ) {
     errors.push("Daily caps must be greater than 0.");
+  } else if (restriction.active && selectedAppCount === 0) {
+    errors.push("Choose at least one app before activating a daily cap.");
   }
 
   return errors;
@@ -196,4 +212,37 @@ export function formatSelectionSummary(restriction: Restriction): string {
   const parts = [pluralize(appCount, "app")];
   if (categoryCount > 0) parts.push(pluralize(categoryCount, "category"));
   return `${parts.join(", ")} selected`;
+}
+
+export function toNativeRestrictionConfig(
+  restriction: Restriction,
+): NativeRestrictionConfig {
+  const normalized = normalizeRestrictionForSave(
+    restriction,
+    restriction.updatedAt,
+  );
+  const base = {
+    id: normalized.id,
+    active: normalized.active,
+    mode: normalized.spec.kind,
+    weekdays: normalized.weekdays,
+    selectedAppCount: normalized.selectedAppCount,
+    selectedCategoryCount: normalized.selectedCategoryCount,
+    updatedAt: normalized.updatedAt,
+  };
+
+  if (normalized.spec.kind === "time_window") {
+    return {
+      ...base,
+      mode: "time_window",
+      windowStart: normalized.spec.windowStart,
+      windowEnd: normalized.spec.windowEnd,
+    };
+  }
+
+  return {
+    ...base,
+    mode: "daily_limit",
+    dailyLimitMin: normalized.spec.dailyLimitMin,
+  };
 }

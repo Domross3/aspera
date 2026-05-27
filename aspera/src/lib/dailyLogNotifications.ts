@@ -34,9 +34,7 @@ const EVENING_COPY = {
 async function cancelByKind(kind: string): Promise<void> {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   const ids = scheduled
-    .filter(
-      (n) => (n.content.data as { kind?: string })?.kind === kind,
-    )
+    .filter((n) => (n.content.data as { kind?: string })?.kind === kind)
     .map((n) => n.identifier);
   await Promise.all(
     ids.map((id) => Notifications.cancelScheduledNotificationAsync(id)),

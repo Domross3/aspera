@@ -9,6 +9,7 @@ import {
   isRestrictionDraftValid,
   isRestrictionIdShape,
   normalizeRestrictionForSave,
+  toNativeRestrictionConfig,
   validateRestrictionDraft,
 } from "./restrictions";
 
@@ -102,6 +103,85 @@ describe("restrictions helpers", () => {
     expect(validateRestrictionDraft(invalidCap)).toContain(
       "Daily caps must be greater than 0.",
     );
+  });
+
+  it("allows inactive drafts without selection but rejects active empty selections", () => {
+    const inactiveDaily = createDefaultRestriction("daily_limit");
+    expect(validateRestrictionDraft(inactiveDaily)).not.toContain(
+      "Choose at least one app before activating a daily cap.",
+    );
+
+    const activeDaily = {
+      ...inactiveDaily,
+      active: true,
+      selectedAppCount: 0,
+      selectedCategoryCount: 2,
+    };
+    expect(validateRestrictionDraft(activeDaily)).toContain(
+      "Choose at least one app before activating a daily cap.",
+    );
+
+    const activeWindow = {
+      ...createDefaultRestriction("time_window"),
+      active: true,
+      selectedAppCount: 0,
+      selectedCategoryCount: 0,
+    };
+    expect(validateRestrictionDraft(activeWindow)).toContain(
+      "Choose at least one app or category before activating.",
+    );
+
+    expect(
+      validateRestrictionDraft({ ...activeWindow, selectedCategoryCount: 1 }),
+    ).not.toContain("Choose at least one app or category before activating.");
+  });
+
+  it("normalizes restrictions into native monitoring config", () => {
+    const windowDraft: Restriction = {
+      ...createDefaultRestriction("time_window", 1000),
+      active: true,
+      selectedAppCount: 2,
+      selectedCategoryCount: 1,
+      weekdays: [3, 1, 1],
+      updatedAt: 5000,
+      spec: {
+        kind: "time_window",
+        windowStart: "08:30",
+        windowEnd: "10:00",
+      },
+    };
+
+    expect(toNativeRestrictionConfig(windowDraft)).toEqual({
+      id: windowDraft.id,
+      active: true,
+      mode: "time_window",
+      weekdays: [1, 3],
+      windowStart: "08:30",
+      windowEnd: "10:00",
+      selectedAppCount: 2,
+      selectedCategoryCount: 1,
+      updatedAt: 5000,
+    });
+
+    const capDraft: Restriction = {
+      ...createDefaultRestriction("daily_limit", 1000),
+      active: true,
+      selectedAppCount: 1,
+      selectedCategoryCount: 0,
+      updatedAt: 6000,
+      spec: { kind: "daily_limit", dailyLimitMin: 44.6 },
+    };
+
+    expect(toNativeRestrictionConfig(capDraft)).toEqual({
+      id: capDraft.id,
+      active: true,
+      mode: "daily_limit",
+      weekdays: [0, 1, 2, 3, 4, 5, 6],
+      dailyLimitMin: 45,
+      selectedAppCount: 1,
+      selectedCategoryCount: 0,
+      updatedAt: 6000,
+    });
   });
 
   it("formats weekday, mode, schedule, and selection summaries", () => {

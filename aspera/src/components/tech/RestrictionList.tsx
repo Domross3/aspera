@@ -24,6 +24,7 @@ interface Props {
   error?: string | null;
   onCreate: () => void;
   onEdit: (restriction: Restriction) => void;
+  onCheat?: (restriction: Restriction) => void;
   onRefresh?: () => void;
 }
 
@@ -34,6 +35,7 @@ export default function RestrictionList({
   error = null,
   onCreate,
   onEdit,
+  onCheat,
   onRefresh,
 }: Props) {
   if (loading && restrictions.length === 0) {
@@ -76,8 +78,8 @@ export default function RestrictionList({
         </View>
         <Text style={styles.title}>No app limits yet</Text>
         <Text style={[styles.mutedText, { marginTop: SPACING.xs }]}>
-          Draft a time window or daily cap now. App selection and enforcement
-          arrive in the next native shield build.
+          Draft a time window or daily cap, choose apps, then activate it when
+          you want Aspera to enforce the boundary.
         </Text>
         <TouchableOpacity
           activeOpacity={0.85}
@@ -127,19 +129,46 @@ export default function RestrictionList({
                 {formatRestrictionMode(restriction)}
               </Text>
             </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>Draft</Text>
+            <View
+              style={[styles.badge, restriction.active && styles.activeBadge]}
+            >
+              <Text
+                style={[
+                  styles.badgeText,
+                  restriction.active && styles.activeBadgeText,
+                ]}
+              >
+                {restriction.active ? "Active" : "Draft"}
+              </Text>
             </View>
           </View>
 
           <View style={styles.detailGrid}>
-            <Detail icon="time-outline" label={formatRestrictionSchedule(restriction)} />
-            <Detail icon="calendar-outline" label={formatWeekdays(restriction.weekdays)} />
+            <Detail
+              icon="time-outline"
+              label={formatRestrictionSchedule(restriction)}
+            />
+            <Detail
+              icon="calendar-outline"
+              label={formatWeekdays(restriction.weekdays)}
+            />
             <Detail
               icon="apps-outline"
               label={formatSelectionSummary(restriction)}
             />
           </View>
+
+          {restriction.active && onCheat ? (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => onCheat(restriction)}
+              disabled={saving}
+              style={styles.cheatButton}
+            >
+              <Ionicons name="key-outline" size={15} color={COLORS.warning} />
+              <Text style={styles.cheatButtonText}>Use cheat</Text>
+            </TouchableOpacity>
+          ) : null}
         </TouchableOpacity>
       ))}
     </View>
@@ -288,6 +317,13 @@ const styles = StyleSheet.create({
     color: COLORS.accent,
     fontWeight: "800",
   } as object,
+  activeBadge: {
+    borderColor: "rgba(34,197,94,0.45)",
+    backgroundColor: "rgba(34,197,94,0.12)",
+  },
+  activeBadgeText: {
+    color: COLORS.success,
+  },
   detailGrid: {
     marginTop: SPACING.md,
     gap: SPACING.xs,
@@ -305,5 +341,23 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
     flex: 1,
+  } as object,
+  cheatButton: {
+    marginTop: SPACING.sm,
+    minHeight: 34,
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: SPACING.xs,
+    borderRadius: RADIUS.pill,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: "rgba(251,191,36,0.35)",
+    backgroundColor: "rgba(251,191,36,0.09)",
+    paddingHorizontal: SPACING.sm,
+  },
+  cheatButtonText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.warning,
+    fontWeight: "800",
   } as object,
 });

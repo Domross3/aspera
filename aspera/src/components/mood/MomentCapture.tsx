@@ -121,9 +121,7 @@ export default function MomentCapture({ visible, onCancel, onSave }: Props) {
                     <TouchableOpacity
                       key={preset.minutes}
                       onPress={() => {
-                        Haptics.impactAsync(
-                          Haptics.ImpactFeedbackStyle.Light,
-                        );
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                         setDuration(active ? null : preset.minutes);
                       }}
                       activeOpacity={0.7}

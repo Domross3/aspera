@@ -194,9 +194,8 @@ function extractLegacyValue(v: CustomMetricValue): unknown {
 export function migrateAppSettings(stored: Partial<AppSettings>): AppSettings {
   // Cast through `any` deliberately for the notification field migration —
   // old persisted blobs may have legacy fields the current type doesn't list.
-  const storedNotif = (stored.notificationSettings ?? {}) as Partial<
-    NotificationSettings
-  > & {
+  const storedNotif = (stored.notificationSettings ??
+    {}) as Partial<NotificationSettings> & {
     quickMoodWindowStart?: string;
     quickMoodWindowEnd?: string;
   };
@@ -301,9 +300,7 @@ export function migrateDailyLog(log: DailyLog): DailyLog {
 // Used by `getSettings` to decide whether to write the migrated value
 // back to AsyncStorage. Cheap shallow check — we don't compare every
 // nested field, just the top-level shape indicators.
-export function settingsNeedsMigration(
-  stored: Partial<AppSettings>,
-): boolean {
+export function settingsNeedsMigration(stored: Partial<AppSettings>): boolean {
   if (
     typeof stored.schemaVersion !== "number" ||
     stored.schemaVersion < APP_SETTINGS_SCHEMA_VERSION

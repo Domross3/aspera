@@ -77,16 +77,13 @@ export function useSettings() {
     };
   }, []);
 
-  const update = useCallback(
-    async (patch: Partial<AppSettings>) => {
-      const next = { ...settingsCache, ...patch };
-      settingsCache = next;
-      loaded = true;
-      emitSettingsChange();
-      await saveSettings(next);
-    },
-    [],
-  );
+  const update = useCallback(async (patch: Partial<AppSettings>) => {
+    const next = { ...settingsCache, ...patch };
+    settingsCache = next;
+    loaded = true;
+    emitSettingsChange();
+    await saveSettings(next);
+  }, []);
 
   return { settings, loading, update };
 }

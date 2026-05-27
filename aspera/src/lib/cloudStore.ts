@@ -97,9 +97,7 @@ function rowToMoodCheckIn(row: MoodEntryRow): MoodCheckIn {
     stress: Number(row.stress),
     note: row.note ?? undefined,
     source:
-      row.source === "quick" || row.source === "full"
-        ? row.source
-        : undefined,
+      row.source === "quick" || row.source === "full" ? row.source : undefined,
   };
 }
 
@@ -267,8 +265,7 @@ export async function upsertRestriction(
       categories: r.categories,
       selected_app_count: r.selectedAppCount,
       selected_category_count: r.selectedCategoryCount,
-      window_start:
-        r.spec.kind === "time_window" ? r.spec.windowStart : null,
+      window_start: r.spec.kind === "time_window" ? r.spec.windowStart : null,
       window_end: r.spec.kind === "time_window" ? r.spec.windowEnd : null,
       daily_limit_min:
         r.spec.kind === "daily_limit" ? r.spec.dailyLimitMin : null,
@@ -320,9 +317,7 @@ function rowToExperiment(row: ExperimentRow): Experiment {
     outcomeMetric: row.outcome_metric,
     durationDays: row.duration_days,
     baselineWindowDays: row.baseline_window_days,
-    startedAt: row.started_at
-      ? new Date(row.started_at).getTime()
-      : undefined,
+    startedAt: row.started_at ? new Date(row.started_at).getTime() : undefined,
     endsAt: row.ends_at ? new Date(row.ends_at).getTime() : undefined,
     status: row.status,
     resultPayload: row.result_payload ?? undefined,
@@ -332,9 +327,7 @@ function rowToExperiment(row: ExperimentRow): Experiment {
   };
 }
 
-export async function fetchExperiments(
-  userId: string,
-): Promise<Experiment[]> {
+export async function fetchExperiments(userId: string): Promise<Experiment[]> {
   const { data, error } = await supabase
     .from("experiments")
     .select(

@@ -84,8 +84,8 @@ export default function ComparisonReadout({
         <Text style={styles.noEffect}>No detectable effect</Text>
         <Text style={styles.caption}>
           {result.sampleSize} treatment day{result.sampleSize === 1 ? "" : "s"}{" "}
-          vs {controlSize} control. Sample may be too small or the effect
-          too subtle for a confident call.
+          vs {controlSize} control. Sample may be too small or the effect too
+          subtle for a confident call.
         </Text>
         {caveat ? <Text style={styles.caveat}>{caveat}</Text> : null}
       </GradientCard>
@@ -124,8 +124,7 @@ export default function ComparisonReadout({
           <Text style={styles.confidenceLabel}>{result.confidenceLabel}</Text>
         </View>
         <Text style={styles.probabilityText}>
-          {probPercent}% likely{" "}
-          {result.effect >= 0 ? "positive" : "negative"}
+          {probPercent}% likely {result.effect >= 0 ? "positive" : "negative"}
         </Text>
       </View>
 

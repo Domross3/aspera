@@ -58,9 +58,13 @@ function pickCopy(): { title: string; body: string } {
 export async function cancelAllQuickMoodNotifications(): Promise<void> {
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   const ids = scheduled
-    .filter((n) => (n.content.data as { kind?: string })?.kind === NOTIFICATION_KIND)
+    .filter(
+      (n) => (n.content.data as { kind?: string })?.kind === NOTIFICATION_KIND,
+    )
     .map((n) => n.identifier);
-  await Promise.all(ids.map((id) => Notifications.cancelScheduledNotificationAsync(id)));
+  await Promise.all(
+    ids.map((id) => Notifications.cancelScheduledNotificationAsync(id)),
+  );
 }
 
 async function countQuickMoodNotifications(): Promise<number> {
@@ -109,8 +113,7 @@ export async function ensureQuickMoodSchedule(
   // the default 2h spacing — without this, a 12h window with frequency 8
   // (needs 7×120m = 840m > 720m) silently schedules fewer than requested.
   const winMin = minutesInWindow(window);
-  const fitGap =
-    frequency > 1 ? Math.floor(winMin / (frequency - 1)) : winMin;
+  const fitGap = frequency > 1 ? Math.floor(winMin / (frequency - 1)) : winMin;
   const gapMin = Math.max(
     MIN_GAP_FLOOR_MIN,
     Math.min(MIN_HOURS_BETWEEN * 60, fitGap),

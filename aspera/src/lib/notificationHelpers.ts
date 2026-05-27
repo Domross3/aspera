@@ -87,12 +87,7 @@ export function buildDailyTriggerDates(
     const offsets = pickRandomOffsets(count, windowMinutes, minGapMin);
     for (const offsetMin of offsets) {
       const fireDate = new Date(dayDate);
-      fireDate.setHours(
-        window.startHour,
-        window.startMinute + offsetMin,
-        0,
-        0,
-      );
+      fireDate.setHours(window.startHour, window.startMinute + offsetMin, 0, 0);
       // Skip times in the past (only affects today's schedule).
       if (fireDate.getTime() > now.getTime() + 60_000) {
         dates.push(fireDate);

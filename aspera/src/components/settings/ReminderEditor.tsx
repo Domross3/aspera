@@ -29,11 +29,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
-import type {
-  EventTypeDef,
-  ReminderSchedule,
-  UserReminder,
-} from "../../types";
+import type { EventTypeDef, ReminderSchedule, UserReminder } from "../../types";
 import TimePickerModal from "./TimePickerModal";
 
 interface Props {
@@ -74,8 +70,9 @@ export default function ReminderEditor({
     () => initial ?? emptyDraft(),
   );
   const [timePickerIdx, setTimePickerIdx] = useState<number | null>(null);
-  const [randomWindowSide, setRandomWindowSide] =
-    useState<"start" | "end" | null>(null);
+  const [randomWindowSide, setRandomWindowSide] = useState<
+    "start" | "end" | null
+  >(null);
 
   useEffect(() => {
     if (visible) {
@@ -142,7 +139,8 @@ export default function ReminderEditor({
     onSave({
       ...draft,
       label: draft.label.trim(),
-      weekdays: draft.weekdays.length > 0 ? draft.weekdays : [0, 1, 2, 3, 4, 5, 6],
+      weekdays:
+        draft.weekdays.length > 0 ? draft.weekdays : [0, 1, 2, 3, 4, 5, 6],
     });
   };
 
@@ -157,9 +155,7 @@ export default function ReminderEditor({
           text: "Delete",
           style: "destructive",
           onPress: () => {
-            Haptics.notificationAsync(
-              Haptics.NotificationFeedbackType.Warning,
-            );
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
             onDelete();
           },
         },
@@ -214,17 +210,13 @@ export default function ReminderEditor({
                 placeholder="e.g. Drink water, Take lion's mane"
                 placeholderTextColor={COLORS.textMuted}
                 value={draft.label}
-                onChangeText={(v) =>
-                  setDraft((d) => ({ ...d, label: v }))
-                }
+                onChangeText={(v) => setDraft((d) => ({ ...d, label: v }))}
                 style={styles.input}
                 maxLength={60}
                 returnKeyType="done"
               />
 
-              <Text
-                style={[styles.sectionLabel, { marginTop: SPACING.lg }]}
-              >
+              <Text style={[styles.sectionLabel, { marginTop: SPACING.lg }]}>
                 Schedule
               </Text>
               <View style={styles.kindRow}>
@@ -295,7 +287,13 @@ export default function ReminderEditor({
                   <Text style={styles.miniLabel}>Times per active day</Text>
                   <View style={styles.countStepper}>
                     <TouchableOpacity
-                      onPress={() => setRandomCount(draft.schedule.kind === "random" ? draft.schedule.count - 1 : 1)}
+                      onPress={() =>
+                        setRandomCount(
+                          draft.schedule.kind === "random"
+                            ? draft.schedule.count - 1
+                            : 1,
+                        )
+                      }
                       hitSlop={8}
                       style={styles.adjBtn}
                     >
@@ -308,7 +306,13 @@ export default function ReminderEditor({
                       × / day
                     </Text>
                     <TouchableOpacity
-                      onPress={() => setRandomCount(draft.schedule.kind === "random" ? draft.schedule.count + 1 : 1)}
+                      onPress={() =>
+                        setRandomCount(
+                          draft.schedule.kind === "random"
+                            ? draft.schedule.count + 1
+                            : 1,
+                        )
+                      }
                       hitSlop={8}
                       style={styles.adjBtn}
                     >
@@ -349,9 +353,7 @@ export default function ReminderEditor({
                 </View>
               )}
 
-              <Text
-                style={[styles.sectionLabel, { marginTop: SPACING.lg }]}
-              >
+              <Text style={[styles.sectionLabel, { marginTop: SPACING.lg }]}>
                 Days
               </Text>
               <View style={styles.weekdaysRow}>
@@ -399,8 +401,7 @@ export default function ReminderEditor({
                       <Text
                         style={[
                           styles.linkChipText,
-                          !draft.linkedEventTypeId &&
-                            styles.linkChipTextActive,
+                          !draft.linkedEventTypeId && styles.linkChipTextActive,
                         ]}
                       >
                         None
@@ -486,9 +487,8 @@ export default function ReminderEditor({
           if (draft.schedule.kind === "random" && randomWindowSide) {
             setSchedule({
               ...draft.schedule,
-              [randomWindowSide === "start"
-                ? "windowStart"
-                : "windowEnd"]: hhmm,
+              [randomWindowSide === "start" ? "windowStart" : "windowEnd"]:
+                hhmm,
             });
           }
           setRandomWindowSide(null);
@@ -513,9 +513,7 @@ function KindTile({
       activeOpacity={0.7}
       style={[styles.kindTile, active && styles.kindTileActive]}
     >
-      <Text
-        style={[styles.kindTileText, active && styles.kindTileTextActive]}
-      >
+      <Text style={[styles.kindTileText, active && styles.kindTileTextActive]}>
         {label}
       </Text>
     </TouchableOpacity>

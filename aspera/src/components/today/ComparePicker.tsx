@@ -131,8 +131,8 @@ export default function ComparePicker() {
 
       <GradientCard>
         <Text style={styles.intro}>
-          Pick two things to compare. We'll split your recent days into
-          groups and run a bootstrap comparison.
+          Pick two things to compare. We'll split your recent days into groups
+          and run a bootstrap comparison.
         </Text>
 
         <TouchableOpacity
@@ -230,10 +230,7 @@ export default function ComparePicker() {
                   ? "Pick a treatment"
                   : "Pick an outcome"}
               </Text>
-              <TouchableOpacity
-                onPress={() => setPickerOpen(null)}
-                hitSlop={8}
-              >
+              <TouchableOpacity onPress={() => setPickerOpen(null)} hitSlop={8}>
                 <Text style={styles.modalClose}>Done</Text>
               </TouchableOpacity>
             </View>
@@ -258,10 +255,7 @@ export default function ComparePicker() {
                       key={`${i}-${opt.label}`}
                       onPress={() => pickOption(pickerOpen!, i)}
                       activeOpacity={0.7}
-                      style={[
-                        styles.modalRow,
-                        active && styles.modalRowActive,
-                      ]}
+                      style={[styles.modalRow, active && styles.modalRowActive]}
                     >
                       <Text
                         style={[

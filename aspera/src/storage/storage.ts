@@ -91,10 +91,7 @@ export async function getSettings(): Promise<AppSettings> {
   if (settingsNeedsMigration(stored)) {
     // Persist the migrated shape so subsequent reads skip the work.
     // Fire-and-forget — failure here just means next launch re-migrates.
-    void AsyncStorage.setItem(
-      STORAGE_KEYS.SETTINGS,
-      JSON.stringify(migrated),
-    );
+    void AsyncStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(migrated));
   }
   return migrated;
 }
@@ -216,7 +213,9 @@ export async function getMoodCheckIns(date: string): Promise<MoodCheckIn[]> {
 
 export async function clearAllMoodCheckIns(): Promise<void> {
   const allKeys = await AsyncStorage.getAllKeys();
-  const moodKeys = allKeys.filter((k) => k.startsWith(STORAGE_KEYS.MOOD_PREFIX));
+  const moodKeys = allKeys.filter((k) =>
+    k.startsWith(STORAGE_KEYS.MOOD_PREFIX),
+  );
   if (moodKeys.length > 0) await AsyncStorage.multiRemove(moodKeys);
 }
 
@@ -251,7 +250,10 @@ export async function replaceCachedMoodCheckIns(
     byDay.set(date, bucket);
   }
   const entries: [string, string][] = [...byDay.entries()].map(
-    ([date, list]) => [`${STORAGE_KEYS.MOOD_PREFIX}${date}`, JSON.stringify(list)],
+    ([date, list]) => [
+      `${STORAGE_KEYS.MOOD_PREFIX}${date}`,
+      JSON.stringify(list),
+    ],
   );
   if (entries.length > 0) await AsyncStorage.multiSet(entries);
 }

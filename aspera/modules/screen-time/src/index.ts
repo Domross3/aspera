@@ -14,13 +14,13 @@ import type {
   ScreenTimeNativeModule,
   PickerResult,
   ScreenTimeDayTotals,
+  NativeRestrictionConfig,
 } from "./types";
 
 export * from "./types";
 
-const native = requireOptionalNativeModule<ScreenTimeNativeModule>(
-  "ScreenTime",
-);
+const native =
+  requireOptionalNativeModule<ScreenTimeNativeModule>("ScreenTime");
 
 /** True when the native Screen Time module is present in this binary. */
 export const isScreenTimeAvailable = (): boolean => native != null;
@@ -62,14 +62,23 @@ export async function clearShield(restrictionId: string): Promise<void> {
   await native.clearShield(restrictionId);
 }
 
-export async function startMonitoring(restrictionId: string): Promise<void> {
+export async function startMonitoring(
+  config: NativeRestrictionConfig,
+): Promise<void> {
   if (!native) return;
-  await native.startMonitoring(restrictionId);
+  await native.startMonitoring(config);
 }
 
 export async function stopMonitoring(restrictionId: string): Promise<void> {
   if (!native) return;
   await native.stopMonitoring(restrictionId);
+}
+
+export async function clearRestrictionState(
+  restrictionId: string,
+): Promise<void> {
+  if (!native) return;
+  await native.clearRestrictionState(restrictionId);
 }
 
 export async function grantCheat(

@@ -30,9 +30,7 @@ export default function FieldRenderer({ field, value, onChange }: Props) {
     case "text":
       return <TextField field={field} value={value} onChange={onChange} />;
     case "duration":
-      return (
-        <DurationField field={field} value={value} onChange={onChange} />
-      );
+      return <DurationField field={field} value={value} onChange={onChange} />;
     default:
       // Unknown kind — likely a future schema landing on an older client.
       // Render nothing rather than crashing.

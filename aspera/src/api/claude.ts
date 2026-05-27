@@ -85,10 +85,7 @@ const INSIGHTS_RETRY_MAX_TOKENS = 2800;
 
 // ── Insights Generation ─────────────────────────────────────────────────
 
-function buildInsightsPrompt(
-  logs: DailyLog[],
-  moments: Moment[] = [],
-): string {
+function buildInsightsPrompt(logs: DailyLog[], moments: Moment[] = []): string {
   const exampleResponse = {
     summary: "Exactly 2 concise sentences summarizing the user's patterns",
     correlations: [

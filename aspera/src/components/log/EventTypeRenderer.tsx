@@ -10,13 +10,7 @@
 // the larger entries array. That keeps the renderer purely controlled.
 
 import React from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
@@ -40,10 +34,7 @@ function buildSeedFieldValues(
   return out;
 }
 
-function defaultTimestampForDate(
-  date: string,
-  isPastDay: boolean,
-): number {
+function defaultTimestampForDate(date: string, isPastDay: boolean): number {
   if (!isPastDay) return Date.now();
   // Past day → noon on that date, so the reading is honest ("approximate")
   // rather than misleadingly precise.
@@ -141,11 +132,7 @@ export default function EventTypeRenderer({
     ]);
   };
 
-  const updateEntryField = (
-    id: string,
-    fieldId: string,
-    value: unknown,
-  ) => {
+  const updateEntryField = (id: string, fieldId: string, value: unknown) => {
     onChange(
       entries.map((e) =>
         e.id === id

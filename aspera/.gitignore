@@ -37,6 +37,6 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# generated native folders
-/ios
+# Native iOS is committed for Screen Time / FamilyControls work. Do not ignore
+# it; the nested ios/.gitignore excludes Pods, build products, and user state.
 /android

@@ -29,12 +29,7 @@ interface Props {
 function parseHHMM(s: string): Date {
   const [h, m] = s.split(":").map((n) => parseInt(n, 10));
   const d = new Date();
-  d.setHours(
-    Number.isFinite(h) ? h : 0,
-    Number.isFinite(m) ? m : 0,
-    0,
-    0,
-  );
+  d.setHours(Number.isFinite(h) ? h : 0, Number.isFinite(m) ? m : 0, 0, 0);
   return d;
 }
 

@@ -19,6 +19,12 @@ enum ScreenTimeConstants {
   static func capEvent(_ id: String, appIndex: Int) -> String {
     "restriction-cap-\(id)-app-\(appIndex)"
   }
+  static func capEventTokenKey(_ id: String, eventName: String) -> String {
+    "capEventToken:\(id):\(eventName)"
+  }
+  static func capEventNamesKey(_ id: String) -> String { "capEventNames:\(id)" }
+  static func capHitTokensKey(_ id: String) -> String { "capHitTokens:\(id)" }
+  static func capHitDayKey(_ id: String) -> String { "capHitDay:\(id)" }
   static func cheatRearmActivity(_ id: String) -> String { "restriction-cheat-rearm-\(id)" }
 
   static func shieldStoreName(_ id: String) -> String { "restriction-\(id)" }
