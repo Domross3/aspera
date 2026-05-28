@@ -83,11 +83,11 @@ struct ScreenTimeDailyTotalsView: View {
         Text("\(formatMinutes(latest.totalMinutes)) today")
           .font(.title3.weight(.semibold))
         VStack(alignment: .leading, spacing: 6) {
-          ForEach(categoryRows(latest), id: \.0) { label, minutes in
+          ForEach(categoryRows(latest)) { row in
             HStack {
-              Text(label)
+              Text(row.label)
               Spacer()
-              Text(formatMinutes(minutes))
+              Text(formatMinutes(row.minutes))
                 .foregroundStyle(.secondary)
             }
             .font(.footnote)
@@ -162,12 +162,18 @@ private func formatMinutes(_ minutes: Int) -> String {
   return remainder > 0 ? "\(hours)h \(remainder)m" : "\(hours)h"
 }
 
-private func categoryRows(_ day: ScreenTimeReportDay) -> [(String, Int)] {
+private struct CategoryRow: Identifiable {
+  let label: String
+  let minutes: Int
+  var id: String { label }
+}
+
+private func categoryRows(_ day: ScreenTimeReportDay) -> [CategoryRow] {
   [
-    ("Social", day.byCategory["social"] ?? 0),
-    ("Entertainment", day.byCategory["entertainment"] ?? 0),
-    ("Productivity", day.byCategory["productivity"] ?? 0),
-    ("Communication", day.byCategory["communication"] ?? 0),
-    ("Other", day.byCategory["other"] ?? 0),
-  ].filter { $0.1 > 0 }
+    CategoryRow(label: "Social", minutes: day.byCategory["social"] ?? 0),
+    CategoryRow(label: "Entertainment", minutes: day.byCategory["entertainment"] ?? 0),
+    CategoryRow(label: "Productivity", minutes: day.byCategory["productivity"] ?? 0),
+    CategoryRow(label: "Communication", minutes: day.byCategory["communication"] ?? 0),
+    CategoryRow(label: "Other", minutes: day.byCategory["other"] ?? 0),
+  ].filter { $0.minutes > 0 }
 }
