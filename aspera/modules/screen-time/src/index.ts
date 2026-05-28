@@ -89,6 +89,11 @@ export async function grantCheat(
   await native.grantCheat(restrictionId, minutes);
 }
 
+export async function refreshDailyTotals(): Promise<ScreenTimeDayTotals[]> {
+  if (!native) return [];
+  return native.refreshDailyTotals();
+}
+
 export async function readDailyTotals(): Promise<ScreenTimeDayTotals[]> {
   if (!native) return [];
   return native.readDailyTotals();

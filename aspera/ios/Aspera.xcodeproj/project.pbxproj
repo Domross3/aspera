@@ -15,6 +15,8 @@
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		E8DB00000000000000000001 /* DeviceActivityMonitorExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DB00000000000000000004 /* DeviceActivityMonitorExtension.swift */; };
 		E8DB00000000000000000002 /* DeviceActivityMonitorExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E8DB00000000000000000003 /* DeviceActivityMonitorExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E8DC00000000000000000001 /* DeviceActivityReportExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DC00000000000000000004 /* DeviceActivityReportExtension.swift */; };
+		E8DC00000000000000000002 /* DeviceActivityReportExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E8DC00000000000000000003 /* DeviceActivityReportExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -26,6 +28,13 @@
 			remoteGlobalIDString = E8DB00000000000000000009;
 			remoteInfo = DeviceActivityMonitorExtension;
 		};
+		E8DC0000000000000000000E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E8DC00000000000000000009;
+			remoteInfo = DeviceActivityReportExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -36,6 +45,7 @@
 			dstSubfolderSpec = 13;
 			files = (
 				E8DB00000000000000000002 /* DeviceActivityMonitorExtension.appex in Embed App Extensions */,
+				E8DC00000000000000000002 /* DeviceActivityReportExtension.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -57,6 +67,10 @@
 		E8DB00000000000000000004 /* DeviceActivityMonitorExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceActivityMonitorExtension.swift; sourceTree = "<group>"; };
 		E8DB00000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E8DB00000000000000000006 /* DeviceActivityMonitorExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DeviceActivityMonitorExtension.entitlements; sourceTree = "<group>"; };
+		E8DC00000000000000000003 /* DeviceActivityReportExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DeviceActivityReportExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E8DC00000000000000000004 /* DeviceActivityReportExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceActivityReportExtension.swift; sourceTree = "<group>"; };
+		E8DC00000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E8DC00000000000000000006 /* DeviceActivityReportExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DeviceActivityReportExtension.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Aspera/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Aspera-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Aspera-Bridging-Header.h"; path = "Aspera/Aspera-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -72,6 +86,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E8DB00000000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E8DC00000000000000000007 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -116,6 +137,7 @@
 			children = (
 				13B07FAE1A68108700A75B9A /* Aspera */,
 				E8DB00000000000000000008 /* DeviceActivityMonitorExtension */,
+				E8DC00000000000000000008 /* DeviceActivityReportExtension */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -132,6 +154,7 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* Aspera.app */,
 				E8DB00000000000000000003 /* DeviceActivityMonitorExtension.appex */,
+				E8DC00000000000000000003 /* DeviceActivityReportExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -181,6 +204,16 @@
 			path = DeviceActivityMonitorExtension;
 			sourceTree = "<group>";
 		};
+		E8DC00000000000000000008 /* DeviceActivityReportExtension */ = {
+			isa = PBXGroup;
+			children = (
+				E8DC00000000000000000004 /* DeviceActivityReportExtension.swift */,
+				E8DC00000000000000000005 /* Info.plist */,
+				E8DC00000000000000000006 /* DeviceActivityReportExtension.entitlements */,
+			);
+			path = DeviceActivityReportExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -202,6 +235,7 @@
 			);
 			dependencies = (
 				E8DB0000000000000000000D /* PBXTargetDependency */,
+				E8DC0000000000000000000D /* PBXTargetDependency */,
 			);
 			name = Aspera;
 			productName = Aspera;
@@ -225,6 +259,23 @@
 			productReference = E8DB00000000000000000003 /* DeviceActivityMonitorExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		E8DC00000000000000000009 /* DeviceActivityReportExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E8DC00000000000000000011 /* Build configuration list for PBXNativeTarget "DeviceActivityReportExtension" */;
+			buildPhases = (
+				E8DC0000000000000000000C /* Sources */,
+				E8DC00000000000000000007 /* Frameworks */,
+				E8DC0000000000000000000B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = DeviceActivityReportExtension;
+			productName = DeviceActivityReportExtension;
+			productReference = E8DC00000000000000000003 /* DeviceActivityReportExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -237,6 +288,9 @@
 						LastSwiftMigration = 1250;
 					};
 					E8DB00000000000000000009 = {
+						LastSwiftMigration = 1250;
+					};
+					E8DC00000000000000000009 = {
 						LastSwiftMigration = 1250;
 					};
 				};
@@ -256,6 +310,7 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* Aspera */,
 				E8DB00000000000000000009 /* DeviceActivityMonitorExtension */,
+				E8DC00000000000000000009 /* DeviceActivityReportExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -273,6 +328,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E8DB0000000000000000000B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E8DC0000000000000000000B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -427,6 +489,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E8DC0000000000000000000C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E8DC00000000000000000001 /* DeviceActivityReportExtension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -434,6 +504,11 @@
 			isa = PBXTargetDependency;
 			target = E8DB00000000000000000009 /* DeviceActivityMonitorExtension */;
 			targetProxy = E8DB0000000000000000000E /* PBXContainerItemProxy */;
+		};
+		E8DC0000000000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E8DC00000000000000000009 /* DeviceActivityReportExtension */;
+			targetProxy = E8DC0000000000000000000E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -631,8 +706,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DeviceActivityMonitorExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/PlugIns";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -661,8 +736,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = DeviceActivityMonitorExtension/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/PlugIns";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -671,6 +746,65 @@
 				MARKETING_VERSION = 1.2.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
 				PRODUCT_BUNDLE_IDENTIFIER = com.dominicross.aspera.DeviceActivityMonitorExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		E8DC0000000000000000000F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = DeviceActivityReportExtension/DeviceActivityReportExtension.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DeviceActivityReportExtension/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/PlugIns";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.dominicross.aspera.DeviceActivityReportExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		E8DC00000000000000000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = DeviceActivityReportExtension/DeviceActivityReportExtension.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = DeviceActivityReportExtension/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/PlugIns";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.dominicross.aspera.DeviceActivityReportExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -707,6 +841,15 @@
 			buildConfigurations = (
 				E8DB0000000000000000000F /* Debug */,
 				E8DB00000000000000000010 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E8DC00000000000000000011 /* Build configuration list for PBXNativeTarget "DeviceActivityReportExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E8DC0000000000000000000F /* Debug */,
+				E8DC00000000000000000010 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

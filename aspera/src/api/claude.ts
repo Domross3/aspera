@@ -7,7 +7,12 @@ import { DailyLog, InsightsResponse, Moment } from "../types";
 // runtime should pull from it — that way the user sees the actual state
 // of their data and knows exactly what's missing.
 import type { CohortTelemetry } from "../lib/mockData";
+import { readScreenTimeTotals } from "../lib/screenTime/bridge";
+import { formatScreenTimeBlock } from "../lib/screenTime/prompt";
+import type { ScreenTimeDayTotals } from "../lib/screenTime/types";
 import { getRecentMoments } from "../storage/storage";
+
+export { formatScreenTimeBlock } from "../lib/screenTime/prompt";
 
 // Cap the moments block in the insights prompt to keep payload bounded.
 // 50 short labels is comfortably under any reasonable token budget.
@@ -85,7 +90,11 @@ const INSIGHTS_RETRY_MAX_TOKENS = 2800;
 
 // ── Insights Generation ─────────────────────────────────────────────────
 
-function buildInsightsPrompt(logs: DailyLog[], moments: Moment[] = []): string {
+function buildInsightsPrompt(
+  logs: DailyLog[],
+  moments: Moment[] = [],
+  screenTimeTotals: ScreenTimeDayTotals[] = [],
+): string {
   const exampleResponse = {
     summary: "Exactly 2 concise sentences summarizing the user's patterns",
     correlations: [
@@ -144,6 +153,7 @@ If so, note this as a correlation.
     : ""
 }
 ${formatMomentsBlock(moments)}
+${formatScreenTimeBlock(screenTimeTotals)}
 KEYSTONE HABIT DETECTION:
 Look for habits that create positive cascading effects across multiple outputs.
 A Keystone Habit is a single input that, when present, correlates with improvements in 2+ output metrics simultaneously.
@@ -449,10 +459,16 @@ export async function generateInsights(
   // (e.g. "you nap outside on high-energy days") alongside the structured
   // daily-log data. Capped at MAX_MOMENTS_IN_PROMPT inside the formatter.
   let recentMoments: Moment[] = [];
+  let screenTimeTotals: ScreenTimeDayTotals[] = [];
   try {
     recentMoments = await getRecentMoments(7);
   } catch (err) {
     console.warn("[insights] could not load recent moments", err);
+  }
+  try {
+    screenTimeTotals = await readScreenTimeTotals();
+  } catch (err) {
+    console.warn("[insights] could not load Screen Time totals", err);
   }
 
   // Aspera voice + JSON output directive. Optional self-compassion prefix
@@ -464,7 +480,7 @@ export async function generateInsights(
   if (recentMoments.length > 0) {
     systemPrompt = `${systemPrompt}\n\nIf the user's recent moments reveal patterns or notable events (long naps, social conflicts, sleep disruptions, unusual choices), surface them in your summary and reference them in correlations alongside the structured daily-log data.`;
   }
-  const basePrompt = buildInsightsPrompt(logs, recentMoments);
+  const basePrompt = buildInsightsPrompt(logs, recentMoments, screenTimeTotals);
   const prompts = [basePrompt, buildRetryPrompt(basePrompt)];
   const maxTokens = [INSIGHTS_MAX_TOKENS, INSIGHTS_RETRY_MAX_TOKENS];
   let lastRawResponse = "";

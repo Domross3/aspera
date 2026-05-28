@@ -28,6 +28,18 @@
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|@expo-google-fonts/.*|react-navigation|@react-navigation/.*|@unimodules/.*|unimodules|sentry-expo|native-base|react-native-svg))"
     ],
+    "modulePathIgnorePatterns": [
+      "<rootDir>/ios/Pods/",
+      "<rootDir>/ios/build/",
+      "<rootDir>/android/",
+      "<rootDir>/dist/"
+    ],
+    "watchPathIgnorePatterns": [
+      "<rootDir>/ios/Pods/",
+      "<rootDir>/ios/build/",
+      "<rootDir>/android/",
+      "<rootDir>/dist/"
+    ],
     "testPathIgnorePatterns": [
       "/node_modules/",
       "/.expo/",

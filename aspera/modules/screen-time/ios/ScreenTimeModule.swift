@@ -71,10 +71,21 @@ public class ScreenTimeModule: Module {
       try grantRestrictionCheat(restrictionId: restrictionId, minutes: minutes)
     }
 
+    AsyncFunction("refreshDailyTotals") { () async throws -> [[String: Any]] in
+      guard #available(iOS 16.0, *) else { return [] }
+      try await presentScreenTimeReport()
+      return readStoredDailyTotals()
+    }
+
     AsyncFunction("readDailyTotals") { () async throws -> [[String: Any]] in
-      return []
+      return readStoredDailyTotals()
     }
   }
+}
+
+@available(iOS 16.0, *)
+extension DeviceActivityReport.Context {
+  static let asperaDailyTotals = Self("Aspera Daily Totals")
 }
 
 @available(iOS 16.0, *)
@@ -99,6 +110,87 @@ private struct PickerHostView: View {
         }
     }
   }
+}
+
+@available(iOS 16.0, *)
+private struct ScreenTimeReportHostView: View {
+  let onDone: () -> Void
+
+  var body: some View {
+    NavigationView {
+      VStack(spacing: 16) {
+        Text("Aspera reads aggregate Screen Time categories only. App names stay inside Apple's picker and report sandbox.")
+          .font(.footnote)
+          .foregroundStyle(.secondary)
+          .multilineTextAlignment(.center)
+          .padding(.horizontal)
+
+        DeviceActivityReport(.asperaDailyTotals, filter: screenTimeReportFilter())
+          .frame(minHeight: 180)
+      }
+      .padding(.vertical, 20)
+      .navigationTitle("Screen Time")
+      .toolbar {
+        ToolbarItem(placement: .confirmationAction) {
+          Button("Done", action: onDone)
+        }
+      }
+    }
+  }
+}
+
+@available(iOS 16.0, *)
+private func screenTimeReportFilter() -> DeviceActivityFilter {
+  let calendar = Calendar.current
+  let todayStart = calendar.startOfDay(for: Date())
+  let start = calendar.date(
+    byAdding: .day,
+    value: -(ScreenTimeConstants.reportLookbackDays - 1),
+    to: todayStart
+  ) ?? todayStart
+  let end = calendar.date(byAdding: .day, value: 1, to: todayStart) ?? Date()
+  return DeviceActivityFilter(
+    segment: .daily(during: DateInterval(start: start, end: end)),
+    users: .all,
+    devices: .all
+  )
+}
+
+@available(iOS 16.0, *)
+private func presentScreenTimeReport() async throws {
+  try await withCheckedThrowingContinuation { continuation in
+    Task { @MainActor in
+      guard let presenter = topViewController() else {
+        continuation.resume(throwing: ScreenTimeException("Could not present Screen Time report."))
+        return
+      }
+
+      var hostingController: UIHostingController<ScreenTimeReportHostView>?
+      let view = ScreenTimeReportHostView(
+        onDone: {
+          hostingController?.dismiss(animated: true) {
+            continuation.resume()
+          }
+        }
+      )
+      hostingController = UIHostingController(rootView: view)
+      hostingController?.isModalInPresentation = true
+      presenter.present(hostingController!, animated: true)
+    }
+  }
+}
+
+private func readStoredDailyTotals() -> [[String: Any]] {
+  guard
+    let json = ScreenTimeConstants.sharedDefaults?.string(
+      forKey: ScreenTimeConstants.dailyTotalsKey
+    ),
+    let data = json.data(using: .utf8),
+    let object = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]]
+  else {
+    return []
+  }
+  return object
 }
 
 @available(iOS 16.0, *)
@@ -141,6 +233,7 @@ private func presentFamilyActivityPicker(restrictionId: String) async throws -> 
         }
       )
       hostingController = UIHostingController(rootView: view)
+      hostingController?.isModalInPresentation = true
       presenter.present(hostingController!, animated: true)
     }
   }

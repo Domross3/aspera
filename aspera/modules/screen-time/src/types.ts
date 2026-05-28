@@ -52,5 +52,8 @@ export interface ScreenTimeNativeModule {
   clearRestrictionState(restrictionId: string): Promise<void>;
   // Clears the shield + starts a guarded transient re-arm schedule.
   grantCheat(restrictionId: string, minutes: number): Promise<void>;
+  // Presents the native DeviceActivityReport view. The report extension runs
+  // while this view is visible and writes aggregate totals to the App Group.
+  refreshDailyTotals(): Promise<ScreenTimeDayTotals[]>;
   readDailyTotals(): Promise<ScreenTimeDayTotals[]>;
 }

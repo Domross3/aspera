@@ -2,15 +2,11 @@
 //
 // v1 (this commit, sub-phase 8c) hosts:
 //   - BrowsingFocus card (relocated from Today's __DEV__ block)
-//   - ScreenTimeCard (relocated; still mock-fed until 8b wires the real
-//     native data source)
-//   - Screen Time auth + restriction draft CRUD
+//   - Screen Time auth + native aggregate warmup
+//   - Restriction CRUD + native app-limit enforcement
 //   - Placeholder card for Experiments — implemented in 8f
 //
 // Future sub-phases fill in:
-//   - 8a → FamilyControls auth flow lives in the top status card
-//   - 8b → ScreenTimeCard switches to real per-category data + warmup count
-//   - 8d-B → native picker + shielding wires into the restriction drafts
 //   - 8f → ExperimentList replaces the Experiments placeholder
 
 import React, { useState } from "react";
@@ -31,6 +27,7 @@ import SectionLabel from "../../src/components/common/SectionLabel";
 import CheatUnlockSheet from "../../src/components/tech/CheatUnlockSheet";
 import RestrictionEditor from "../../src/components/tech/RestrictionEditor";
 import RestrictionList from "../../src/components/tech/RestrictionList";
+import ScreenTimeWarmupCard from "../../src/components/tech/ScreenTimeWarmupCard";
 import { useRestrictions } from "../../src/hooks/useRestrictions";
 import { useScreenTime } from "../../src/hooks/useScreenTime";
 import { useSettings } from "../../src/hooks/useSettings";
@@ -130,6 +127,9 @@ export default function TechScreen() {
             on `approved`. */}
         <SectionLabel label="Screen Time" />
         <ScreenTimeAuthCard screenTime={screenTime} />
+        {screenTime.authStatus === "approved" ? (
+          <ScreenTimeWarmupCard screenTime={screenTime} />
+        ) : null}
 
         <SectionLabel label="Restrictions" />
         {screenTime.authStatus === "approved" ? (
@@ -157,9 +157,8 @@ export default function TechScreen() {
                 { color: COLORS.textMuted, marginTop: SPACING.xs },
               ]}
             >
-              Once authorization is approved, you can draft app-limit
-              configuration here. The Apple app picker and real shielding land
-              in the next native build.
+              Once authorization is approved, you can choose apps and save
+              active limits from this tab.
             </Text>
           </GradientCard>
         )}

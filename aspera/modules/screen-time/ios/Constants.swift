@@ -13,6 +13,7 @@ enum ScreenTimeConstants {
   static func cheatExpiryKey(_ id: String) -> String { "cheatExpiry:\(id)" }
   static func lastAppliedReasonKey(_ id: String) -> String { "lastAppliedReason:\(id)" }
   static let dailyTotalsKey = "dailyTotals"
+  static let reportLookbackDays = 7
 
   static func windowActivity(_ id: String) -> String { "restriction-window-\(id)" }
   static func capActivity(_ id: String) -> String { "restriction-cap-\(id)" }
