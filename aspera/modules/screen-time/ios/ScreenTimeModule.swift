@@ -158,7 +158,7 @@ private func screenTimeReportFilter() -> DeviceActivityFilter {
 
 @available(iOS 16.0, *)
 private func presentScreenTimeReport() async throws {
-  try await withCheckedThrowingContinuation { continuation in
+  try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
     Task { @MainActor in
       guard let presenter = topViewController() else {
         continuation.resume(throwing: ScreenTimeException("Could not present Screen Time report."))
@@ -169,7 +169,7 @@ private func presentScreenTimeReport() async throws {
       let view = ScreenTimeReportHostView(
         onDone: {
           hostingController?.dismiss(animated: true) {
-            continuation.resume()
+            continuation.resume(returning: ())
           }
         }
       )
@@ -195,7 +195,7 @@ private func readStoredDailyTotals() -> [[String: Any]] {
 
 @available(iOS 16.0, *)
 private func presentFamilyActivityPicker(restrictionId: String) async throws -> [String: Any] {
-  try await withCheckedThrowingContinuation { continuation in
+  try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<[String: Any], Error>) in
     Task { @MainActor in
       guard let presenter = topViewController() else {
         continuation.resume(throwing: ScreenTimeException("Could not present app picker."))
