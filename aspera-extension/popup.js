@@ -26,9 +26,9 @@ function computeFocusScore(totals) {
 }
 
 function getScoreColor(score) {
-  if (score >= 70) return "#34D399"; // green
-  if (score >= 40) return "#FBBF24"; // amber
-  return "#F87171"; // red
+  if (score >= 70) return "#D4D4D4";
+  if (score >= 40) return "#AFAFAF";
+  return "#8A8A8A";
 }
 
 // ── Render ───────────────────────────────────────────────────────
@@ -120,6 +120,7 @@ render();
 (function () {
   const taskInput = document.getElementById("bigrock-input");
   const deepToggle = document.getElementById("deepwork-toggle");
+  const delaySelect = document.getElementById("delay-seconds");
   const statusEl = document.getElementById("bigrock-status");
 
   // Load current state on popup open
@@ -128,6 +129,7 @@ render();
     if (state) {
       taskInput.value = state.task || "";
       deepToggle.checked = !!state.isDeepWork;
+      delaySelect.value = String(state.delaySeconds || 15);
       updateStatus(state);
     }
   });
@@ -136,6 +138,7 @@ render();
     const state = {
       task: taskInput.value.trim(),
       isDeepWork: deepToggle.checked,
+      delaySeconds: Number(delaySelect.value) || 15,
     };
     chrome.storage.sync.set({ aspera_big_rock: state });
     updateStatus(state);
@@ -159,4 +162,5 @@ render();
   // Save on every change
   taskInput.addEventListener("input", persist);
   deepToggle.addEventListener("change", persist);
+  delaySelect.addEventListener("change", persist);
 })();

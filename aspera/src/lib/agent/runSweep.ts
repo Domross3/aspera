@@ -8,7 +8,7 @@
 //   1. Build outcome series (daily mood/energy means + daily focus).
 //   2. Build curated levers (alcohol, event toggles/presence, Moment labels).
 //   3. For each pair with adequate power (≥ minGroupDays on BOTH sides), run
-//      the bootstrap `compareDays`. Only powered pairs enter the family.
+//      the moving-block bootstrap. Only powered pairs enter the family.
 //   4. Gate the family with Benjamini-Hochberg FDR (bound false-discovery rate)
 //      then an effect-size floor (must be glaring, not merely distinguishable).
 //   5. Return survivors as HYPOTHESES, strongest first.
@@ -20,7 +20,7 @@ import type {
   MoodCheckIn,
   Moment,
 } from "../../types";
-import { compareDays } from "../experiments/compare";
+import { compareDaysBlocked } from "../experiments/blockBootstrap";
 import type { CompareOpts, DayMetric } from "../experiments/types";
 import { dailyFocus, dailyMoodEnergy } from "./aggregate";
 import { buildLevers, type Lever } from "./candidates";
@@ -120,7 +120,7 @@ export function runSweep(
     for (const outcome of outcomes) {
       const { control, treatment } = splitByLever(outcome.series, lever);
       if (treatment.length < minGroup || control.length < minGroup) continue;
-      const result = compareDays(control, treatment, opts);
+      const result = compareDaysBlocked(control, treatment, opts);
       pending.push({ lever, outcome, result });
     }
   }
