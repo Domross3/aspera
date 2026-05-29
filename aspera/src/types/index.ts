@@ -195,7 +195,11 @@ export type RestrictionSpec =
       windowStart: string /* "HH:MM" */;
       windowEnd: string;
     }
-  | { kind: "daily_limit"; dailyLimitMin: number };
+  | { kind: "daily_limit"; dailyLimitMin: number }
+  // Gratification delay: apps stay reachable but each open requires a calm
+  // pause of `delaySeconds` (10–60) before a fixed access window. No schedule —
+  // the shield is persistent and lifted briefly via the pause + grantCheat.
+  | { kind: "delay"; delaySeconds: number };
 
 export interface Restriction {
   id: string;

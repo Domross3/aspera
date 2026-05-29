@@ -29,11 +29,12 @@ export interface ScreenTimeDayTotals {
 export interface NativeRestrictionConfig {
   id: string;
   active: boolean;
-  mode: "time_window" | "daily_limit";
+  mode: "time_window" | "daily_limit" | "delay";
   weekdays: number[]; // 0=Sun … 6=Sat
   windowStart?: string; // "HH:MM"
   windowEnd?: string; // "HH:MM"
   dailyLimitMin?: number;
+  delaySeconds?: number;
   selectedAppCount: number;
   selectedCategoryCount: number;
   updatedAt: number;

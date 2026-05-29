@@ -12,6 +12,7 @@ import {
   saveRestrictionWithNative,
 } from "../lib/restrictionBridge";
 import {
+  applyShield,
   clearRestrictionState,
   clearShield,
   presentPicker,
@@ -39,6 +40,7 @@ const nativeBridge: RestrictionNativeBridge = {
   presentPicker,
   startMonitoring,
   stopMonitoring,
+  applyShield,
   clearShield,
   clearRestrictionState,
 };

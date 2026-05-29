@@ -28,6 +28,10 @@ import {
   restrictionWithKind,
   validateRestrictionDraft,
 } from "../../lib/restrictions";
+import {
+  DELAY_MAX_SECONDS,
+  DELAY_MIN_SECONDS,
+} from "../../lib/gratificationDelay";
 
 interface Props {
   visible: boolean;
@@ -198,6 +202,12 @@ export default function RestrictionEditor({
                 active={draft.spec.kind === "daily_limit"}
                 onPress={() => setKind("daily_limit")}
               />
+              <Segment
+                label="Delay"
+                icon="leaf-outline"
+                active={draft.spec.kind === "delay"}
+                onPress={() => setKind("delay")}
+              />
             </View>
 
             <View style={styles.activeRow}>
@@ -239,7 +249,7 @@ export default function RestrictionEditor({
                   />
                 </View>
               </View>
-            ) : (
+            ) : draft.spec.kind === "daily_limit" ? (
               <View style={styles.sectionBlock}>
                 <ContinuousSlider
                   label="Daily cap"
@@ -259,6 +269,31 @@ export default function RestrictionEditor({
                     }))
                   }
                 />
+              </View>
+            ) : (
+              <View style={styles.sectionBlock}>
+                <ContinuousSlider
+                  label="Pause before opening"
+                  min={DELAY_MIN_SECONDS}
+                  max={DELAY_MAX_SECONDS}
+                  step={5}
+                  value={draft.spec.delaySeconds}
+                  accentColor={COLORS.accent}
+                  formatValue={(value) => `${Math.round(value)}s`}
+                  onChange={(delaySeconds) =>
+                    setDraft((current) => ({
+                      ...current,
+                      spec: {
+                        kind: "delay",
+                        delaySeconds: Math.round(delaySeconds),
+                      },
+                    }))
+                  }
+                />
+                <Text style={styles.helperText}>
+                  Each time you open these apps, take a calm pause first. Always
+                  available — the wait is the friction.
+                </Text>
               </View>
             )}
 
