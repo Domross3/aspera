@@ -12,6 +12,7 @@ export interface RestrictionNativeBridge {
   presentPicker: (restrictionId: string) => Promise<PickerResult>;
   startMonitoring: (config: NativeRestrictionConfig) => Promise<void>;
   stopMonitoring: (restrictionId: string) => Promise<void>;
+  applyShield: (restrictionId: string) => Promise<void>;
   clearShield: (restrictionId: string) => Promise<void>;
   clearRestrictionState: (restrictionId: string) => Promise<void>;
 }
@@ -48,6 +49,13 @@ export async function syncRestrictionNative(
   native: RestrictionNativeBridge,
 ): Promise<void> {
   if (restriction.active) {
+    // Delay mode has no schedule/monitor — it's a persistent shield that the
+    // breath-pause lifts briefly via grantCheat. Shield directly rather than
+    // routing through the DeviceActivity monitor used by the other kinds.
+    if (restriction.spec.kind === "delay") {
+      await native.applyShield(restriction.id);
+      return;
+    }
     await native.startMonitoring(toNativeRestrictionConfig(restriction));
     return;
   }

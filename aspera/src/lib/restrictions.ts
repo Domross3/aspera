@@ -1,5 +1,11 @@
 import type { Restriction, RestrictionSpec } from "../types";
 import type { NativeRestrictionConfig } from "../../modules/screen-time/src/types";
+import {
+  clampDelaySeconds,
+  DELAY_DEFAULT_SECONDS,
+  DELAY_MAX_SECONDS,
+  DELAY_MIN_SECONDS,
+} from "./gratificationDelay";
 
 export const ALL_WEEKDAYS = [0, 1, 2, 3, 4, 5, 6] as const;
 export const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -12,6 +18,21 @@ const DEFAULT_TIME_WINDOW = {
   windowEnd: "23:00",
 };
 const DEFAULT_DAILY_LIMIT_MIN = 30;
+
+function defaultSpecForKind(kind: RestrictionKind): RestrictionSpec {
+  switch (kind) {
+    case "time_window":
+      return {
+        kind,
+        windowStart: DEFAULT_TIME_WINDOW.windowStart,
+        windowEnd: DEFAULT_TIME_WINDOW.windowEnd,
+      };
+    case "daily_limit":
+      return { kind, dailyLimitMin: DEFAULT_DAILY_LIMIT_MIN };
+    case "delay":
+      return { kind, delaySeconds: DELAY_DEFAULT_SECONDS };
+  }
+}
 
 const UUID_V4_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -55,17 +76,7 @@ export function createDefaultRestriction(
     selectedCategoryCount: 0,
     weekdays: [...ALL_WEEKDAYS],
     active: false,
-    spec:
-      kind === "time_window"
-        ? {
-            kind,
-            windowStart: DEFAULT_TIME_WINDOW.windowStart,
-            windowEnd: DEFAULT_TIME_WINDOW.windowEnd,
-          }
-        : {
-            kind,
-            dailyLimitMin: DEFAULT_DAILY_LIMIT_MIN,
-          },
+    spec: defaultSpecForKind(kind),
     createdAt: now,
     updatedAt: now,
   };
@@ -78,17 +89,7 @@ export function restrictionWithKind(
   if (restriction.spec.kind === kind) return restriction;
   return {
     ...restriction,
-    spec:
-      kind === "time_window"
-        ? {
-            kind,
-            windowStart: DEFAULT_TIME_WINDOW.windowStart,
-            windowEnd: DEFAULT_TIME_WINDOW.windowEnd,
-          }
-        : {
-            kind,
-            dailyLimitMin: DEFAULT_DAILY_LIMIT_MIN,
-          },
+    spec: defaultSpecForKind(kind),
   };
 }
 
@@ -125,10 +126,15 @@ export function normalizeRestrictionForSave(
             windowStart: restriction.spec.windowStart,
             windowEnd: restriction.spec.windowEnd,
           }
-        : {
-            kind: "daily_limit",
-            dailyLimitMin: Math.round(restriction.spec.dailyLimitMin),
-          },
+        : restriction.spec.kind === "daily_limit"
+          ? {
+              kind: "daily_limit",
+              dailyLimitMin: Math.round(restriction.spec.dailyLimitMin),
+            }
+          : {
+              kind: "delay",
+              delaySeconds: clampDelaySeconds(restriction.spec.delaySeconds),
+            },
     updatedAt: now,
   };
 }
@@ -165,13 +171,28 @@ export function validateRestrictionDraft(restriction: Restriction): string[] {
     if (restriction.active && selectedAppCount + selectedCategoryCount === 0) {
       errors.push("Choose at least one app or category before activating.");
     }
-  } else if (
-    !Number.isFinite(restriction.spec.dailyLimitMin) ||
-    restriction.spec.dailyLimitMin <= 0
-  ) {
-    errors.push("Daily caps must be greater than 0.");
-  } else if (restriction.active && selectedAppCount === 0) {
-    errors.push("Choose at least one app before activating a daily cap.");
+  } else if (restriction.spec.kind === "daily_limit") {
+    if (
+      !Number.isFinite(restriction.spec.dailyLimitMin) ||
+      restriction.spec.dailyLimitMin <= 0
+    ) {
+      errors.push("Daily caps must be greater than 0.");
+    } else if (restriction.active && selectedAppCount === 0) {
+      errors.push("Choose at least one app before activating a daily cap.");
+    }
+  } else {
+    if (
+      !Number.isFinite(restriction.spec.delaySeconds) ||
+      restriction.spec.delaySeconds < DELAY_MIN_SECONDS ||
+      restriction.spec.delaySeconds > DELAY_MAX_SECONDS
+    ) {
+      errors.push(
+        `Delay must be between ${DELAY_MIN_SECONDS} and ${DELAY_MAX_SECONDS} seconds.`,
+      );
+    }
+    if (restriction.active && selectedAppCount + selectedCategoryCount === 0) {
+      errors.push("Choose at least one app or category before activating.");
+    }
   }
 
   return errors;
@@ -182,7 +203,14 @@ export function isRestrictionDraftValid(restriction: Restriction): boolean {
 }
 
 export function formatRestrictionMode(restriction: Restriction): string {
-  return restriction.spec.kind === "time_window" ? "Time Window" : "Daily Cap";
+  switch (restriction.spec.kind) {
+    case "time_window":
+      return "Time Window";
+    case "daily_limit":
+      return "Daily Cap";
+    case "delay":
+      return "Delay";
+  }
 }
 
 export function formatWeekdays(weekdays: number[]): string {
@@ -196,6 +224,9 @@ export function formatWeekdays(weekdays: number[]): string {
 export function formatRestrictionSchedule(restriction: Restriction): string {
   if (restriction.spec.kind === "daily_limit") {
     return `${restriction.spec.dailyLimitMin} min/app`;
+  }
+  if (restriction.spec.kind === "delay") {
+    return `${restriction.spec.delaySeconds}s pause`;
   }
   return `${restriction.spec.windowStart}-${restriction.spec.windowEnd}`;
 }
@@ -237,6 +268,14 @@ export function toNativeRestrictionConfig(
       mode: "time_window",
       windowStart: normalized.spec.windowStart,
       windowEnd: normalized.spec.windowEnd,
+    };
+  }
+
+  if (normalized.spec.kind === "delay") {
+    return {
+      ...base,
+      mode: "delay",
+      delaySeconds: normalized.spec.delaySeconds,
     };
   }
 

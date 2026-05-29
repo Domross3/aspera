@@ -25,6 +25,7 @@ import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
 import CheatUnlockSheet from "../../src/components/tech/CheatUnlockSheet";
+import BreathPauseSheet from "../../src/components/tech/BreathPauseSheet";
 import RestrictionEditor from "../../src/components/tech/RestrictionEditor";
 import RestrictionList from "../../src/components/tech/RestrictionList";
 import ScreenTimeWarmupCard from "../../src/components/tech/ScreenTimeWarmupCard";
@@ -32,6 +33,7 @@ import { useRestrictions } from "../../src/hooks/useRestrictions";
 import { useScreenTime } from "../../src/hooks/useScreenTime";
 import { useSettings } from "../../src/hooks/useSettings";
 import { grantCheat } from "../../modules/screen-time/src";
+import { DELAY_ACCESS_WINDOW_MINUTES } from "../../src/lib/gratificationDelay";
 import type { CheatPolicy, Restriction } from "../../src/types";
 
 export default function TechScreen() {
@@ -43,6 +45,9 @@ export default function TechScreen() {
   const [editingRestriction, setEditingRestriction] =
     useState<Restriction | null>(null);
   const [cheatRestriction, setCheatRestriction] = useState<Restriction | null>(
+    null,
+  );
+  const [pauseRestriction, setPauseRestriction] = useState<Restriction | null>(
     null,
   );
 
@@ -88,6 +93,11 @@ export default function TechScreen() {
   ) => {
     await grantCheat(restriction.id, 30);
     await settingsState.update({ cheatPolicy: nextPolicy });
+  };
+
+  const handleDelayUnlock = async (restriction: Restriction) => {
+    await grantCheat(restriction.id, DELAY_ACCESS_WINDOW_MINUTES);
+    setPauseRestriction(null);
   };
 
   return (
@@ -142,7 +152,11 @@ export default function TechScreen() {
             onEdit={openEditRestriction}
             onCheat={(restriction) => {
               void Haptics.selectionAsync();
-              setCheatRestriction(restriction);
+              if (restriction.spec.kind === "delay") {
+                setPauseRestriction(restriction);
+              } else {
+                setCheatRestriction(restriction);
+              }
             }}
             onRefresh={() => void restrictionState.refresh()}
           />
@@ -190,6 +204,12 @@ export default function TechScreen() {
         policy={settingsState.settings.cheatPolicy}
         onCancel={() => setCheatRestriction(null)}
         onUnlock={handleCheatUnlock}
+      />
+      <BreathPauseSheet
+        visible={pauseRestriction != null}
+        restriction={pauseRestriction}
+        onCancel={() => setPauseRestriction(null)}
+        onUnlock={handleDelayUnlock}
       />
     </LinearGradient>
   );

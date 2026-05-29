@@ -16,6 +16,7 @@ function createNativeMock(): RestrictionNativeBridge {
     })),
     startMonitoring: jest.fn(async () => {}),
     stopMonitoring: jest.fn(async () => {}),
+    applyShield: jest.fn(async () => {}),
     clearShield: jest.fn(async () => {}),
     clearRestrictionState: jest.fn(async () => {}),
   };

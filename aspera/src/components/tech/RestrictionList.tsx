@@ -165,8 +165,18 @@ export default function RestrictionList({
               disabled={saving}
               style={styles.cheatButton}
             >
-              <Ionicons name="key-outline" size={15} color={COLORS.warning} />
-              <Text style={styles.cheatButtonText}>Use cheat</Text>
+              <Ionicons
+                name={
+                  restriction.spec.kind === "delay"
+                    ? "leaf-outline"
+                    : "key-outline"
+                }
+                size={15}
+                color={COLORS.warning}
+              />
+              <Text style={styles.cheatButtonText}>
+                {restriction.spec.kind === "delay" ? "Take a pause" : "Use cheat"}
+              </Text>
             </TouchableOpacity>
           ) : null}
         </TouchableOpacity>
