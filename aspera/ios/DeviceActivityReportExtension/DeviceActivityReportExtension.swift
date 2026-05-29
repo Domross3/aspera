@@ -19,13 +19,19 @@ extension DeviceActivityReport.Context {
 @main
 struct AsperaDeviceActivityReportExtension: DeviceActivityReportExtension {
   var body: some DeviceActivityReportScene {
-    ScreenTimeDailyTotalsReport { days in
+    ScreenTimeDailyTotalsReport { (days: [ScreenTimeReportDay]) in
       ScreenTimeDailyTotalsView(days: days)
     }
   }
 }
 
 struct ScreenTimeDailyTotalsReport: DeviceActivityReportScene {
+  // Pin the DeviceActivityReportScene associated types explicitly. Left to
+  // inference (from `content` / `makeConfiguration`) the compiler can fail with
+  // "generic parameter could not be inferred"; spelling them out is safe.
+  typealias Configuration = [ScreenTimeReportDay]
+  typealias Content = ScreenTimeDailyTotalsView
+
   let context: DeviceActivityReport.Context = .asperaDailyTotals
   let content: ([ScreenTimeReportDay]) -> ScreenTimeDailyTotalsView
 
@@ -51,7 +57,7 @@ struct ScreenTimeDailyTotalsReport: DeviceActivityReportScene {
 
     let days = byDate.keys.sorted().map { date in
       let categories = byDate[date] ?? emptyCategories()
-      let total = categories.values.reduce(0, +)
+      let total = categories.values.reduce(0) { $0 + $1 }
       return ScreenTimeReportDay(
         date: date,
         byCategory: categories,
