@@ -25,6 +25,7 @@ import CorrelationCard from "../insights/CorrelationCard";
 import TrendBarsSection from "../insights/TrendBarsSection";
 import SearchBar from "../insights/SearchBar";
 import ComparePicker from "./ComparePicker";
+import AgentFindingsCard from "./AgentFindingsCard";
 
 // Need at least 3 days of logs for the AI to find meaningful patterns —
 // mirrors the gate that lived in `insights.tsx`.
@@ -60,6 +61,11 @@ export default function PatternsSection() {
 
       {/* Natural-language search — works without generated insights. */}
       <SearchBar />
+
+      {/* Passive confidence-gated agent — surfaces glaring patterns from the
+          user's own data, on-device, no AI call. Shown above the manual AI
+          insights because it's the calm, automatic layer. */}
+      <AgentFindingsCard />
 
       {/* Generate button */}
       <TouchableOpacity
