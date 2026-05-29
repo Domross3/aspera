@@ -48,7 +48,7 @@ The Chrome extension is loaded manually via chrome://extensions (developer mode,
 - Supabase Postgres + Auth — per-user data is cloud-backed, scoped via RLS (migrations 002 + 003)
 - AsyncStorage as a write-through cache for offline support
 - Apple Sign In for mobile auth
-- Dark theme, #6C63FF accent
+- Grayscale dark theme; `COLORS` lives in `aspera/src/constants/theme.ts`
 - `expo-updates` for OTA JS shipping (`eas update --branch preview`)
 
 ## Key constraints
@@ -56,7 +56,7 @@ The Chrome extension is loaded manually via chrome://extensions (developer mode,
 - **Storage**: per-user cloud-backed via Supabase, server-encrypted, scoped via RLS. AsyncStorage acts as a write-through cache (Phase B-2). Mobile reads cloud first, falls back to cache on network failure; writes go to both.
 - **API keys**: never bundled into the mobile binary. Claude calls go through aspera-web's `/api/mobile/claude` proxy with a bearer secret (`EXPO_PUBLIC_MOBILE_API_SECRET`). Anthropic key only lives server-side on Vercel.
 - **Mocks**: `src/lib/mockData.ts` and mock-backed integrations are dev-only scaffolding. They render only when `__DEV__` is true. Production builds start empty until real integrations land.
-- **Native Screen Time work**: `aspera/ios/` is committed state. Do not run `expo prebuild --clean` for Screen Controls work; edit native files directly and use full EAS/native builds because Family Controls, DeviceActivity, ManagedSettings, App Groups, and extensions cannot ship over OTA. Phase 8d-B implementation details live in `aspera/docs/phase-8d-b-screen-controls.md`.
+- **Native Screen Time work**: `aspera/ios/` is committed state and already contains the FamilyControls/DeviceActivity/ManagedSettings module plus monitor/report extension targets. Do not run `expo prebuild --clean` for Screen Controls work; edit native files directly and use full EAS/native builds because Family Controls, DeviceActivity, ManagedSettings, App Groups, and extensions cannot ship over OTA. Current review context lives in `aspera/docs/claude-review-2026-05-29.md`; Phase 8d-B implementation details live in `aspera/docs/phase-8d-b-screen-controls.md`.
 
 ## AI layer (`src/api/claude.ts`)
 
@@ -64,7 +64,7 @@ The Chrome extension is loaded manually via chrome://extensions (developer mode,
 - **Self-compassion prefix** auto-engages when weekly focus or energy averages < 5 (`detectBadWeek`). Modulates intensity, not identity.
 - **Living Briefing** — `getMorningBriefing(log, recentLogs)` returns 2–3 sentences for Today's header card.
 - **Insights** — `generateInsights(logs)` returns the `InsightsResponse` JSON shape. The retry/parse pipeline tolerates malformed model output. Exactly one correlation must be marked `isKeystone: true`.
-- **Somatic Interceptor** (`src/components/interceptor/SomaticInterceptor.tsx`) — never mention productivity/goals/tasks in reappraisal prompts. Currently orphaned in the codebase pending rewire as the "Reset" intervention.
+- **Somatic Interceptor** (`src/components/interceptor/SomaticInterceptor.tsx`) — never mention productivity/goals/tasks in reappraisal prompts. It is wired to the Today tab idle timer, and the Chrome extension now uses breath-first copy for its gratification-delay overlay.
 
 ## Code style
 
@@ -76,10 +76,13 @@ The Chrome extension is loaded manually via chrome://extensions (developer mode,
 
 ## Validation
 
-No test suite. Verify changes with:
+Prefer the repo-root wrapper plus focused Jest suites:
+
 `npm run mobile:typecheck`
 
-After UI changes, ship via OTA (`cd aspera && eas update --branch preview`), kill + reopen the installed app, and verify on device. EAS Build is only needed when adding native modules.
+`cd aspera && npm test -- --runInBand`
+
+Before spending an EAS build, also run plist/Xcode lint and targeted Swift typechecks for any touched extension code. After UI-only changes, ship via OTA (`cd aspera && eas update --branch preview`), kill + reopen the installed app, and verify on device. EAS Build is only needed when native code or native project settings change.
 
 ## Extension changes
 
@@ -90,6 +93,6 @@ The Chrome extension is vanilla JS. After edits, reload the extension in chrome:
 - **Real HealthKit integration** (Phase B-4): native module + Apple Sign In coordination. Replaces the recently removed "Apple Health" badges with actual data.
 - **Type 5 + Type 2 contracts** (Phase B-5): daily-commitment + Big-Rock-bound interventions. Mobile + extension surfaces.
 - **Demo-first onboarding** (Phase B-6): 90-sec sample-day demo + constrained setup.
-- **iOS Family Controls / Tier 3/4 hard blocking** (Phase B-7): requires native rebuild + Apple approval.
+- **Additional iOS Family Controls scope** beyond the current app-limit build: requires a native rebuild and must preserve existing enforcement before adding new native surface.
 - **N-of-1 experiments UI** (Phase B-8).
 - **Real Spotify + Google Calendar integrations** (Phase B-9).

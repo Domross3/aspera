@@ -1,5 +1,24 @@
 # Aspera Claude Handoff
 
+## Current Status — 2026-05-29
+
+Screen Time is no longer merely planned. The mobile app now includes the local
+Screen Time Expo module, the DeviceActivity monitor/report extension targets,
+restriction UI, cheat flow, and guarded report-ingestion surface. Treat the next
+native step as **stabilization**, not new feature scope: preserve working app
+limits, keep the report extension as a guarded spike, and spend an EAS build
+only after local checks pass.
+
+The no-cloud-build pass also moved the app toward the current product identity:
+
+- shared mobile palette is grayscale via `src/constants/theme.ts`
+- passive agent sweeps use the moving-block bootstrap by default
+- weekly recap notifications are scheduled locally and route to Today
+- Chrome extension friction has configurable pause length + breath-first copy
+
+Review details for this pass live in
+`aspera/docs/claude-review-2026-05-29.md`.
+
 ## Product Direction
 
 Aspera is no longer just a daily log plus AI summaries. The product is moving toward an AI personal operating system that combines:
@@ -113,13 +132,18 @@ This means future insight generation can reason about:
 
 ## Recommended Next Build Steps
 
-1. Add an `Attention Mix` or `Holistic Time Spent` card to the Today tab using `AttentionSummary`.
-2. Feed `DailyIntegrationSummary` into the Insights UI directly, not just the Claude prompt.
-3. Move from Expo Go assumptions to an Expo development build path for native modules.
-4. Build an iOS Screen Time module using FamilyControls + DeviceActivity and normalize it into the existing `AttentionSummary` shape.
-5. Upgrade Settings from status-only cards to actual connection/auth flows.
-6. Replace mock connectors one by one without changing the normalized domain layer.
+1. Run the no-cloud-build verification set: mobile typecheck, focused Jest,
+   plist/Xcode lint, and targeted Swift typecheck.
+2. Spend one EAS preview build only after those checks pass; validate that app
+   limits, native cleanup, and cheat re-arm still work on device.
+3. Keep DeviceActivityReport ingestion behind the warmup/spike path until it is
+   proven App-Review-safe and can write aggregate totals to the App Group.
+4. Once native Screen Time is stable, feed proven Screen Time aggregates into
+   the existing `AttentionSummary` and weekly recap surfaces.
+5. Replace mock connectors one by one without changing the normalized domain
+   layer.
 
 ## Current Constraint
 
-iOS Screen Time is still **planned**, not implemented. The normalized data model was added first so native Screen Time can slot into the same architecture later without redesigning the whole app.
+The scarce resource is native build budget. Avoid new native scope until the
+current Screen Time binary is green and existing enforcement is preserved.

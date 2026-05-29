@@ -23,6 +23,10 @@ import {
   EVENING_LOG_NOTIFICATION_KIND,
   ensureDailyLogSchedule,
 } from "../src/lib/dailyLogNotifications";
+import {
+  WEEKLY_RECAP_NOTIFICATION_KIND,
+  ensureWeeklyRecapSchedule,
+} from "../src/lib/weeklyRecapNotifications";
 
 function AppLayout() {
   const router = useRouter();
@@ -67,6 +71,13 @@ function AppLayout() {
     void ensureDailyLogSchedule(settings.notificationSettings);
   }, [settingsLoading, settings.notificationSettings]);
 
+  // Weekly recap delivery for the confidence-gated agent. This is setting-free
+  // in v1: notification permission is the user's global opt-in.
+  useEffect(() => {
+    if (settingsLoading) return;
+    void ensureWeeklyRecapSchedule();
+  }, [settingsLoading]);
+
   // Re-arm every schedule whenever the app foregrounds. Without this, a
   // user who leaves the app backgrounded for a few days never re-rolls
   // their pulse window — the cold-start effects above only fire on a
@@ -79,6 +90,7 @@ function AppLayout() {
       void ensureQuickMoodSchedule(settings.notificationSettings);
       void ensureUserReminderSchedule(settings.userReminders ?? []);
       void ensureDailyLogSchedule(settings.notificationSettings);
+      void ensureWeeklyRecapSchedule();
     });
     return () => sub.remove();
   }, [settingsLoading, settings.notificationSettings, settings.userReminders]);
@@ -135,6 +147,11 @@ function AppLayout() {
     if (kind === EVENING_LOG_NOTIFICATION_KIND) {
       // Evening reflection is about logging the day — route to the Log tab.
       router.navigate("/(tabs)/log" as never);
+      return;
+    }
+    if (kind === WEEKLY_RECAP_NOTIFICATION_KIND) {
+      // Recaps live inside Today's Patterns section, so the tab root is enough.
+      router.push("/(tabs)" as never);
       return;
     }
   };

@@ -12,7 +12,9 @@ This phase enables:
 - A deliberate-friction cheat-code bypass.
 - Native cleanup when restrictions are disabled or deleted.
 
-Screen Time data ingestion/reporting remains a later phase.
+Screen Time data ingestion/reporting is present only as a guarded
+DeviceActivityReport spike. Enforcement is the preserved value path; report
+totals must be proven on device before they power user-visible insights.
 
 ## Entry Conditions
 
@@ -123,6 +125,8 @@ Required local checks:
 - `npm run mobile:typecheck`
 - `npm test -- --runInBand`
 - `pod install`
+- `plutil -lint` on the app/extension plists and Xcode project
+- targeted Swift typecheck for touched extension files
 - Native build checkpoint after the empty extension target.
 - Native build checkpoint after enforcement logic.
 

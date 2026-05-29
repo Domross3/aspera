@@ -5,12 +5,13 @@
 (function () {
   "use strict";
 
-  const COUNTDOWN_SECONDS = 15;
-  const ACCENT = "#6C63FF";
-  const ACCENT_ALT = "#00D4FF";
+  const DEFAULT_COUNTDOWN_SECONDS = 15;
+  const ACCENT = "#5E5E5E";
+  const ACCENT_ALT = "#A3A3A3";
   let overlayEl = null;
   let countdownInterval = null;
   let styleTag = null;
+  let currentCountdownSeconds = DEFAULT_COUNTDOWN_SECONDS;
 
   // ── Lock the page underneath ──────────────────────────────────
   function lockPage() {
@@ -53,8 +54,12 @@
   }
 
   // ── Build & inject the overlay ──────────────────────────────────
-  function showOverlay(taskName) {
+  function showOverlay(taskName, delaySeconds) {
     if (overlayEl) return;
+    currentCountdownSeconds =
+      Number.isFinite(delaySeconds) && delaySeconds > 0
+        ? Math.min(60, Math.max(5, Math.round(delaySeconds)))
+        : DEFAULT_COUNTDOWN_SECONDS;
 
     lockPage();
 
@@ -113,11 +118,16 @@
           background-clip: text;
         ">${escapeHtml(taskName)}</div>
 
+        <div style="
+          font-size: 16px; color: #D4D4D4; line-height: 1.45;
+          margin: -20px auto 28px; max-width: 360px;
+        ">Take one slow breath. If you still want the page after the pause, keep going deliberately.</div>
+
         <!-- Countdown -->
         <div id="aspera-countdown-text" style="
           font-size: 14px; color: #4A5568; margin-bottom: 16px;
           font-weight: 500;
-        ">This page will be available in ${COUNTDOWN_SECONDS}s</div>
+        ">This page will be available in ${currentCountdownSeconds}s</div>
 
         <!-- Progress bar -->
         <div style="
@@ -200,7 +210,7 @@
     });
 
     // Start countdown
-    let remaining = COUNTDOWN_SECONDS;
+    let remaining = currentCountdownSeconds;
     countdownInterval = setInterval(() => {
       remaining -= 1;
       updateCountdown(remaining);
@@ -213,7 +223,7 @@
 
     // Kick off the first bar update
     requestAnimationFrame(() => {
-      updateCountdown(COUNTDOWN_SECONDS);
+      updateCountdown(currentCountdownSeconds);
     });
   }
 
@@ -233,7 +243,8 @@
           : "Timer complete — stay focused?";
     }
     if (bar) {
-      const pct = ((COUNTDOWN_SECONDS - seconds) / COUNTDOWN_SECONDS) * 100;
+      const pct =
+        ((currentCountdownSeconds - seconds) / currentCountdownSeconds) * 100;
       bar.style.width = pct + "%";
     }
   }
@@ -271,7 +282,10 @@
   // ── Check state and decide ──────────────────────────────────────
   function checkAndApply(state) {
     if (state && state.isDeepWork && state.task && state.task.trim() !== "") {
-      showOverlay(state.task);
+      const delaySeconds = Number.isFinite(state.delaySeconds)
+        ? state.delaySeconds
+        : DEFAULT_COUNTDOWN_SECONDS;
+      showOverlay(state.task, delaySeconds);
     } else {
       removeOverlay();
     }
@@ -292,7 +306,12 @@
         newVal.task &&
         newVal.task.trim() !== ""
       ) {
-        if (!overlayEl) showOverlay(newVal.task);
+        if (!overlayEl) {
+          const delaySeconds = Number.isFinite(newVal.delaySeconds)
+            ? newVal.delaySeconds
+            : DEFAULT_COUNTDOWN_SECONDS;
+          showOverlay(newVal.task, delaySeconds);
+        }
       } else {
         removeOverlay();
       }

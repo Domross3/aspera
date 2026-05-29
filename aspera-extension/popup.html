@@ -30,7 +30,7 @@
         width: 28px;
         height: 28px;
         border-radius: 8px;
-        background: linear-gradient(135deg, #6c63ff, #00d4ff);
+        background: linear-gradient(135deg, #5e5e5e, #a3a3a3);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -100,13 +100,13 @@
         margin-bottom: 6px;
       }
       .time-bar .label.productive {
-        color: #34d399;
+        color: #d4d4d4;
       }
       .time-bar .label.neutral {
         color: #9ba8c4;
       }
       .time-bar .label.distracting {
-        color: #f87171;
+        color: #8a8a8a;
       }
       .time-bar .time {
         font-size: 18px;
@@ -144,13 +144,13 @@
         flex-shrink: 0;
       }
       .site-dot.productive {
-        background: #34d399;
+        background: #d4d4d4;
       }
       .site-dot.neutral {
         background: #9ba8c4;
       }
       .site-dot.distracting {
-        background: #f87171;
+        background: #8a8a8a;
       }
       .site-name {
         flex: 1;
@@ -211,10 +211,11 @@
         color: #4a5568;
       }
       .bigrock-input:focus {
-        border-color: #6c63ff;
+        border-color: #a3a3a3;
       }
 
-      .deepwork-row {
+      .deepwork-row,
+      .delay-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -222,6 +223,9 @@
         background: #111827;
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 10px;
+      }
+      .delay-row {
+        margin-top: 8px;
       }
       .deepwork-label {
         font-size: 13px;
@@ -268,11 +272,25 @@
           background 0.2s ease;
       }
       .toggle input:checked + .slider {
-        background: #6c63ff;
+        background: #5e5e5e;
       }
       .toggle input:checked + .slider::before {
         transform: translateX(18px);
         background: #fff;
+      }
+
+      .delay-select {
+        background: #1c2535;
+        color: #f0f4ff;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 6px 8px;
+        font: inherit;
+        font-size: 12px;
+        outline: none;
+      }
+      .delay-select:focus {
+        border-color: #a3a3a3;
       }
 
       .bigrock-status {
@@ -283,7 +301,7 @@
         min-height: 16px;
       }
       .bigrock-status.active {
-        color: #6c63ff;
+        color: #d4d4d4;
         font-weight: 600;
       }
     </style>
@@ -322,6 +340,18 @@
           <input type="checkbox" id="deepwork-toggle" />
           <span class="slider"></span>
         </label>
+      </div>
+      <div class="delay-row">
+        <div>
+          <div class="deepwork-label">Pause length</div>
+          <div class="deepwork-sublabel">Breath before override</div>
+        </div>
+        <select id="delay-seconds" class="delay-select">
+          <option value="5">5 sec</option>
+          <option value="15" selected>15 sec</option>
+          <option value="30">30 sec</option>
+          <option value="60">60 sec</option>
+        </select>
       </div>
       <div class="bigrock-status" id="bigrock-status"></div>
     </div>

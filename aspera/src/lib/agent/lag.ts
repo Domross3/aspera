@@ -12,7 +12,7 @@
 // standalone.)
 
 import type { ComparisonResult } from "../../types";
-import { compareDays } from "../experiments/compare";
+import { compareDaysBlocked } from "../experiments/blockBootstrap";
 import type { DayMetric, CompareOpts } from "../experiments/types";
 import { dailyFocus, dailyMoodEnergy, localDateKey } from "./aggregate";
 import { buildLevers, type Lever } from "./candidates";
@@ -91,7 +91,11 @@ export function runLagSweep(
         (lagged.has(d.date) ? treatment : control).push(d);
       }
       if (treatment.length < minGroup || control.length < minGroup) continue;
-      pending.push({ lever, outcome, result: compareDays(control, treatment, opts) });
+      pending.push({
+        lever,
+        outcome,
+        result: compareDaysBlocked(control, treatment, opts),
+      });
     }
   }
   if (pending.length === 0) return [];
