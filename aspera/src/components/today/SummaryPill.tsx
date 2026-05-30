@@ -1,7 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   icon: string;
@@ -11,6 +14,9 @@ interface Props {
 }
 
 export default function SummaryPill({ icon, label, value, color }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <View style={[styles.pill, { borderColor: `${color}44` }]}>
       <Ionicons
@@ -19,34 +25,35 @@ export default function SummaryPill({ icon, label, value, color }: Props) {
         color={color}
       />
       <View style={styles.text}>
-        <Text style={[styles.label, { color: COLORS.textMuted }]}>{label}</Text>
+        <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
         <Text style={[styles.value, { color }]}>{value}</Text>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  pill: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    backgroundColor: COLORS.surfaceElevated,
-  },
-  text: { gap: 1 },
-  label: {
-    ...TYPOGRAPHY.caption,
-    fontSize: 10,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  } as object,
-  value: {
-    ...TYPOGRAPHY.caption,
-    fontWeight: "700",
-    fontSize: 13,
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    pill: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      backgroundColor: c.surfaceElevated,
+    },
+    text: { gap: 1 },
+    label: {
+      ...TYPOGRAPHY.caption,
+      fontSize: 10,
+      textTransform: "uppercase",
+      letterSpacing: 0.8,
+    } as object,
+    value: {
+      ...TYPOGRAPHY.caption,
+      fontWeight: "700",
+      fontSize: 13,
+    } as object,
+  });

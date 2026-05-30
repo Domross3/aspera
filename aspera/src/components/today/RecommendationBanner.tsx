@@ -15,12 +15,14 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import {
-  COLORS,
   SPACING,
   RADIUS,
   TYPOGRAPHY,
   SHADOWS,
 } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   recommendation: string | null;
@@ -48,9 +50,12 @@ export default function RecommendationBanner({
   onRefresh,
   generatedAt,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <LinearGradient
-      colors={COLORS.gradients.focus as [string, string]}
+      colors={colors.gradients.focus as [string, string]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={[styles.banner, SHADOWS.glow]}
@@ -93,45 +98,46 @@ export default function RecommendationBanner({
   );
 }
 
-const styles = StyleSheet.create({
-  banner: {
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    gap: SPACING.sm,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-  },
-  emoji: { fontSize: 18 },
-  title: {
-    ...TYPOGRAPHY.label,
-    color: "rgba(255,255,255,0.8)",
-  } as object,
-  refresh: { padding: SPACING.xs },
-  loading: { gap: SPACING.xs + 2 },
-  shimmer: {
-    height: 14,
-    width: "100%",
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: RADIUS.sm,
-  },
-  rec: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    lineHeight: 24,
-    fontSize: 16,
-  } as object,
-  timestamp: {
-    ...TYPOGRAPHY.caption,
-    color: "rgba(255,255,255,0.55)",
-    fontSize: 11,
-    marginTop: SPACING.xs,
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    banner: {
+      borderRadius: RADIUS.xl,
+      padding: SPACING.lg,
+      gap: SPACING.sm,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+    },
+    emoji: { fontSize: 18 },
+    title: {
+      ...TYPOGRAPHY.label,
+      color: "rgba(255,255,255,0.8)",
+    } as object,
+    refresh: { padding: SPACING.xs },
+    loading: { gap: SPACING.xs + 2 },
+    shimmer: {
+      height: 14,
+      width: "100%",
+      backgroundColor: "rgba(255,255,255,0.2)",
+      borderRadius: RADIUS.sm,
+    },
+    rec: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      lineHeight: 24,
+      fontSize: 16,
+    } as object,
+    timestamp: {
+      ...TYPOGRAPHY.caption,
+      color: "rgba(255,255,255,0.55)",
+      fontSize: 11,
+      marginTop: SPACING.xs,
+    } as object,
+  });

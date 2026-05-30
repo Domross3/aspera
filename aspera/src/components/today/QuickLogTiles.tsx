@@ -20,12 +20,15 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import SectionLabel from "../common/SectionLabel";
 import { useLogs } from "../../hooks/useLogs";
 import { useSettings } from "../../hooks/useSettings";
 import { defaultValueFor } from "../log/fields";
 import type { DailyLog, EventEntry, EventTypeDef, FieldDef } from "../../types";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 function todayId(): string {
   return new Date().toISOString().split("T")[0];
@@ -68,6 +71,7 @@ export default function QuickLogTiles() {
   const router = useRouter();
   const { settings } = useSettings();
   const { todayLog, save } = useLogs();
+  const styles = useThemedStyles(makeStyles);
 
   const recurrentTypes = (settings.eventTypes ?? []).filter(
     (t) => t.cardinality === "recurrent",
@@ -110,6 +114,7 @@ interface TileProps {
 function QuickLogTile({ type, todayLog, onAdd, onLongPress }: TileProps) {
   const [justAdded, setJustAdded] = useState(false);
   const bumpAnim = useRef(new Animated.Value(1)).current;
+  const styles = useThemedStyles(makeStyles);
 
   const todayCount = (todayLog?.eventEntries ?? []).filter(
     (e) => e.typeId === type.id,
@@ -180,58 +185,59 @@ function QuickLogTile({ type, todayLog, onAdd, onLongPress }: TileProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: -SPACING.xs,
-  },
-  tileWrap: {
-    width: "50%",
-    padding: SPACING.xs,
-  },
-  tile: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    gap: SPACING.xs,
-    minHeight: 92,
-  },
-  tileTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  tileEmoji: {
-    fontSize: 22,
-  },
-  tileEmojiPlaceholder: {
-    width: 22,
-    height: 22,
-  },
-  countPill: {
-    backgroundColor: COLORS.accentGlow,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.pill,
-  },
-  countPillText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontSize: 11,
-    fontWeight: "700",
-  } as object,
-  tileName: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: "600",
-  } as object,
-  tileCta: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 11,
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    grid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      marginHorizontal: -SPACING.xs,
+    },
+    tileWrap: {
+      width: "50%",
+      padding: SPACING.xs,
+    },
+    tile: {
+      backgroundColor: c.surface,
+      borderRadius: RADIUS.md,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+      padding: SPACING.md,
+      gap: SPACING.xs,
+      minHeight: 92,
+    },
+    tileTop: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    tileEmoji: {
+      fontSize: 22,
+    },
+    tileEmojiPlaceholder: {
+      width: 22,
+      height: 22,
+    },
+    countPill: {
+      backgroundColor: c.accentGlow,
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 2,
+      borderRadius: RADIUS.pill,
+    },
+    countPillText: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontSize: 11,
+      fontWeight: "700",
+    } as object,
+    tileName: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      fontSize: 14,
+      fontWeight: "600",
+    } as object,
+    tileCta: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 11,
+    } as object,
+  });

@@ -19,7 +19,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import GradientCard from "../common/GradientCard";
 import SectionLabel from "../common/SectionLabel";
 import ComparisonReadout from "../experiments/ComparisonReadout";
@@ -34,6 +34,9 @@ import {
   type TreatmentOption,
 } from "../../lib/experiments/adhoc";
 import type { ComparisonResult } from "../../types";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface PickerState {
   treatment?: TreatmentOption;
@@ -48,6 +51,8 @@ const MIN_GROUP_SIZE = 1;
 export default function ComparePicker() {
   const { recentLogs } = useLogs();
   const { settings } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const [state, setState] = useState<PickerState>({});
   const [pickerOpen, setPickerOpen] = useState<"treatment" | "outcome" | null>(
@@ -150,7 +155,7 @@ export default function ComparePicker() {
             >
               {state.treatment?.label ?? "Pick a treatment"}
             </Text>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.accent} />
+            <Ionicons name="chevron-forward" size={16} color={colors.accent} />
           </View>
         </TouchableOpacity>
 
@@ -169,7 +174,7 @@ export default function ComparePicker() {
             >
               {state.outcome?.label ?? "Pick an outcome"}
             </Text>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.accent} />
+            <Ionicons name="chevron-forward" size={16} color={colors.accent} />
           </View>
         </TouchableOpacity>
 
@@ -190,7 +195,7 @@ export default function ComparePicker() {
           colors={["#2A1515", "#1A0E0E"]}
           style={{ marginTop: SPACING.sm }}
         >
-          <Text style={[TYPOGRAPHY.caption, { color: COLORS.danger }]}>
+          <Text style={[TYPOGRAPHY.caption, { color: colors.danger }]}>
             ⚠️ {state.errorMessage}
           </Text>
         </GradientCard>
@@ -269,7 +274,7 @@ export default function ComparePicker() {
                         <Ionicons
                           name="checkmark"
                           size={18}
-                          color={COLORS.accent}
+                          color={colors.accent}
                         />
                       ) : null}
                     </TouchableOpacity>
@@ -284,121 +289,122 @@ export default function ComparePicker() {
   );
 }
 
-const styles = StyleSheet.create({
-  intro: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
-    lineHeight: 17,
-  } as object,
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: SPACING.sm + 2,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-  },
-  rowEmpty: {
-    opacity: 0.9,
-  },
-  rowLabel: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    fontWeight: "600",
-  } as object,
-  rowValue: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  rowValueText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontSize: 13,
-    flexShrink: 1,
-    textAlign: "right",
-  } as object,
-  rowValuePlaceholder: {
-    color: COLORS.textMuted,
-  } as object,
-  runButton: {
-    marginTop: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.accent,
-    alignItems: "center",
-  },
-  runButtonDisabled: {
-    opacity: 0.5,
-  },
-  runButtonText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    fontWeight: "700",
-  } as object,
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
-  modalSheet: {
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: RADIUS.lg,
-    borderTopRightRadius: RADIUS.lg,
-    maxHeight: "70%",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-  },
-  modalTitle: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-  } as object,
-  modalClose: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontWeight: "700",
-  } as object,
-  modalList: {
-    padding: SPACING.md,
-    paddingBottom: SPACING.xl,
-  },
-  modalRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: SPACING.sm + 2,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md,
-  },
-  modalRowActive: {
-    backgroundColor: COLORS.accentGlow,
-  },
-  modalRowText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    fontSize: 14,
-    flexShrink: 1,
-  } as object,
-  modalRowTextActive: {
-    color: COLORS.accent,
-    fontWeight: "700",
-  } as object,
-  modalEmpty: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontStyle: "italic",
-    textAlign: "center",
-    padding: SPACING.lg,
-    lineHeight: 18,
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    intro: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      marginBottom: SPACING.md,
+      lineHeight: 17,
+    } as object,
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: SPACING.sm + 2,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
+    rowEmpty: {
+      opacity: 0.9,
+    },
+    rowLabel: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      fontWeight: "600",
+    } as object,
+    rowValue: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      flex: 1,
+      justifyContent: "flex-end",
+    },
+    rowValueText: {
+      ...TYPOGRAPHY.body,
+      color: c.accent,
+      fontSize: 13,
+      flexShrink: 1,
+      textAlign: "right",
+    } as object,
+    rowValuePlaceholder: {
+      color: c.textMuted,
+    } as object,
+    runButton: {
+      marginTop: SPACING.md,
+      paddingVertical: SPACING.sm + 2,
+      borderRadius: RADIUS.md,
+      backgroundColor: c.accent,
+      alignItems: "center",
+    },
+    runButtonDisabled: {
+      opacity: 0.5,
+    },
+    runButtonText: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      fontWeight: "700",
+    } as object,
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "flex-end",
+    },
+    modalSheet: {
+      backgroundColor: c.background,
+      borderTopLeftRadius: RADIUS.lg,
+      borderTopRightRadius: RADIUS.lg,
+      maxHeight: "70%",
+    },
+    modalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
+    modalTitle: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+    } as object,
+    modalClose: {
+      ...TYPOGRAPHY.body,
+      color: c.accent,
+      fontWeight: "700",
+    } as object,
+    modalList: {
+      padding: SPACING.md,
+      paddingBottom: SPACING.xl,
+    },
+    modalRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: SPACING.sm + 2,
+      paddingHorizontal: SPACING.md,
+      borderRadius: RADIUS.md,
+    },
+    modalRowActive: {
+      backgroundColor: c.accentGlow,
+    },
+    modalRowText: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      fontSize: 14,
+      flexShrink: 1,
+    } as object,
+    modalRowTextActive: {
+      color: c.accent,
+      fontWeight: "700",
+    } as object,
+    modalEmpty: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontStyle: "italic",
+      textAlign: "center",
+      padding: SPACING.lg,
+      lineHeight: 18,
+    } as object,
+  });
