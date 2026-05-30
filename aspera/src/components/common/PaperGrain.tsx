@@ -1,6 +1,6 @@
 import React from "react";
 import { DimensionValue, StyleSheet, View } from "react-native";
-import { COLORS } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
 
 const DOTS = Array.from({ length: 72 }, (_, index) => ({
   key: `grain-${index}`,
@@ -10,6 +10,7 @@ const DOTS = Array.from({ length: 72 }, (_, index) => ({
 }));
 
 export default function PaperGrain() {
+  const { colors } = useTheme();
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {DOTS.map((dot) => (
@@ -20,7 +21,8 @@ export default function PaperGrain() {
             {
               left: dot.left as DimensionValue,
               top: dot.top as DimensionValue,
-              opacity: COLORS.grain * dot.opacity,
+              opacity: colors.grain * dot.opacity,
+              backgroundColor: colors.text,
             },
           ]}
         />
@@ -35,6 +37,5 @@ const styles = StyleSheet.create({
     width: 1,
     height: 1,
     borderRadius: 1,
-    backgroundColor: COLORS.text,
   },
 });

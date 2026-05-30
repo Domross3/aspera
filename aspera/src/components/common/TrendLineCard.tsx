@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, LayoutChangeEvent } from "react-native";
 import GradientCard from "./GradientCard";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 // `value: null` represents a day with no data. The chart leaves an empty
 // slot on the x-axis (preserving the day label) and the line skips over
@@ -37,6 +39,152 @@ function isFiniteValue(v: number | null | undefined): v is number {
   return typeof v === "number" && Number.isFinite(v);
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    card: {
+      marginBottom: SPACING.md,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: SPACING.md,
+      marginBottom: SPACING.md,
+    },
+    headerText: {
+      flex: 1,
+    },
+    title: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+    } as object,
+    subtitle: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      marginTop: 2,
+    } as object,
+    averageBadge: {
+      minWidth: 72,
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: SPACING.xs,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      alignItems: "flex-end",
+      backgroundColor: c.surface,
+    },
+    averageLabel: {
+      ...TYPOGRAPHY.label,
+      color: c.textMuted,
+      fontSize: 8,
+    } as object,
+    averageValue: {
+      ...TYPOGRAPHY.subtitle,
+      fontWeight: "700",
+    } as object,
+
+    // Mode 1 — empty
+    emptyBody: {
+      paddingVertical: SPACING.lg,
+      alignItems: "center",
+    },
+    emptyText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      textAlign: "center",
+      paddingHorizontal: SPACING.md,
+      lineHeight: 16,
+    } as object,
+
+    // Mode 2 — single day
+    singleBody: {
+      alignItems: "center",
+      paddingTop: SPACING.sm,
+      paddingBottom: SPACING.md,
+    },
+    singleValue: {
+      fontSize: 36,
+      fontWeight: "800",
+      letterSpacing: -0.5,
+    },
+    singleLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      marginTop: 2,
+    } as object,
+    singleFooter: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      marginTop: SPACING.sm,
+      fontSize: 11,
+    } as object,
+
+    // Mode 3 — full chart
+    chartShell: {
+      height: CHART_HEIGHT,
+      position: "relative",
+      justifyContent: "flex-end",
+    },
+    gridLineTop: {
+      position: "absolute",
+      top: TOP_PADDING,
+      left: 0,
+      right: 0,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: c.line,
+    },
+    gridLineBottom: {
+      position: "absolute",
+      bottom: LABEL_ROW_HEIGHT,
+      left: 0,
+      right: 0,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderColor: c.line,
+    },
+    averageLine: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      borderTopWidth: 1,
+      borderStyle: "dashed",
+    },
+    segment: {
+      position: "absolute",
+      height: 2,
+      borderRadius: RADIUS.pill,
+    },
+    dot: {
+      position: "absolute",
+      width: DOT_SIZE,
+      height: DOT_SIZE,
+      borderRadius: DOT_SIZE / 2,
+      borderWidth: 2,
+      backgroundColor: c.surface,
+    },
+    labelRow: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      height: LABEL_ROW_HEIGHT,
+      marginTop: "auto",
+      gap: SPACING.xs,
+    },
+    labelCell: {
+      flex: 1,
+      alignItems: "center",
+      gap: 2,
+    },
+    valueLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 10,
+      fontWeight: "700",
+    } as object,
+    pointLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 9,
+    } as object,
+  });
+
 export default function TrendLineCard({
   title,
   subtitle,
@@ -50,6 +198,7 @@ export default function TrendLineCard({
   singleDayFooter = "Day 1 of your trend",
 }: Props) {
   const [chartWidth, setChartWidth] = useState(0);
+  const styles = useThemedStyles(makeStyles);
 
   const finiteIndices = useMemo(
     () =>
@@ -241,148 +390,3 @@ export default function TrendLineCard({
     </GradientCard>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    marginBottom: SPACING.md,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-  headerText: {
-    flex: 1,
-  },
-  title: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-  } as object,
-  subtitle: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  } as object,
-  averageBadge: {
-    minWidth: 72,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    alignItems: "flex-end",
-    backgroundColor: "rgba(255,255,255,0.04)",
-  },
-  averageLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textMuted,
-    fontSize: 8,
-  } as object,
-  averageValue: {
-    ...TYPOGRAPHY.subtitle,
-    fontWeight: "700",
-  } as object,
-
-  // Mode 1 — empty
-  emptyBody: {
-    paddingVertical: SPACING.lg,
-    alignItems: "center",
-  },
-  emptyText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    textAlign: "center",
-    paddingHorizontal: SPACING.md,
-    lineHeight: 16,
-  } as object,
-
-  // Mode 2 — single day
-  singleBody: {
-    alignItems: "center",
-    paddingTop: SPACING.sm,
-    paddingBottom: SPACING.md,
-  },
-  singleValue: {
-    fontSize: 36,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-  },
-  singleLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  } as object,
-  singleFooter: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    marginTop: SPACING.sm,
-    fontSize: 11,
-  } as object,
-
-  // Mode 3 — full chart
-  chartShell: {
-    height: CHART_HEIGHT,
-    position: "relative",
-    justifyContent: "flex-end",
-  },
-  gridLineTop: {
-    position: "absolute",
-    top: TOP_PADDING,
-    left: 0,
-    right: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  gridLineBottom: {
-    position: "absolute",
-    bottom: LABEL_ROW_HEIGHT,
-    left: 0,
-    right: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  averageLine: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    borderTopWidth: 1,
-    borderStyle: "dashed",
-  },
-  segment: {
-    position: "absolute",
-    height: 2,
-    borderRadius: RADIUS.pill,
-  },
-  dot: {
-    position: "absolute",
-    width: DOT_SIZE,
-    height: DOT_SIZE,
-    borderRadius: DOT_SIZE / 2,
-    borderWidth: 2,
-    backgroundColor: COLORS.surface,
-  },
-  labelRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    height: LABEL_ROW_HEIGHT,
-    marginTop: "auto",
-    gap: SPACING.xs,
-  },
-  labelCell: {
-    flex: 1,
-    alignItems: "center",
-    gap: 2,
-  },
-  valueLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 10,
-    fontWeight: "700",
-  } as object,
-  pointLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 9,
-  } as object,
-});

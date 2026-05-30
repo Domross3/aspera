@@ -1,8 +1,8 @@
 import React, { PropsWithChildren, useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { COLORS } from "../../constants/theme";
 import { useReducedMotion } from "./useReducedMotion";
+import { useTheme } from "../../theme/ThemeProvider";
 
 interface Props {
   size?: number;
@@ -18,6 +18,7 @@ export default function BreathingOrb({
   style,
   children,
 }: PropsWithChildren<Props>) {
+  const { colors } = useTheme();
   const reducedMotion = useReducedMotion();
   const progress = useRef(new Animated.Value(0)).current;
 
@@ -83,6 +84,7 @@ export default function BreathingOrb({
             width: glowSize,
             height: glowSize,
             borderRadius: glowSize / 2,
+            backgroundColor: colors.glow,
             opacity: glowOpacity,
             transform: [{ scale: orbScale }],
           },
@@ -96,6 +98,7 @@ export default function BreathingOrb({
               width: ringSize,
               height: ringSize,
               borderRadius: ringSize / 2,
+              borderColor: colors.ring,
               opacity: ringOpacity,
               transform: [{ scale: ringScale }],
             },
@@ -114,7 +117,7 @@ export default function BreathingOrb({
         ]}
       >
         <LinearGradient
-          colors={[COLORS.orbA, COLORS.orbB] as [string, string]}
+          colors={[colors.orbA, colors.orbB] as [string, string]}
           start={{ x: 0.28, y: 0.18 }}
           end={{ x: 0.82, y: 0.96 }}
           style={[styles.orb, { borderRadius: size / 2 }]}
@@ -135,12 +138,10 @@ const styles = StyleSheet.create({
   },
   glow: {
     position: "absolute",
-    backgroundColor: COLORS.glow,
   },
   ring: {
     position: "absolute",
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.ring,
   },
   orbWrap: {
     overflow: "hidden",
