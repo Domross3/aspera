@@ -1,9 +1,11 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import * as Haptics from "expo-haptics";
 import { MealQuality } from "../../types";
 import { MEAL_QUALITY_LABELS } from "../../constants/options";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   mealQuality: MealQuality;
@@ -12,12 +14,14 @@ interface Props {
   onChangeHydration: (h: number) => void;
 }
 
+// Fixed semantic colors for meal quality — not theme-dependent,
+// they always convey red→green sentiment regardless of palette.
 const MEAL_COLORS: Record<number, string> = {
-  1: COLORS.danger,
+  1: "#e74c3c",
   2: "#F97316",
-  3: COLORS.warning,
+  3: "#f39c12",
   4: "#A3E635",
-  5: COLORS.success,
+  5: "#2ecc71",
 };
 
 export default function NutritionInput({
@@ -26,6 +30,8 @@ export default function NutritionInput({
   onChangeMeal,
   onChangeHydration,
 }: Props) {
+  const styles = useThemedStyles(makeStyles);
+
   const adjustHydration = (delta: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onChangeHydration(Math.max(0, Math.min(12, hydration + delta)));
@@ -113,82 +119,82 @@ export default function NutritionInput({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: AsperaColors) => ({
   subLabel: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
+    color: c.textMuted,
     marginBottom: SPACING.sm,
   } as object,
   mealRow: {
-    flexDirection: "row",
+    flexDirection: "row" as const,
     gap: SPACING.xs,
   },
   mealTile: {
     flex: 1,
-    alignItems: "center",
+    alignItems: "center" as const,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    borderColor: c.border,
+    backgroundColor: c.surface,
   },
   mealScore: {
     ...TYPOGRAPHY.subtitle,
-    color: COLORS.textSecondary,
-    fontWeight: "700",
+    color: c.textSecondary,
+    fontWeight: "700" as const,
   } as object,
   mealLabel: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
+    color: c.textMuted,
     marginTop: 2,
   } as object,
   hydroRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
     marginBottom: SPACING.sm,
   },
   hydroBtn: {
     width: 44,
     height: 44,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
+    backgroundColor: c.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: c.border,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
   },
   hydroBtnText: {
     fontSize: 22,
-    color: COLORS.text,
+    color: c.text,
     lineHeight: 28,
   },
   hydroDisplay: {
-    alignItems: "center",
+    alignItems: "center" as const,
   },
   hydroValue: {
     ...TYPOGRAPHY.title,
-    color: COLORS.accentAlt,
+    color: c.accentAlt,
   } as object,
   hydroUnit: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
+    color: c.textMuted,
   } as object,
   dotsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
     gap: SPACING.xs,
   },
   dot: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: COLORS.border,
+    backgroundColor: c.border,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: c.border,
   },
   dotFilled: {
-    backgroundColor: COLORS.accentAlt,
-    borderColor: COLORS.accentAlt,
+    backgroundColor: c.accentAlt,
+    borderColor: c.accentAlt,
   },
 });

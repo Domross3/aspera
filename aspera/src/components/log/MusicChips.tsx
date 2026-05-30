@@ -4,13 +4,15 @@ import {
   Text,
   TouchableOpacity,
   TextInput,
-  StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { MusicGenre } from "../../types";
 import { MUSIC_GENRE_OPTIONS } from "../../constants/options";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   selected: MusicGenre[];
@@ -18,6 +20,8 @@ interface Props {
 }
 
 export default function MusicChips({ selected, onChange }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [showInput, setShowInput] = useState(false);
   const [customText, setCustomText] = useState("");
 
@@ -88,8 +92,8 @@ export default function MusicChips({ selected, onChange }: Props) {
           onPress={() => setShowInput(true)}
           activeOpacity={0.7}
         >
-          <Ionicons name="add" size={14} color={COLORS.accent} />
-          <Text style={[styles.label, { color: COLORS.accent }]}>Custom</Text>
+          <Ionicons name="add" size={14} color={colors.accent} />
+          <Text style={[styles.label, { color: colors.accent }]}>Custom</Text>
         </TouchableOpacity>
       </View>
 
@@ -99,14 +103,14 @@ export default function MusicChips({ selected, onChange }: Props) {
             value={customText}
             onChangeText={setCustomText}
             placeholder="e.g. Grunge, R&B, Synthwave..."
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             style={styles.input}
             autoFocus
             onSubmitEditing={addCustom}
             returnKeyType="done"
           />
           <TouchableOpacity style={styles.addBtn} onPress={addCustom}>
-            <Text style={{ color: COLORS.text, fontWeight: "700" }}>Add</Text>
+            <Text style={{ color: colors.text, fontWeight: "700" }}>Add</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -114,59 +118,59 @@ export default function MusicChips({ selected, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: AsperaColors) => ({
   wrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
     gap: SPACING.sm,
   },
   chip: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
     gap: 4,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs + 2,
     borderRadius: RADIUS.pill,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    borderColor: c.border,
+    backgroundColor: c.surface,
   },
   chipSelected: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
+    borderColor: c.accent,
+    backgroundColor: c.accentGlow,
   },
   addChip: {
-    borderColor: COLORS.borderAccent,
-    borderStyle: "dashed",
+    borderColor: c.borderAccent,
+    borderStyle: "dashed" as const,
   },
   emoji: { fontSize: 14 },
   label: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
+    color: c.textMuted,
   } as object,
   labelSelected: {
-    color: COLORS.accent,
+    color: c.accent,
   },
   inputRow: {
-    flexDirection: "row",
+    flexDirection: "row" as const,
     gap: SPACING.sm,
     marginTop: SPACING.sm,
   },
   input: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: c.background,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    color: COLORS.text,
+    color: c.text,
     ...(TYPOGRAPHY.body as object),
   },
   addBtn: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: c.accent,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
-    justifyContent: "center",
+    justifyContent: "center" as const,
   },
 });

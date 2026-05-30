@@ -9,11 +9,12 @@ import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
 } from "react-native";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   selectedDate: string; // "YYYY-MM-DD"
@@ -53,6 +54,7 @@ export default function WeekStrip({
   onSelect,
   windowDays = 7,
 }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const tiles = buildDays(windowDays);
 
   return (
@@ -98,7 +100,7 @@ export default function WeekStrip({
 
 const TILE_WIDTH = 44;
 
-const styles = StyleSheet.create({
+const makeStyles = (c: AsperaColors) => ({
   row: {
     paddingVertical: SPACING.xs,
     gap: SPACING.xs,
@@ -108,45 +110,45 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    alignItems: "center",
+    borderColor: c.border,
+    backgroundColor: c.surface,
+    alignItems: "center" as const,
     gap: 2,
   },
   tileActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
+    borderColor: c.accent,
+    backgroundColor: c.accentGlow,
   },
   tileToday: {
-    borderColor: "rgba(108,99,255,0.3)",
+    borderColor: c.ring,
   },
   day: {
     ...TYPOGRAPHY.label,
-    color: COLORS.textMuted,
+    color: c.textMuted,
     fontSize: 10,
     letterSpacing: 0.5,
-    textTransform: "uppercase",
+    textTransform: "uppercase" as const,
   } as object,
   dayActive: {
-    color: COLORS.accent,
-    fontWeight: "700",
+    color: c.accent,
+    fontWeight: "700" as const,
   } as object,
   num: {
     ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-    fontWeight: "700",
+    color: c.text,
+    fontWeight: "700" as const,
   } as object,
   numActive: {
-    color: COLORS.accent,
+    color: c.accent,
   } as object,
   todayDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: COLORS.accent,
+    backgroundColor: c.accent,
     marginTop: 2,
   },
   todayDotActive: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: c.accent,
   },
 });

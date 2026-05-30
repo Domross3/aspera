@@ -1,13 +1,14 @@
-import React, { useRef } from "react";
+import React from "react";
 import {
   View,
   Text,
-  PanResponder,
-  StyleSheet,
   TouchableOpacity,
 } from "react-native";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   label: string;
@@ -22,8 +23,12 @@ export default function RatingSlider({
   value,
   max = 5,
   onChange,
-  accentColor = COLORS.accent,
+  accentColor,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const resolvedAccent = accentColor ?? colors.accent;
+
   const adjustValue = (delta: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onChange(Math.max(1, Math.min(max, value + delta)));
@@ -33,7 +38,7 @@ export default function RatingSlider({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.label}>{label}</Text>
-        <Text style={[styles.value, { color: accentColor }]}>
+        <Text style={[styles.value, { color: resolvedAccent }]}>
           {value}/{max}
         </Text>
       </View>
@@ -51,7 +56,7 @@ export default function RatingSlider({
               }}
               style={[
                 styles.dot,
-                { backgroundColor: filled ? accentColor : COLORS.border },
+                { backgroundColor: filled ? resolvedAccent : colors.border },
               ]}
             />
           );
@@ -68,7 +73,7 @@ export default function RatingSlider({
               styles.bar,
               {
                 width: `${(value / max) * 100}%`,
-                backgroundColor: accentColor,
+                backgroundColor: resolvedAccent,
               },
             ]}
           />
@@ -81,23 +86,23 @@ export default function RatingSlider({
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: AsperaColors) => ({
   container: { gap: SPACING.sm },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
   },
   label: {
     ...TYPOGRAPHY.body,
-    color: COLORS.text,
+    color: c.text,
   } as object,
   value: {
     ...TYPOGRAPHY.title,
-    fontWeight: "700",
+    fontWeight: "700" as const,
   } as object,
   dotsRow: {
-    flexDirection: "row",
+    flexDirection: "row" as const,
     gap: SPACING.xs - 2,
   },
   dot: {
@@ -106,34 +111,34 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.pill,
   },
   controls: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
     gap: SPACING.sm,
   },
   btn: {
     width: 36,
     height: 36,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
+    backgroundColor: c.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: c.border,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
   },
   btnText: {
     fontSize: 20,
-    color: COLORS.text,
+    color: c.text,
     lineHeight: 24,
   },
   barContainer: {
     flex: 1,
     height: 8,
     borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.border,
-    overflow: "hidden",
+    backgroundColor: c.border,
+    overflow: "hidden" as const,
   },
   bar: {
-    height: "100%",
+    height: "100%" as const,
     borderRadius: RADIUS.pill,
   },
 });
