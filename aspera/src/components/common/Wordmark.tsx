@@ -2,7 +2,6 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { TYPOGRAPHY } from "../../constants/theme";
 import BreathingOrb from "./BreathingOrb";
-import { useTheme } from "../../theme/ThemeProvider";
 import { useThemedStyles } from "../../theme/useThemedStyles";
 import type { AsperaColors } from "../../theme/ThemeProvider";
 

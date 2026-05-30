@@ -70,7 +70,7 @@ const makeStyles = (c: AsperaColors) =>
       borderRadius: RADIUS.md,
       borderWidth: 1,
       alignItems: "flex-end",
-      backgroundColor: "rgba(255,255,255,0.04)",
+      backgroundColor: c.surface,
     },
     averageLabel: {
       ...TYPOGRAPHY.label,
@@ -130,7 +130,7 @@ const makeStyles = (c: AsperaColors) =>
       left: 0,
       right: 0,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderColor: "rgba(255,255,255,0.08)",
+      borderColor: c.line,
     },
     gridLineBottom: {
       position: "absolute",
@@ -138,7 +138,7 @@ const makeStyles = (c: AsperaColors) =>
       left: 0,
       right: 0,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderColor: "rgba(255,255,255,0.08)",
+      borderColor: c.line,
     },
     averageLine: {
       position: "absolute",
