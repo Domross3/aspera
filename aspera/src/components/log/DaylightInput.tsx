@@ -2,14 +2,111 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   value: number;
   onChange: (v: number) => void;
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    heading: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+      marginBottom: SPACING.md,
+    } as object,
+    row: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: SPACING.lg,
+    },
+    btn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: c.surfaceElevated,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    countWrap: { alignItems: "center", minWidth: 70 },
+    count: {
+      ...TYPOGRAPHY.hero,
+      color: c.warning,
+      lineHeight: 42,
+    } as object,
+    unit: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+    } as object,
+    qualityRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      marginTop: SPACING.md,
+    },
+    qualityLabel: {
+      ...TYPOGRAPHY.caption,
+      fontWeight: "700",
+      width: 52,
+    } as object,
+    barTrack: {
+      flex: 1,
+      height: 6,
+      backgroundColor: c.surfaceElevated,
+      borderRadius: 3,
+      overflow: "hidden",
+    },
+    barFill: {
+      height: "100%",
+      borderRadius: 3,
+    },
+    chips: {
+      flexDirection: "row",
+      justifyContent: "center",
+      flexWrap: "wrap",
+      gap: SPACING.sm,
+      marginTop: SPACING.md,
+    },
+    chip: {
+      paddingHorizontal: SPACING.sm + 2,
+      paddingVertical: SPACING.xs + 2,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surfaceElevated,
+    },
+    chipActive: {
+      backgroundColor: c.warning,
+      borderColor: c.warning,
+    },
+    chipText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontWeight: "600",
+    } as object,
+    chipTextActive: {
+      color: "#000",
+    },
+    tip: {
+      ...TYPOGRAPHY.caption,
+      color: c.warning,
+      fontStyle: "italic",
+      textAlign: "center",
+      marginTop: SPACING.sm,
+    } as object,
+  });
+
 export default function DaylightInput({ value, onChange }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const adjust = (delta: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onChange(Math.max(0, Math.min(300, value + delta)));
@@ -26,7 +123,7 @@ export default function DaylightInput({ value, onChange }: Props) {
             ? "Minimal"
             : "—";
   const levelColor =
-    value >= 60 ? COLORS.success : value >= 30 ? COLORS.warning : COLORS.danger;
+    value >= 60 ? colors.success : value >= 30 ? colors.warning : colors.danger;
 
   return (
     <View>
@@ -34,7 +131,7 @@ export default function DaylightInput({ value, onChange }: Props) {
 
       <View style={styles.row}>
         <TouchableOpacity style={styles.btn} onPress={() => adjust(-10)}>
-          <Ionicons name="remove" size={20} color={COLORS.text} />
+          <Ionicons name="remove" size={20} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.countWrap}>
@@ -43,7 +140,7 @@ export default function DaylightInput({ value, onChange }: Props) {
         </View>
 
         <TouchableOpacity style={styles.btn} onPress={() => adjust(10)}>
-          <Ionicons name="add" size={20} color={COLORS.text} />
+          <Ionicons name="add" size={20} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -94,93 +191,3 @@ export default function DaylightInput({ value, onChange }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  heading: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
-  } as object,
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: SPACING.lg,
-  },
-  btn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  countWrap: { alignItems: "center", minWidth: 70 },
-  count: {
-    ...TYPOGRAPHY.hero,
-    color: COLORS.warning,
-    lineHeight: 42,
-  } as object,
-  unit: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-  } as object,
-  qualityRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-    marginTop: SPACING.md,
-  },
-  qualityLabel: {
-    ...TYPOGRAPHY.caption,
-    fontWeight: "700",
-    width: 52,
-  } as object,
-  barTrack: {
-    flex: 1,
-    height: 6,
-    backgroundColor: COLORS.surfaceElevated,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  barFill: {
-    height: "100%",
-    borderRadius: 3,
-  },
-  chips: {
-    flexDirection: "row",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    gap: SPACING.sm,
-    marginTop: SPACING.md,
-  },
-  chip: {
-    paddingHorizontal: SPACING.sm + 2,
-    paddingVertical: SPACING.xs + 2,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surfaceElevated,
-  },
-  chipActive: {
-    backgroundColor: COLORS.warning,
-    borderColor: COLORS.warning,
-  },
-  chipText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontWeight: "600",
-  } as object,
-  chipTextActive: {
-    color: "#000",
-  },
-  tip: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.warning,
-    fontStyle: "italic",
-    textAlign: "center",
-    marginTop: SPACING.sm,
-  } as object,
-});

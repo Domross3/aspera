@@ -7,15 +7,90 @@ import {
   StyleSheet,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   rocks: string[];
   onChange: (rocks: string[]) => void;
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    hint: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      marginBottom: SPACING.md,
+    } as object,
+    rockRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      paddingVertical: SPACING.sm,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
+    numberBadge: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    numberText: {
+      ...TYPOGRAPHY.caption,
+      color: c.text,
+      fontWeight: "800",
+      fontSize: 11,
+    } as object,
+    rockText: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      flex: 1,
+    } as object,
+    inputRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      marginTop: SPACING.sm,
+    },
+    input: {
+      flex: 1,
+      backgroundColor: c.background,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: c.border,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
+      color: c.text,
+      ...TYPOGRAPHY.body,
+    } as object,
+    addButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: c.accent,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    addButtonDisabled: {
+      backgroundColor: c.surfaceElevated,
+    },
+    emptyHint: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontStyle: "italic",
+      marginTop: SPACING.sm,
+      lineHeight: 16,
+    } as object,
+  });
+
 export default function BigRocksInput({ rocks, onChange }: Props) {
   const [draft, setDraft] = useState("");
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const addRock = () => {
     const trimmed = draft.trim();
@@ -37,7 +112,7 @@ export default function BigRocksInput({ rocks, onChange }: Props) {
       {rocks.map((rock, i) => (
         <View key={i} style={styles.rockRow}>
           <View
-            style={[styles.numberBadge, { backgroundColor: COLORS.accent }]}
+            style={[styles.numberBadge, { backgroundColor: colors.accent }]}
           >
             <Text style={styles.numberText}>{i + 1}</Text>
           </View>
@@ -48,7 +123,7 @@ export default function BigRocksInput({ rocks, onChange }: Props) {
             onPress={() => removeRock(i)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="close-circle" size={20} color={COLORS.textMuted} />
+            <Ionicons name="close-circle" size={20} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
       ))}
@@ -64,7 +139,7 @@ export default function BigRocksInput({ rocks, onChange }: Props) {
                 ? "e.g. Finish hackathon MVP"
                 : "Add another rock..."
             }
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             returnKeyType="done"
             onSubmitEditing={addRock}
             blurOnSubmit={false}
@@ -80,7 +155,7 @@ export default function BigRocksInput({ rocks, onChange }: Props) {
             <Ionicons
               name="add"
               size={20}
-              color={draft.trim() ? COLORS.text : COLORS.textMuted}
+              color={draft.trim() ? colors.text : colors.textMuted}
             />
           </TouchableOpacity>
         </View>
@@ -95,72 +170,3 @@ export default function BigRocksInput({ rocks, onChange }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  hint: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
-  } as object,
-  rockRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-  },
-  numberBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  numberText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.text,
-    fontWeight: "800",
-    fontSize: 11,
-  } as object,
-  rockText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    flex: 1,
-  } as object,
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-    marginTop: SPACING.sm,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    color: COLORS.text,
-    ...TYPOGRAPHY.body,
-  } as object,
-  addButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.accent,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  addButtonDisabled: {
-    backgroundColor: COLORS.surfaceElevated,
-  },
-  emptyHint: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontStyle: "italic",
-    marginTop: SPACING.sm,
-    lineHeight: 16,
-  } as object,
-});
