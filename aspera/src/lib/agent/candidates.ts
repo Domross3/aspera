@@ -32,11 +32,17 @@ function emoji(et: EventTypeDef): string {
  *   2. Event-type toggle fields (e.g. "Meditated: yes")
  *   3. Recurrent event-type presence ("Had a workout today")
  *   4. Recurring free-form Moment labels ("coffee", "gym", …)
+ *   5. App restriction active days (OBSERVATIONAL — see note below).
  */
 export function buildLevers(
   logs: DailyLog[],
   moments: Moment[],
   eventTypes: EventTypeDef[],
+  // OBSERVATIONAL lever: confounded by time/trend because the user chose when
+  // to enable restrictions (selection bias). The rigorous test is a randomised
+  // n-of-1 where restriction-on days are assigned by coin flip (planned
+  // follow-up). Until then, treat any finding here as hypothesis-generating only.
+  restrictionActiveDates: string[] = [],
 ): Lever[] {
   const levers: Lever[] = [];
 
@@ -111,6 +117,20 @@ export function buildLevers(
       });
     }
   });
+
+  // 5. App restriction active days.
+  // OBSERVATIONAL lever: confounded by time/trend because the user chose when
+  // to enable restrictions (selection bias). The rigorous test is a randomised
+  // n-of-1 where restriction-on days are assigned by coin flip (planned
+  // follow-up). Until then, treat any finding here as hypothesis-generating only.
+  const uniqueRestrictionDates = new Set(restrictionActiveDates);
+  if (uniqueRestrictionDates.size >= MIN_LEVER_DAYS) {
+    levers.push({
+      id: "restriction-active",
+      label: "🔒 App limit active",
+      treatmentDates: uniqueRestrictionDates,
+    });
+  }
 
   return levers;
 }
