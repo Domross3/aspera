@@ -15,7 +15,10 @@ import {
   type LayoutChangeEvent,
 } from "react-native";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   label: string;
@@ -42,6 +45,50 @@ function roundToStep(value: number, step: number, min: number): number {
   return Math.round(stepped * 10) / 10;
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    container: { gap: SPACING.sm },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    label: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+    } as object,
+    value: {
+      ...TYPOGRAPHY.title,
+      fontWeight: "700",
+    } as object,
+    touchArea: {
+      height: TOUCH_HEIGHT,
+      justifyContent: "center",
+    },
+    track: {
+      height: TRACK_HEIGHT,
+      backgroundColor: c.border,
+      borderRadius: RADIUS.pill,
+      overflow: "hidden",
+    },
+    fill: {
+      height: "100%",
+      borderRadius: RADIUS.pill,
+    },
+    thumb: {
+      position: "absolute",
+      width: THUMB_SIZE,
+      height: THUMB_SIZE,
+      borderRadius: THUMB_SIZE / 2,
+      top: (TOUCH_HEIGHT - THUMB_SIZE) / 2,
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4,
+      elevation: 4,
+    },
+  });
+
 export default function ContinuousSlider({
   label,
   value,
@@ -49,9 +96,13 @@ export default function ContinuousSlider({
   max = 5,
   step = 0.1,
   onChange,
-  accentColor = COLORS.accent,
+  accentColor,
   formatValue,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const resolvedAccent = accentColor ?? colors.accent;
+
   const [trackWidth, setTrackWidth] = useState(0);
   const trackWidthRef = useRef(0);
   // Throttle haptics to half-step boundaries (1.0, 1.5, 2.0, ...) — firing
@@ -111,7 +162,7 @@ export default function ContinuousSlider({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.label}>{label}</Text>
-        <Text style={[styles.value, { color: accentColor }]}>
+        <Text style={[styles.value, { color: resolvedAccent }]}>
           {formatValue ? formatValue(value, max) : `${value.toFixed(1)}/${max}`}
         </Text>
       </View>
@@ -129,7 +180,7 @@ export default function ContinuousSlider({
           <View
             style={[
               styles.fill,
-              { width: thumbCenter, backgroundColor: accentColor },
+              { width: thumbCenter, backgroundColor: resolvedAccent },
             ]}
           />
         </View>
@@ -140,7 +191,7 @@ export default function ContinuousSlider({
               styles.thumb,
               {
                 left: thumbCenter - THUMB_SIZE / 2,
-                backgroundColor: accentColor,
+                backgroundColor: resolvedAccent,
               },
             ]}
           />
@@ -149,46 +200,3 @@ export default function ContinuousSlider({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { gap: SPACING.sm },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  label: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-  } as object,
-  value: {
-    ...TYPOGRAPHY.title,
-    fontWeight: "700",
-  } as object,
-  touchArea: {
-    height: TOUCH_HEIGHT,
-    justifyContent: "center",
-  },
-  track: {
-    height: TRACK_HEIGHT,
-    backgroundColor: COLORS.border,
-    borderRadius: RADIUS.pill,
-    overflow: "hidden",
-  },
-  fill: {
-    height: "100%",
-    borderRadius: RADIUS.pill,
-  },
-  thumb: {
-    position: "absolute",
-    width: THUMB_SIZE,
-    height: THUMB_SIZE,
-    borderRadius: THUMB_SIZE / 2,
-    top: (TOUCH_HEIGHT - THUMB_SIZE) / 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-});

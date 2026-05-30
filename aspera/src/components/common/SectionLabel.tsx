@@ -1,6 +1,7 @@
 import React from "react";
 import { Text, View, ViewStyle } from "react-native";
-import { COLORS, SPACING, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
 
 interface Props {
   label: string;
@@ -8,9 +9,10 @@ interface Props {
 }
 
 export default function SectionLabel({ label, style }: Props) {
+  const { colors } = useTheme();
   return (
     <View style={[{ marginBottom: SPACING.sm }, style]}>
-      <Text style={{ ...TYPOGRAPHY.label, color: COLORS.textMuted }}>
+      <Text style={{ ...TYPOGRAPHY.label, color: colors.textMuted }}>
         {label}
       </Text>
     </View>

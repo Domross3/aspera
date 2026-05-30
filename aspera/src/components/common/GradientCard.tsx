@@ -1,7 +1,8 @@
 import React from "react";
 import { StyleProp, ViewStyle } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { COLORS, RADIUS, SHADOWS, SPACING } from "../../constants/theme";
+import { RADIUS, SHADOWS, SPACING } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
 
 interface Props {
   children: React.ReactNode;
@@ -16,10 +17,11 @@ export default function GradientCard({
   colors,
   padded = true,
 }: Props) {
+  const { colors: themeColors } = useTheme();
   return (
     <LinearGradient
       colors={
-        (colors ?? COLORS.gradients.card) as [string, string, ...string[]]
+        (colors ?? themeColors.gradients.card) as [string, string, ...string[]]
       }
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
@@ -27,7 +29,7 @@ export default function GradientCard({
         {
           borderRadius: RADIUS.lg,
           borderWidth: 1,
-          borderColor: COLORS.border,
+          borderColor: themeColors.border,
           ...(padded ? { padding: SPACING.md } : {}),
           ...SHADOWS.card,
         },
