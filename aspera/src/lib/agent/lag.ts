@@ -14,7 +14,7 @@
 import type { ComparisonResult } from "../../types";
 import { compareDaysBlocked } from "../experiments/blockBootstrap";
 import type { DayMetric, CompareOpts } from "../experiments/types";
-import { dailyFocus, dailyMoodEnergy, localDateKey } from "./aggregate";
+import { dailyFocus, dailyMoodEnergy, dailyScreenTime, localDateKey } from "./aggregate";
 import { buildLevers, type Lever } from "./candidates";
 import {
   benjaminiHochberg,
@@ -54,11 +54,29 @@ function shiftForward(dates: Set<string>): Set<string> {
 
 function buildOutcomes(inputs: SweepInputs): Outcome[] {
   const { mood, energy } = dailyMoodEnergy(inputs.moodCheckIns);
-  return [
+  const outcomes: Outcome[] = [
     { id: "mood", label: "mood", series: mood, minEffect: 0.5 },
     { id: "energy", label: "energy", series: energy, minEffect: 0.5 },
     { id: "focus", label: "focus", series: dailyFocus(inputs.logs), minEffect: 1 },
   ];
+  if (inputs.screenTime?.length) {
+    const st = dailyScreenTime(inputs.screenTime);
+    outcomes.push(
+      {
+        id: "screen_total",
+        label: "total screen time",
+        series: st.total,
+        minEffect: 15,
+      },
+      {
+        id: "screen_social",
+        label: "social-app minutes",
+        series: st.byCategory.social,
+        minEffect: 10,
+      },
+    );
+  }
+  return outcomes;
 }
 
 interface Pending {
@@ -79,7 +97,12 @@ export function runLagSweep(
   const q = opts.q ?? DEFAULT_FDR_Q;
   const minGroup = opts.minGroupDays ?? DEFAULT_MIN_GROUP_DAYS;
   const outcomes = buildOutcomes(inputs);
-  const levers = buildLevers(inputs.logs, inputs.moments, inputs.eventTypes);
+  const levers = buildLevers(
+    inputs.logs,
+    inputs.moments,
+    inputs.eventTypes,
+    inputs.restrictionActiveDates ?? [],
+  );
 
   const pending: Pending[] = [];
   for (const lever of levers) {

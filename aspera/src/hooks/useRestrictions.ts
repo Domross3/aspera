@@ -21,6 +21,7 @@ import {
   stopMonitoring,
 } from "../../modules/screen-time/src";
 import { useAuth } from "./useAuth";
+import { logActiveRestrictions } from "../lib/screenTime/restrictionLog";
 
 interface UseRestrictionsResult {
   restrictions: Restriction[];
@@ -75,6 +76,11 @@ export function useRestrictions(): UseRestrictionsResult {
             syncRestrictionNative(restriction, nativeBridge).catch(() => {}),
           ),
       );
+      // Fire-and-forget: record which restrictions are active today so Engine A
+      // can build the "restriction-active" observational lever.
+      logActiveRestrictions(
+        rows.filter((r) => r.active).map((r) => r.id),
+      ).catch(() => {});
       setRestrictions(rows);
     } catch (err) {
       setError(errorMessage(err));

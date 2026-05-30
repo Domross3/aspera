@@ -22,7 +22,8 @@ import type {
 } from "../../types";
 import { compareDaysBlocked } from "../experiments/blockBootstrap";
 import type { CompareOpts, DayMetric } from "../experiments/types";
-import { dailyFocus, dailyMoodEnergy } from "./aggregate";
+import type { ScreenTimeDayTotals } from "../screenTime/types";
+import { dailyFocus, dailyMoodEnergy, dailyScreenTime } from "./aggregate";
 import { buildLevers, type Lever } from "./candidates";
 import {
   benjaminiHochberg,
@@ -45,6 +46,10 @@ export interface SweepInputs {
   moodCheckIns: MoodCheckIn[];
   moments: Moment[];
   eventTypes: EventTypeDef[];
+  /** Optional screen-time daily totals (from HealthKit / DeviceActivity bridge). */
+  screenTime?: ScreenTimeDayTotals[];
+  /** YYYY-MM-DD dates on which at least one app restriction was active. */
+  restrictionActiveDates?: string[];
 }
 
 export interface SweepOpts extends CompareOpts {
@@ -69,15 +74,34 @@ export interface SweepFinding {
 const DEFAULT_MIN_GROUP_DAYS = 7;
 
 // Effect floors per outcome scale: mood/energy on 1–5 → 0.5 pt; focus on
-// 1–10 → 1 pt. A shift smaller than this is noise to lived experience.
+// 1–10 → 1 pt. Screen-time in minutes: social 10 min, total 15 min.
+// A shift smaller than the floor is noise to lived experience.
 function buildOutcomes(inputs: SweepInputs): Outcome[] {
   const { mood, energy } = dailyMoodEnergy(inputs.moodCheckIns);
   const focus = dailyFocus(inputs.logs);
-  return [
+  const outcomes: Outcome[] = [
     { id: "mood", label: "mood", series: mood, minEffect: 0.5 },
     { id: "energy", label: "energy", series: energy, minEffect: 0.5 },
     { id: "focus", label: "focus", series: focus, minEffect: 1 },
   ];
+  if (inputs.screenTime?.length) {
+    const st = dailyScreenTime(inputs.screenTime);
+    outcomes.push(
+      {
+        id: "screen_total",
+        label: "total screen time",
+        series: st.total,
+        minEffect: 15,
+      },
+      {
+        id: "screen_social",
+        label: "social-app minutes",
+        series: st.byCategory.social,
+        minEffect: 10,
+      },
+    );
+  }
+  return outcomes;
 }
 
 function splitByLever(
@@ -112,7 +136,12 @@ export function runSweep(
   const q = opts.q ?? DEFAULT_FDR_Q;
   const minGroup = opts.minGroupDays ?? DEFAULT_MIN_GROUP_DAYS;
   const outcomes = buildOutcomes(inputs);
-  const levers = buildLevers(inputs.logs, inputs.moments, inputs.eventTypes);
+  const levers = buildLevers(
+    inputs.logs,
+    inputs.moments,
+    inputs.eventTypes,
+    inputs.restrictionActiveDates ?? [],
+  );
 
   // 1–3. Sweep every adequately-powered pair into the family.
   const pending: Pending[] = [];

@@ -7,6 +7,11 @@
 
 import type { DailyLog, MoodCheckIn } from "../../types";
 import type { DayMetric } from "../experiments/types";
+import {
+  SCREEN_TIME_CATEGORIES,
+  type ScreenTimeCategory,
+} from "../screenTime/constants";
+import type { ScreenTimeDayTotals } from "../screenTime/types";
 
 /** Local-time YYYY-MM-DD key for a ms-epoch timestamp. */
 export function localDateKey(timestampMs: number): string {
@@ -52,6 +57,36 @@ export function dailyMoodEnergy(checkIns: MoodCheckIn[]): {
     energy.push({ date, value: acc.energySum / acc.count });
   }
   return { mood, energy };
+}
+
+/**
+ * Collapse per-day screen-time totals into `DayMetric` series for Engine A.
+ * Days with `totalMinutes === 0` are dropped (no data collected). Series are
+ * sorted ascending by date. `total` maps to `totalMinutes`; each
+ * `byCategory[cat]` maps to `byCategory[cat] ?? 0`.
+ */
+export function dailyScreenTime(totals: ScreenTimeDayTotals[]): {
+  total: DayMetric[];
+  byCategory: Record<ScreenTimeCategory, DayMetric[]>;
+} {
+  const filtered = totals
+    .filter((t) => t.totalMinutes !== 0)
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  const total: DayMetric[] = filtered.map((t) => ({
+    date: t.date,
+    value: t.totalMinutes,
+  }));
+
+  const byCategory = {} as Record<ScreenTimeCategory, DayMetric[]>;
+  for (const cat of SCREEN_TIME_CATEGORIES) {
+    byCategory[cat] = filtered.map((t) => ({
+      date: t.date,
+      value: t.byCategory[cat] ?? 0,
+    }));
+  }
+
+  return { total, byCategory };
 }
 
 /**
