@@ -1,46 +1,65 @@
 import { TextStyle, ViewStyle } from "react-native";
 
+// Warm-neutral grayscale design system (from the design handoff).
+// No hue anywhere except the single reserved `critical` tone (limit states
+// only); emphasis comes from lightness, weight, and space. Dark is the default;
+// the warm-paper light set + a theme context land in the next phase. Keys stay
+// backward-compatible with existing COLORS consumers — remapped onto the warm
+// neutral palette so the whole app re-skins without churn.
+
 export const COLORS = {
-  background: "#080808",
-  surface: "#121212",
-  surfaceElevated: "#1E1E1E",
+  background: "#0a0a09", // asp-bg — warm off-black
+  surface: "#141311", // asp-surface — raised panels
+  surfaceElevated: "#1d1b18", // asp-elevated — buttons, cards
 
-  accent: "#5E5E5E",
-  accentAlt: "#A3A3A3",
-  accentGlow: "rgba(255,255,255,0.14)",
+  // "Accent" is no longer a hue — it's the lightest neutral gesture.
+  accent: "#d7d2c6", // asp-glow — lightest gesture / emphasis
+  accentAlt: "#b4afa5", // asp-text-2
+  accentGlow: "rgba(215,210,198,0.22)", // glow at low opacity
 
-  text: "#F5F5F5",
-  textSecondary: "#BDBDBD",
-  textMuted: "#777777",
+  text: "#f2efe8", // asp-text — warm off-white
+  textSecondary: "#b4afa5", // asp-text-2
+  textMuted: "#76726b", // asp-muted
 
-  success: "#D4D4D4",
-  warning: "#AFAFAF",
-  danger: "#8A8A8A",
+  // Only `critical` is non-grey. Legacy semantics map onto neutral / critical.
+  success: "#b4afa5", // neutral (no green)
+  warning: "#b8a489", // critical-adjacent
+  danger: "#b8a489", // asp-critical — the one reserved tone
 
-  border: "rgba(255,255,255,0.10)",
-  borderAccent: "rgba(255,255,255,0.32)",
+  border: "rgba(244,240,232,0.16)", // asp-line-2
+  borderAccent: "rgba(244,240,232,0.16)",
 
   gradients: {
-    card: ["#1E1E1E", "#121212"] as string[],
-    accent: ["#686868", "#454545"] as string[],
-    energy: ["#AFAFAF", "#777777"] as string[],
-    focus: ["#6F6F6F", "#A3A3A3"] as string[],
-    success: ["#D4D4D4", "#8A8A8A"] as string[],
-    background: ["#080808", "#151515"] as string[],
+    card: ["#1d1b18", "#141311"] as string[],
+    accent: ["#34322e", "#16150f"] as string[], // orb gradient
+    energy: ["#b4afa5", "#76726b"] as string[],
+    focus: ["#6c6962", "#b4afa5"] as string[],
+    success: ["#b4afa5", "#76726b"] as string[],
+    background: ["#0a0a09", "#141311"] as string[],
   },
 
   intensity: [
-    "#2A2A2A",
-    "#3A3A3A",
-    "#4A4A4A",
-    "#5A5A5A",
-    "#6A6A6A",
-    "#7A7A7A",
-    "#8A8A8A",
-    "#9A9A9A",
-    "#B0B0B0",
-    "#D0D0D0",
+    "#2a2824",
+    "#34322e",
+    "#403d38",
+    "#4b4844",
+    "#5a5650",
+    "#6c6962",
+    "#827e76",
+    "#9b968c",
+    "#b4afa5",
+    "#d7d2c6",
   ],
+
+  // ── Handoff-specific warm-neutral tokens for the new design components ──
+  faint: "#4b4844", // asp-faint — tertiary / de-emphasized marks
+  line: "rgba(244,240,232,0.085)", // asp-line — hairline dividers
+  ring: "#6c6962", // asp-ring — breath-ring stroke
+  glow: "#d7d2c6", // asp-glow — lightest gesture (inhale peak)
+  orbA: "#34322e", // orb gradient highlight
+  orbB: "#16150f", // orb gradient shadow
+  critical: "#b8a489", // reserved desaturated tone — critical / limit ONLY
+  grain: 0.045, // paper-grain overlay opacity
 };
 
 export const SPACING = {
@@ -58,6 +77,10 @@ export const RADIUS = {
   lg: 18,
   xl: 24,
   pill: 999,
+  // Handoff personalities:
+  soft: 26, // B — soft/organic cards & buttons
+  instrument: 10, // C — instrument panels, buttons, rows
+  moodSquare: 56, // the circumplex squircle pad
 };
 
 export const TYPOGRAPHY: Record<string, TextStyle> = {
@@ -75,6 +98,7 @@ export const TYPOGRAPHY: Record<string, TextStyle> = {
 };
 
 export const SHADOWS: Record<string, ViewStyle> = {
+  // Depth is communicated by hairline borders + surface lightness, not drops.
   card: {
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -83,9 +107,9 @@ export const SHADOWS: Record<string, ViewStyle> = {
     elevation: 8,
   },
   glow: {
-    shadowColor: "#FFFFFF",
+    shadowColor: "#d7d2c6", // warm-neutral glow (was purple)
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 10,
   },
