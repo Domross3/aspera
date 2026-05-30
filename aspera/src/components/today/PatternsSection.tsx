@@ -18,7 +18,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { useInsights } from "../../hooks/useInsights";
 import { useLogs } from "../../hooks/useLogs";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
 import GradientCard from "../common/GradientCard";
 import SectionLabel from "../common/SectionLabel";
 import CorrelationCard from "../insights/CorrelationCard";
@@ -26,6 +26,9 @@ import TrendBarsSection from "../insights/TrendBarsSection";
 import SearchBar from "../insights/SearchBar";
 import ComparePicker from "./ComparePicker";
 import AgentFindingsCard from "./AgentFindingsCard";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 // Need at least 3 days of logs for the AI to find meaningful patterns —
 // mirrors the gate that lived in `insights.tsx`.
@@ -34,6 +37,8 @@ const MIN_LOGS_FOR_INSIGHTS = 3;
 export default function PatternsSection() {
   const { recentLogs } = useLogs();
   const { insights, loading, error, loadCached, generate } = useInsights();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -75,7 +80,7 @@ export default function PatternsSection() {
         style={{ marginTop: SPACING.md }}
       >
         <LinearGradient
-          colors={COLORS.gradients.accent as [string, string]}
+          colors={colors.gradients.accent as [string, string]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[
@@ -85,7 +90,7 @@ export default function PatternsSection() {
         >
           {loading ? (
             <View style={styles.loadingRow}>
-              <ActivityIndicator color={COLORS.text} size="small" />
+              <ActivityIndicator color={colors.text} size="small" />
               <Text style={styles.genButtonText}>
                 Analyzing your patterns...
               </Text>
@@ -109,7 +114,7 @@ export default function PatternsSection() {
           colors={["#2A1515", "#1A0E0E"]}
           style={{ marginTop: SPACING.md }}
         >
-          <Text style={[TYPOGRAPHY.caption, { color: COLORS.danger }]}>
+          <Text style={[TYPOGRAPHY.caption, { color: colors.danger }]}>
             ⚠️ {error}
           </Text>
         </GradientCard>
@@ -118,7 +123,7 @@ export default function PatternsSection() {
       {insights ? (
         <>
           <GradientCard
-            colors={COLORS.gradients.accent}
+            colors={colors.gradients.accent}
             style={{ marginTop: SPACING.lg }}
           >
             <Text
@@ -132,7 +137,7 @@ export default function PatternsSection() {
             >
               SUMMARY
             </Text>
-            <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+            <Text style={[TYPOGRAPHY.body, { color: colors.text }]}>
               {insights.summary}
             </Text>
             <View style={styles.recBox}>
@@ -150,7 +155,7 @@ export default function PatternsSection() {
               <Text
                 style={[
                   TYPOGRAPHY.body,
-                  { color: COLORS.text, fontWeight: "600" },
+                  { color: colors.text, fontWeight: "600" },
                 ]}
               >
                 {insights.topRecommendation}
@@ -199,41 +204,42 @@ export default function PatternsSection() {
   );
 }
 
-const styles = StyleSheet.create({
-  genButton: {
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md + 2,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  genButtonText: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-    fontWeight: "700",
-  } as object,
-  loadingRow: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-    alignItems: "center",
-  },
-  recBox: {
-    marginTop: SPACING.md,
-    paddingTop: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: "rgba(255,255,255,0.2)",
-  },
-  cards: { gap: SPACING.md },
-  footnote: {
-    marginTop: SPACING.lg,
-    paddingTop: SPACING.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
-    alignItems: "center",
-  },
-  footnoteText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 10,
-    fontStyle: "italic",
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    genButton: {
+      borderRadius: RADIUS.lg,
+      paddingVertical: SPACING.md + 2,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    genButtonText: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+      fontWeight: "700",
+    } as object,
+    loadingRow: {
+      flexDirection: "row",
+      gap: SPACING.sm,
+      alignItems: "center",
+    },
+    recBox: {
+      marginTop: SPACING.md,
+      paddingTop: SPACING.md,
+      borderTopWidth: 1,
+      borderTopColor: "rgba(255,255,255,0.2)",
+    },
+    cards: { gap: SPACING.md },
+    footnote: {
+      marginTop: SPACING.lg,
+      paddingTop: SPACING.md,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.border,
+      alignItems: "center",
+    },
+    footnoteText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 10,
+      fontStyle: "italic",
+    } as object,
+  });

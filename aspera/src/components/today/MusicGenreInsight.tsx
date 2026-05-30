@@ -2,7 +2,10 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import GradientCard from "../common/GradientCard";
 import { DailyLog } from "../../types";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   currentGenres: string[];
@@ -97,6 +100,8 @@ export default function MusicGenreInsight({
   currentGenres,
   recentLogs,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const stats = buildGenreStats(currentGenres, recentLogs);
 
   if (stats.length === 0) return null;
@@ -143,59 +148,60 @@ export default function MusicGenreInsight({
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    marginTop: SPACING.md,
-    borderWidth: 1,
-    borderColor: "rgba(43, 211, 231, 0.18)",
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-    marginBottom: SPACING.xs,
-  },
-  icon: { fontSize: 14 },
-  eyebrow: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.accentAlt,
-    fontSize: 9,
-  } as object,
-  title: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-    marginBottom: SPACING.xs,
-  } as object,
-  body: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    fontSize: 13,
-    lineHeight: 19,
-  } as object,
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACING.sm,
-    marginTop: SPACING.md,
-  },
-  chip: {
-    paddingHorizontal: SPACING.sm + 2,
-    paddingVertical: SPACING.xs + 1,
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.surfaceElevated,
-  },
-  chipActive: {
-    backgroundColor: "rgba(43, 211, 231, 0.16)",
-    borderWidth: 1,
-    borderColor: "rgba(43, 211, 231, 0.28)",
-  },
-  chipText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 11,
-    fontWeight: "700",
-  } as object,
-  chipTextActive: {
-    color: COLORS.accentAlt,
-  },
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    card: {
+      marginTop: SPACING.md,
+      borderWidth: 1,
+      borderColor: "rgba(43, 211, 231, 0.18)",
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+      marginBottom: SPACING.xs,
+    },
+    icon: { fontSize: 14 },
+    eyebrow: {
+      ...TYPOGRAPHY.label,
+      color: c.accentAlt,
+      fontSize: 9,
+    } as object,
+    title: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+      marginBottom: SPACING.xs,
+    } as object,
+    body: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+      fontSize: 13,
+      lineHeight: 19,
+    } as object,
+    chipRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.sm,
+      marginTop: SPACING.md,
+    },
+    chip: {
+      paddingHorizontal: SPACING.sm + 2,
+      paddingVertical: SPACING.xs + 1,
+      borderRadius: RADIUS.pill,
+      backgroundColor: c.surfaceElevated,
+    },
+    chipActive: {
+      backgroundColor: "rgba(43, 211, 231, 0.16)",
+      borderWidth: 1,
+      borderColor: "rgba(43, 211, 231, 0.28)",
+    },
+    chipText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 11,
+      fontWeight: "700",
+    } as object,
+    chipTextActive: {
+      color: c.accentAlt,
+    },
+  });

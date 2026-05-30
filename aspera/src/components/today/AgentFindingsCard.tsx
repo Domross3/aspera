@@ -6,11 +6,16 @@
 
 import React, { useEffect } from "react";
 import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from "../../constants/theme";
+import { RADIUS, SPACING, TYPOGRAPHY } from "../../constants/theme";
 import { useAgentInsights } from "../../hooks/useAgentInsights";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 export default function AgentFindingsCard() {
   const { findings, loading, analyzed, analyze } = useAgentInsights();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   useEffect(() => {
     analyze();
@@ -24,8 +29,8 @@ export default function AgentFindingsCard() {
       </View>
         {loading || !analyzed ? (
           <View style={styles.row}>
-            <ActivityIndicator color={COLORS.text} size="small" />
-            <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+            <ActivityIndicator color={colors.text} size="small" />
+            <Text style={[TYPOGRAPHY.caption, { color: colors.textMuted }]}>
               Looking through your own data…
             </Text>
           </View>
@@ -49,60 +54,63 @@ export default function AgentFindingsCard() {
   );
 }
 
-const styles = StyleSheet.create({
-  panel: {
-    borderRadius: RADIUS.instrument,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    paddingBottom: 20,
-    marginTop: SPACING.md,
-  },
-  panelHeader: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    marginBottom: SPACING.md,
-  },
-  label: {
-    ...TYPOGRAPHY.aspLabel,
-    letterSpacing: 1.98,
-    color: COLORS.textMuted,
-  } as object,
-  tentative: {
-    ...TYPOGRAPHY.aspLabel,
-    letterSpacing: 1.1,
-    color: COLORS.faint,
-  } as object,
-  row: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
-  list: { gap: SPACING.md },
-  bodyText: {
-    ...TYPOGRAPHY.body,
-    fontSize: 17,
-    lineHeight: 25.5,
-    color: COLORS.text,
-  } as object,
-  footnote: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontStyle: "italic",
-  } as object,
-  tickRow: {
-    height: 18,
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 4,
-  },
-  tick: {
-    width: 4,
-    borderRadius: 1,
-    backgroundColor: COLORS.faint,
-  },
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    panel: {
+      borderRadius: RADIUS.instrument,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      paddingHorizontal: 18,
+      paddingTop: 18,
+      paddingBottom: 20,
+      marginTop: SPACING.md,
+    },
+    panelHeader: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      justifyContent: "space-between",
+      marginBottom: SPACING.md,
+    },
+    label: {
+      ...TYPOGRAPHY.aspLabel,
+      letterSpacing: 1.98,
+      color: c.textMuted,
+    } as object,
+    tentative: {
+      ...TYPOGRAPHY.aspLabel,
+      letterSpacing: 1.1,
+      color: c.faint,
+    } as object,
+    row: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
+    list: { gap: SPACING.md },
+    bodyText: {
+      ...TYPOGRAPHY.body,
+      fontSize: 17,
+      lineHeight: 25.5,
+      color: c.text,
+    } as object,
+    footnote: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontStyle: "italic",
+    } as object,
+    tickRow: {
+      height: 18,
+      flexDirection: "row",
+      alignItems: "flex-end",
+      gap: 4,
+    },
+    tick: {
+      width: 4,
+      borderRadius: 1,
+      backgroundColor: c.faint,
+    },
+  });
 
 function TickTexture() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const heights = [8, 13, 7, 16, 10, 5, 6];
   return (
     <View style={styles.tickRow}>
@@ -114,7 +122,7 @@ function TickTexture() {
             {
               height,
               backgroundColor:
-                index === heights.length - 1 ? COLORS.textSecondary : COLORS.faint,
+                index === heights.length - 1 ? colors.textSecondary : colors.faint,
             },
           ]}
         />

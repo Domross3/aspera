@@ -2,8 +2,11 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import GradientCard from "../common/GradientCard";
 import SectionLabel from "../common/SectionLabel";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
 import { SCREEN_TIME_DATA } from "../../lib/mockData";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 function minsToLabel(mins: number): string {
   if (mins < 60) return `${mins}m`;
@@ -13,6 +16,8 @@ function minsToLabel(mins: number): string {
 }
 
 export default function ScreenTimeCard() {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const today = SCREEN_TIME_DATA[0];
   if (!today) return null;
 
@@ -23,10 +28,10 @@ export default function ScreenTimeCard() {
   const isHigh = totalMs > 360; // >6h is high
   const summaryColor =
     totalMs <= 240
-      ? COLORS.success
+      ? colors.success
       : totalMs <= 360
-        ? COLORS.warning
-        : COLORS.danger;
+        ? colors.warning
+        : colors.danger;
 
   return (
     <View>
@@ -109,7 +114,7 @@ export default function ScreenTimeCard() {
           style={[
             TYPOGRAPHY.caption,
             {
-              color: COLORS.textMuted,
+              color: colors.textMuted,
               marginTop: SPACING.md,
               marginBottom: SPACING.xs,
             },
@@ -131,137 +136,138 @@ export default function ScreenTimeCard() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.md,
-    gap: SPACING.xs,
-  },
-  headerIcon: { fontSize: 14 },
-  headerText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    flex: 1,
-  } as object,
-  badge: {
-    backgroundColor: "rgba(108,99,255,0.2)",
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.pill,
-  },
-  badgeText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontSize: 9,
-  } as object,
-  // Stats
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.lg,
-    marginBottom: SPACING.md,
-  },
-  totalCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  totalValue: {
-    ...TYPOGRAPHY.subtitle,
-    fontSize: 15,
-    lineHeight: 20,
-  } as object,
-  totalLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 8,
-  } as object,
-  statsCol: {
-    flex: 1,
-    gap: SPACING.xs,
-  },
-  statItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  statValue: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 11,
-    fontWeight: "600",
-  } as object,
-  statLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 11,
-  } as object,
-  // Bar
-  barTrack: {
-    flexDirection: "row",
-    height: 6,
-    borderRadius: 4,
-    overflow: "hidden",
-    backgroundColor: COLORS.surface,
-    marginBottom: SPACING.sm,
-  },
-  barFill: { height: "100%" },
-  // Categories
-  categoryList: {
-    gap: 2,
-  },
-  categoryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-    paddingVertical: 2,
-  },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  categoryName: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    flex: 1,
-    fontSize: 11,
-  } as object,
-  categoryTime: {
-    ...TYPOGRAPHY.caption,
-    fontSize: 11,
-    fontWeight: "600",
-    minWidth: 40,
-    textAlign: "right",
-  } as object,
-  categoryPct: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 10,
-    minWidth: 28,
-    textAlign: "right",
-  } as object,
-  // Apps
-  appRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: SPACING.xs,
-    gap: SPACING.xs,
-  },
-  appIcon: { fontSize: 14 },
-  appName: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    flex: 1,
-    fontSize: 13,
-  } as object,
-  appTime: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 11,
-    fontWeight: "600",
-    minWidth: 40,
-    textAlign: "right",
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: SPACING.md,
+      gap: SPACING.xs,
+    },
+    headerIcon: { fontSize: 14 },
+    headerText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      flex: 1,
+    } as object,
+    badge: {
+      backgroundColor: "rgba(108,99,255,0.2)",
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 2,
+      borderRadius: RADIUS.pill,
+    },
+    badgeText: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontSize: 9,
+    } as object,
+    // Stats
+    statsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.lg,
+      marginBottom: SPACING.md,
+    },
+    totalCircle: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      borderWidth: 2,
+      borderColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    totalValue: {
+      ...TYPOGRAPHY.subtitle,
+      fontSize: 15,
+      lineHeight: 20,
+    } as object,
+    totalLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 8,
+    } as object,
+    statsCol: {
+      flex: 1,
+      gap: SPACING.xs,
+    },
+    statItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    statValue: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 11,
+      fontWeight: "600",
+    } as object,
+    statLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 11,
+    } as object,
+    // Bar
+    barTrack: {
+      flexDirection: "row",
+      height: 6,
+      borderRadius: 4,
+      overflow: "hidden",
+      backgroundColor: c.surface,
+      marginBottom: SPACING.sm,
+    },
+    barFill: { height: "100%" },
+    // Categories
+    categoryList: {
+      gap: 2,
+    },
+    categoryRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+      paddingVertical: 2,
+    },
+    dot: { width: 6, height: 6, borderRadius: 3 },
+    categoryName: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      flex: 1,
+      fontSize: 11,
+    } as object,
+    categoryTime: {
+      ...TYPOGRAPHY.caption,
+      fontSize: 11,
+      fontWeight: "600",
+      minWidth: 40,
+      textAlign: "right",
+    } as object,
+    categoryPct: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 10,
+      minWidth: 28,
+      textAlign: "right",
+    } as object,
+    // Apps
+    appRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: SPACING.xs,
+      gap: SPACING.xs,
+    },
+    appIcon: { fontSize: 14 },
+    appName: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      flex: 1,
+      fontSize: 13,
+    } as object,
+    appTime: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 11,
+      fontWeight: "600",
+      minWidth: 40,
+      textAlign: "right",
+    } as object,
+  });

@@ -14,10 +14,13 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import GradientCard from "../common/GradientCard";
 import BigRocksInput from "../log/BigRocksInput";
 import { DailyLog } from "../../types";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   todayRocks: string[];
@@ -31,6 +34,8 @@ export default function TodayBigRocks({
   onChange,
 }: Props) {
   const [editing, setEditing] = useState(false);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const hasRocks = todayRocks.length > 0;
 
   // Yesterday's rocks (recentLogs[0] is today if logged; else most recent prior day).
@@ -105,7 +110,7 @@ export default function TodayBigRocks({
             <Ionicons
               name="time-outline"
               size={14}
-              color={COLORS.textSecondary}
+              color={colors.textSecondary}
             />
             <Text style={styles.suggestionText} numberOfLines={2}>
               Use yesterday's: {previousRocks.slice(0, 3).join(" · ")}
@@ -117,59 +122,60 @@ export default function TodayBigRocks({
   );
 }
 
-const styles = StyleSheet.create({
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: SPACING.sm,
-  },
-  sectionLabel: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.textSecondary,
-  } as object,
-  editLink: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontWeight: "600",
-  } as object,
-  rockRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-    paddingVertical: SPACING.xs,
-  },
-  numberBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: COLORS.accent,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  numberText: {
-    color: COLORS.text,
-    fontSize: 11,
-    fontWeight: "800",
-  },
-  rockText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    flex: 1,
-  } as object,
-  suggestionButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-    marginTop: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs + 2,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surfaceElevated,
-  },
-  suggestionText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    flex: 1,
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    headerRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: SPACING.sm,
+    },
+    sectionLabel: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.textSecondary,
+    } as object,
+    editLink: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontWeight: "600",
+    } as object,
+    rockRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      paddingVertical: SPACING.xs,
+    },
+    numberBadge: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: c.accent,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    numberText: {
+      color: c.text,
+      fontSize: 11,
+      fontWeight: "800",
+    },
+    rockText: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      flex: 1,
+    } as object,
+    suggestionButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+      marginTop: SPACING.sm,
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: SPACING.xs + 2,
+      borderRadius: RADIUS.md,
+      backgroundColor: c.surfaceElevated,
+    },
+    suggestionText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      flex: 1,
+    } as object,
+  });

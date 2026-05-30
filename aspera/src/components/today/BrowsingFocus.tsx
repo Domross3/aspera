@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import GradientCard from "../common/GradientCard";
 import SectionLabel from "../common/SectionLabel";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
 import { BROWSING_DATA, BrowsingDay } from "../../lib/mockData";
 import {
   fetchBrowsingFromFirebase,
   FirebaseBrowsingDay,
 } from "../../lib/firebase";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 function msToLabel(ms: number): string {
   const mins = Math.round(ms / 60000);
@@ -16,12 +19,6 @@ function msToLabel(ms: number): string {
   const m = mins % 60;
   return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
-
-const CATEGORY_COLORS: Record<string, string> = {
-  productive: COLORS.success,
-  neutral: COLORS.textMuted,
-  distracting: COLORS.danger,
-};
 
 function firebaseToLocal(fb: FirebaseBrowsingDay): BrowsingDay {
   const sites = Object.entries(fb.sites).map(([key, info]) => ({
@@ -36,6 +33,8 @@ function firebaseToLocal(fb: FirebaseBrowsingDay): BrowsingDay {
 export default function BrowsingFocus() {
   const [liveData, setLiveData] = useState<BrowsingDay | null>(null);
   const [isLive, setIsLive] = useState(false);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   // Firebase live fetch — disabled for demo stability, enable to show LIVE badge
   // useEffect(() => {
@@ -57,12 +56,18 @@ export default function BrowsingFocus() {
 
   const scoreColor =
     focusScore >= 70
-      ? COLORS.success
+      ? colors.success
       : focusScore >= 40
-        ? COLORS.warning
-        : COLORS.danger;
+        ? colors.warning
+        : colors.danger;
 
   const topSites = [...sites].sort((a, b) => b.time - a.time).slice(0, 5);
+
+  const categoryColors: Record<string, string> = {
+    productive: colors.success,
+    neutral: colors.textMuted,
+    distracting: colors.danger,
+  };
 
   return (
     <View>
@@ -88,15 +93,15 @@ export default function BrowsingFocus() {
           </View>
           <View style={styles.breakdownCol}>
             <View style={styles.breakdownRow}>
-              <View style={[styles.dot, { backgroundColor: COLORS.success }]} />
+              <View style={[styles.dot, { backgroundColor: colors.success }]} />
               <Text style={styles.breakdownLabel}>Productive</Text>
-              <Text style={[styles.breakdownValue, { color: COLORS.success }]}>
+              <Text style={[styles.breakdownValue, { color: colors.success }]}>
                 {msToLabel(totals.productive)} ({prodPct}%)
               </Text>
             </View>
             <View style={styles.breakdownRow}>
               <View
-                style={[styles.dot, { backgroundColor: COLORS.textMuted }]}
+                style={[styles.dot, { backgroundColor: colors.textMuted }]}
               />
               <Text style={styles.breakdownLabel}>Neutral</Text>
               <Text style={styles.breakdownValue}>
@@ -104,9 +109,9 @@ export default function BrowsingFocus() {
               </Text>
             </View>
             <View style={styles.breakdownRow}>
-              <View style={[styles.dot, { backgroundColor: COLORS.danger }]} />
+              <View style={[styles.dot, { backgroundColor: colors.danger }]} />
               <Text style={styles.breakdownLabel}>Distracting</Text>
-              <Text style={[styles.breakdownValue, { color: COLORS.danger }]}>
+              <Text style={[styles.breakdownValue, { color: colors.danger }]}>
                 {msToLabel(totals.distracting)} ({distPct}%)
               </Text>
             </View>
@@ -120,7 +125,7 @@ export default function BrowsingFocus() {
               styles.barFill,
               {
                 flex: totals.productive,
-                backgroundColor: COLORS.success,
+                backgroundColor: colors.success,
                 borderTopLeftRadius: 4,
                 borderBottomLeftRadius: 4,
               },
@@ -129,7 +134,7 @@ export default function BrowsingFocus() {
           <View
             style={[
               styles.barFill,
-              { flex: totals.neutral, backgroundColor: COLORS.textMuted },
+              { flex: totals.neutral, backgroundColor: colors.textMuted },
             ]}
           />
           <View
@@ -137,7 +142,7 @@ export default function BrowsingFocus() {
               styles.barFill,
               {
                 flex: totals.distracting,
-                backgroundColor: COLORS.danger,
+                backgroundColor: colors.danger,
                 borderTopRightRadius: 4,
                 borderBottomRightRadius: 4,
               },
@@ -150,7 +155,7 @@ export default function BrowsingFocus() {
           style={[
             TYPOGRAPHY.caption,
             {
-              color: COLORS.textMuted,
+              color: colors.textMuted,
               marginTop: SPACING.md,
               marginBottom: SPACING.xs,
             },
@@ -163,7 +168,7 @@ export default function BrowsingFocus() {
             <View
               style={[
                 styles.siteDot,
-                { backgroundColor: CATEGORY_COLORS[site.category] },
+                { backgroundColor: categoryColors[site.category] },
               ]}
             />
             <Text style={styles.siteHost} numberOfLines={1}>
@@ -178,116 +183,117 @@ export default function BrowsingFocus() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.md,
-    gap: SPACING.xs,
-  },
-  extensionIcon: { fontSize: 14 },
-  headerText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    flex: 1,
-  } as object,
-  badge: {
-    backgroundColor: "rgba(108,99,255,0.2)",
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.pill,
-  },
-  badgeLive: {
-    backgroundColor: "rgba(52,211,153,0.2)",
-  },
-  badgeText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontSize: 9,
-  } as object,
-  badgeTextLive: {
-    color: COLORS.success,
-  },
-  // Score
-  scoreRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.lg,
-    marginBottom: SPACING.md,
-  },
-  scoreCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 2,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  scoreValue: {
-    ...TYPOGRAPHY.title,
-    lineHeight: 26,
-  } as object,
-  scoreLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 8,
-  } as object,
-  breakdownCol: { flex: 1, gap: SPACING.xs },
-  breakdownRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-  },
-  dot: { width: 6, height: 6, borderRadius: 3 },
-  breakdownLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    flex: 1,
-    fontSize: 11,
-  } as object,
-  breakdownValue: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 11,
-    fontWeight: "600",
-  } as object,
-  // Bar
-  barTrack: {
-    flexDirection: "row",
-    height: 6,
-    borderRadius: 4,
-    overflow: "hidden",
-    backgroundColor: COLORS.surface,
-  },
-  barFill: { height: "100%" },
-  // Sites
-  siteRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: SPACING.xs,
-    gap: SPACING.xs,
-  },
-  siteDot: { width: 6, height: 6, borderRadius: 3 },
-  siteHost: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    flex: 1,
-    fontSize: 13,
-  } as object,
-  siteTime: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 11,
-    fontWeight: "600",
-    minWidth: 40,
-    textAlign: "right",
-  } as object,
-  siteVisits: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 10,
-    minWidth: 45,
-    textAlign: "right",
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: SPACING.md,
+      gap: SPACING.xs,
+    },
+    extensionIcon: { fontSize: 14 },
+    headerText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      flex: 1,
+    } as object,
+    badge: {
+      backgroundColor: "rgba(108,99,255,0.2)",
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 2,
+      borderRadius: RADIUS.pill,
+    },
+    badgeLive: {
+      backgroundColor: "rgba(52,211,153,0.2)",
+    },
+    badgeText: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontSize: 9,
+    } as object,
+    badgeTextLive: {
+      color: c.success,
+    },
+    // Score
+    scoreRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.lg,
+      marginBottom: SPACING.md,
+    },
+    scoreCircle: {
+      width: 64,
+      height: 64,
+      borderRadius: 32,
+      borderWidth: 2,
+      borderColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    scoreValue: {
+      ...TYPOGRAPHY.title,
+      lineHeight: 26,
+    } as object,
+    scoreLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 8,
+    } as object,
+    breakdownCol: { flex: 1, gap: SPACING.xs },
+    breakdownRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+    },
+    dot: { width: 6, height: 6, borderRadius: 3 },
+    breakdownLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      flex: 1,
+      fontSize: 11,
+    } as object,
+    breakdownValue: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 11,
+      fontWeight: "600",
+    } as object,
+    // Bar
+    barTrack: {
+      flexDirection: "row",
+      height: 6,
+      borderRadius: 4,
+      overflow: "hidden",
+      backgroundColor: c.surface,
+    },
+    barFill: { height: "100%" },
+    // Sites
+    siteRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: SPACING.xs,
+      gap: SPACING.xs,
+    },
+    siteDot: { width: 6, height: 6, borderRadius: 3 },
+    siteHost: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      flex: 1,
+      fontSize: 13,
+    } as object,
+    siteTime: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 11,
+      fontWeight: "600",
+      minWidth: 40,
+      textAlign: "right",
+    } as object,
+    siteVisits: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 10,
+      minWidth: 45,
+      textAlign: "right",
+    } as object,
+  });

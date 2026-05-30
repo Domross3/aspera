@@ -2,8 +2,11 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import GradientCard from "../common/GradientCard";
 import SectionLabel from "../common/SectionLabel";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
 import { SPOTIFY_TRACKS, SpotifyTrack } from "../../lib/mockData";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -11,6 +14,7 @@ function formatTime(iso: string): string {
 }
 
 function TrackRow({ track }: { track: SpotifyTrack }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.trackRow}>
       <View style={styles.albumArt}>
@@ -42,6 +46,7 @@ function TrackRow({ track }: { track: SpotifyTrack }) {
 }
 
 export default function SpotifyRecent() {
+  const styles = useThemedStyles(makeStyles);
   const todayTracks = SPOTIFY_TRACKS.filter((t) => {
     const played = new Date(t.played_at).toISOString().split("T")[0];
     const today = new Date().toISOString().split("T")[0];
@@ -70,62 +75,63 @@ export default function SpotifyRecent() {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.md,
-    gap: SPACING.xs,
-  },
-  spotifyIcon: { fontSize: 14 },
-  headerText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    flex: 1,
-  } as object,
-  badge: {
-    backgroundColor: "rgba(108,99,255,0.2)",
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.pill,
-  },
-  badgeText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontSize: 9,
-  } as object,
-  trackRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: SPACING.xs + 2,
-    gap: SPACING.sm,
-  },
-  albumArt: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.surfaceElevated,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  albumEmoji: { fontSize: 16 },
-  trackInfo: {
-    flex: 1,
-  },
-  trackName: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    fontSize: 14,
-    fontWeight: "600",
-  } as object,
-  trackArtist: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 11,
-  } as object,
-  trackTime: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 10,
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: SPACING.md,
+      gap: SPACING.xs,
+    },
+    spotifyIcon: { fontSize: 14 },
+    headerText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      flex: 1,
+    } as object,
+    badge: {
+      backgroundColor: "rgba(108,99,255,0.2)",
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 2,
+      borderRadius: RADIUS.pill,
+    },
+    badgeText: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontSize: 9,
+    } as object,
+    trackRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingVertical: SPACING.xs + 2,
+      gap: SPACING.sm,
+    },
+    albumArt: {
+      width: 36,
+      height: 36,
+      borderRadius: RADIUS.sm,
+      backgroundColor: c.surfaceElevated,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    albumEmoji: { fontSize: 16 },
+    trackInfo: {
+      flex: 1,
+    },
+    trackName: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      fontSize: 14,
+      fontWeight: "600",
+    } as object,
+    trackArtist: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 11,
+    } as object,
+    trackTime: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 10,
+    } as object,
+  });
