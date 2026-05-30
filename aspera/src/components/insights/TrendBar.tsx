@@ -1,6 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import { View, Text, Animated, StyleSheet } from "react-native";
-import { COLORS, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   label: string;
@@ -18,7 +20,39 @@ function isFiniteValue(v: number | null): v is number {
   return typeof v === "number" && Number.isFinite(v);
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    col: {
+      flex: 1,
+      alignItems: "center",
+      gap: 4,
+    },
+    track: {
+      width: "70%",
+      height: MAX_BAR_HEIGHT,
+      backgroundColor: c.border,
+      borderRadius: RADIUS.sm,
+      justifyContent: "flex-end",
+      overflow: "hidden",
+    },
+    fill: {
+      width: "100%",
+      borderRadius: RADIUS.sm,
+    },
+    val: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontWeight: "700",
+    } as object,
+    label: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 10,
+    } as object,
+  });
+
 export default function TrendBar({ label, value, maxValue, color }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const heightAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -45,33 +79,3 @@ export default function TrendBar({ label, value, maxValue, color }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  col: {
-    flex: 1,
-    alignItems: "center",
-    gap: 4,
-  },
-  track: {
-    width: "70%",
-    height: MAX_BAR_HEIGHT,
-    backgroundColor: COLORS.border,
-    borderRadius: RADIUS.sm,
-    justifyContent: "flex-end",
-    overflow: "hidden",
-  },
-  fill: {
-    width: "100%",
-    borderRadius: RADIUS.sm,
-  },
-  val: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontWeight: "700",
-  } as object,
-  label: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 10,
-  } as object,
-});

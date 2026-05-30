@@ -4,8 +4,11 @@
 
 import React from "react";
 import { View, Text, Switch, StyleSheet } from "react-native";
-import { COLORS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+import { SPACING, TYPOGRAPHY } from "../../../constants/theme";
 import type { FieldDef } from "../../../types";
+import { useTheme } from "../../../theme/ThemeProvider";
+import { useThemedStyles } from "../../../theme/useThemedStyles";
+import type { AsperaColors } from "../../../theme/ThemeProvider";
 
 interface Props {
   field: FieldDef;
@@ -13,7 +16,23 @@ interface Props {
   onChange: (next: boolean) => void;
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: SPACING.xs,
+    },
+    label: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+    } as object,
+  });
+
 export default function ToggleField({ field, value, onChange }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
   const on = value === true;
   return (
     <View style={styles.row}>
@@ -21,22 +40,9 @@ export default function ToggleField({ field, value, onChange }: Props) {
       <Switch
         value={on}
         onValueChange={onChange}
-        trackColor={{ false: COLORS.border, true: COLORS.accent }}
-        thumbColor={COLORS.text}
+        trackColor={{ false: colors.border, true: colors.accent }}
+        thumbColor={colors.text}
       />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: SPACING.xs,
-  },
-  label: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-  } as object,
-});

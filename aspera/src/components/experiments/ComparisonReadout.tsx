@@ -15,9 +15,11 @@
 
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import GradientCard from "../common/GradientCard";
 import type { ComparisonResult } from "../../types";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   result: ComparisonResult;
@@ -54,6 +56,112 @@ function formatRangeHalf(range: { low: number; high: number }): string {
   return `± ${half.toFixed(1)}`;
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    card: {
+      marginTop: SPACING.md,
+    },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      gap: SPACING.sm,
+      marginBottom: SPACING.sm,
+    },
+    title: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+      flex: 1,
+      fontSize: 14,
+    } as object,
+    arrow: {
+      color: c.textMuted,
+      fontWeight: "400",
+    } as object,
+    sampleHint: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 11,
+    } as object,
+    effectRow: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      gap: SPACING.sm,
+      marginBottom: SPACING.sm,
+    },
+    effectValue: {
+      ...TYPOGRAPHY.hero,
+      color: c.accent,
+      fontWeight: "800",
+      fontSize: 36,
+      letterSpacing: -1,
+    } as object,
+    effectRange: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+      fontWeight: "600",
+      fontSize: 14,
+    } as object,
+    metaRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: SPACING.sm,
+    },
+    dotsRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    dotFilled: {
+      backgroundColor: c.accent,
+    },
+    dotEmpty: {
+      backgroundColor: c.border,
+    },
+    confidenceLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 12,
+      marginLeft: SPACING.xs,
+      textTransform: "capitalize",
+    } as object,
+    probabilityText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 12,
+      fontWeight: "600",
+    } as object,
+    noEffect: {
+      ...TYPOGRAPHY.title,
+      color: c.textMuted,
+      marginBottom: SPACING.xs,
+      fontStyle: "italic",
+    } as object,
+    caption: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 12,
+      lineHeight: 17,
+    } as object,
+    caveat: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 11,
+      fontStyle: "italic",
+      marginTop: SPACING.sm,
+      paddingTop: SPACING.sm,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.border,
+      lineHeight: 16,
+    } as object,
+  });
+
 export default function ComparisonReadout({
   result,
   treatmentLabel,
@@ -61,6 +169,8 @@ export default function ComparisonReadout({
   controlSize,
   caveat,
 }: Props) {
+  const styles = useThemedStyles(makeStyles);
+
   const noDetectableEffect =
     Math.abs(result.effect) < NO_EFFECT_THRESHOLD &&
     result.confidenceLabel !== "high" &&
@@ -132,108 +242,3 @@ export default function ComparisonReadout({
     </GradientCard>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    marginTop: SPACING.md,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-  },
-  title: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-    flex: 1,
-    fontSize: 14,
-  } as object,
-  arrow: {
-    color: COLORS.textMuted,
-    fontWeight: "400",
-  } as object,
-  sampleHint: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 11,
-  } as object,
-  effectRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: SPACING.sm,
-    marginBottom: SPACING.sm,
-  },
-  effectValue: {
-    ...TYPOGRAPHY.hero,
-    color: COLORS.accent,
-    fontWeight: "800",
-    fontSize: 36,
-    letterSpacing: -1,
-  } as object,
-  effectRange: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    fontWeight: "600",
-    fontSize: 14,
-  } as object,
-  metaRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: SPACING.sm,
-  },
-  dotsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  dotFilled: {
-    backgroundColor: COLORS.accent,
-  },
-  dotEmpty: {
-    backgroundColor: COLORS.border,
-  },
-  confidenceLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    marginLeft: SPACING.xs,
-    textTransform: "capitalize",
-  } as object,
-  probabilityText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    fontWeight: "600",
-  } as object,
-  noEffect: {
-    ...TYPOGRAPHY.title,
-    color: COLORS.textMuted,
-    marginBottom: SPACING.xs,
-    fontStyle: "italic",
-  } as object,
-  caption: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 12,
-    lineHeight: 17,
-  } as object,
-  caveat: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 11,
-    fontStyle: "italic",
-    marginTop: SPACING.sm,
-    paddingTop: SPACING.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
-    lineHeight: 16,
-  } as object,
-});

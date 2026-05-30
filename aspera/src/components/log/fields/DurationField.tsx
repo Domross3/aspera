@@ -5,8 +5,10 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+import { SPACING, TYPOGRAPHY } from "../../../constants/theme";
 import type { FieldDef } from "../../../types";
+import { useThemedStyles } from "../../../theme/useThemedStyles";
+import type { AsperaColors } from "../../../theme/ThemeProvider";
 
 interface Props {
   field: FieldDef;
@@ -23,7 +25,61 @@ function formatDuration(min: number): string {
   return `${h}h ${m}m`;
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: SPACING.xs,
+    },
+    label: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      flex: 1,
+    } as object,
+    stepper: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.md,
+    },
+    adjBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: c.surfaceElevated,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    adjBtnDisabled: {
+      opacity: 0.4,
+    },
+    adjText: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "600",
+      lineHeight: 20,
+    },
+    value: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.accent,
+      fontWeight: "700",
+      minWidth: 60,
+      textAlign: "center",
+    } as object,
+    valueMuted: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.textMuted,
+      fontWeight: "700",
+      minWidth: 60,
+      textAlign: "center",
+    } as object,
+  });
+
 export default function DurationField({ field, value, onChange }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const step = field.config?.step ?? 15;
   const min = field.config?.min ?? 0;
   const max = field.config?.max ?? Number.POSITIVE_INFINITY;
@@ -82,55 +138,3 @@ export default function DurationField({ field, value, onChange }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: SPACING.xs,
-  },
-  label: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    flex: 1,
-  } as object,
-  stepper: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.md,
-  },
-  adjBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  adjBtnDisabled: {
-    opacity: 0.4,
-  },
-  adjText: {
-    color: COLORS.text,
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 20,
-  },
-  value: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.accent,
-    fontWeight: "700",
-    minWidth: 60,
-    textAlign: "center",
-  } as object,
-  valueMuted: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.textMuted,
-    fontWeight: "700",
-    minWidth: 60,
-    textAlign: "center",
-  } as object,
-});

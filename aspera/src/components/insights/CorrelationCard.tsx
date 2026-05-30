@@ -2,27 +2,120 @@ import React, { useEffect, useRef } from "react";
 import { View, Text, Animated, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Correlation } from "../../types";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import GradientCard from "../common/GradientCard";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   correlation: Correlation;
   index: number;
 }
 
-const CONFIDENCE_COLORS: Record<string, string> = {
-  low: COLORS.warning,
-  medium: COLORS.accentAlt,
-  high: COLORS.success,
-};
-
-const METRIC_COLORS: Record<string, string> = {
-  focus: COLORS.accent,
-  energy: COLORS.warning,
-  tasks: COLORS.success,
-};
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    card: { gap: SPACING.sm },
+    keystoneCard: {
+      borderWidth: 1,
+      borderColor: c.borderAccent,
+    },
+    keystoneBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+      paddingVertical: SPACING.xs + 2,
+      paddingHorizontal: SPACING.sm,
+      borderRadius: RADIUS.sm,
+      marginBottom: SPACING.xs,
+    },
+    keystoneIcon: { fontSize: 12 },
+    keystoneLabel: {
+      ...TYPOGRAPHY.label,
+      color: c.text,
+      fontSize: 9,
+    } as object,
+    keystoneHint: {
+      ...TYPOGRAPHY.caption,
+      color: "rgba(255,255,255,0.7)",
+      fontSize: 9,
+      flex: 1,
+      textAlign: "right",
+    } as object,
+    topRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    emoji: { fontSize: 28 },
+    badgeRow: {
+      flexDirection: "row",
+      gap: SPACING.xs,
+      flexWrap: "wrap",
+      justifyContent: "flex-end",
+    },
+    badge: {
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 2,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+    },
+    badgeText: {
+      ...TYPOGRAPHY.caption,
+      fontSize: 10,
+      fontWeight: "600",
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    } as object,
+    title: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+      fontWeight: "700",
+    } as object,
+    description: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+    } as object,
+    deltaRow: {
+      flexDirection: "row",
+      alignItems: "baseline",
+    },
+    delta: {
+      ...TYPOGRAPHY.title,
+      fontWeight: "800",
+    } as object,
+    deltaLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+    } as object,
+    factorsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.xs,
+      marginTop: SPACING.xs,
+    },
+    factor: {
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 2,
+      borderRadius: RADIUS.pill,
+      backgroundColor: c.surfaceElevated,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    keystoneFactor: {
+      borderColor: c.borderAccent,
+      backgroundColor: c.accentGlow,
+    },
+    factorText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      textTransform: "capitalize",
+    } as object,
+  });
 
 export default function CorrelationCard({ correlation: c, index }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(30)).current;
 
@@ -43,8 +136,20 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
     ]).start();
   }, []);
 
+  const CONFIDENCE_COLORS: Record<string, string> = {
+    low: colors.warning,
+    medium: colors.accentAlt,
+    high: colors.success,
+  };
+
+  const METRIC_COLORS: Record<string, string> = {
+    focus: colors.accent,
+    energy: colors.warning,
+    tasks: colors.success,
+  };
+
   const deltaPositive = c.delta >= 0;
-  const metricColor = METRIC_COLORS[c.outputMetric] ?? COLORS.accent;
+  const metricColor = METRIC_COLORS[c.outputMetric] ?? colors.accent;
 
   const cardColors = c.isKeystone
     ? (["#1A1040", "#0F0A2A"] as [string, string]) // deeper purple for keystone
@@ -61,7 +166,7 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
         {/* Keystone banner */}
         {c.isKeystone && (
           <LinearGradient
-            colors={COLORS.gradients.accent as [string, string]}
+            colors={colors.gradients.accent as [string, string]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.keystoneBanner}
@@ -118,7 +223,7 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
           <Text
             style={[
               styles.delta,
-              { color: deltaPositive ? COLORS.success : COLORS.danger },
+              { color: deltaPositive ? colors.success : colors.danger },
             ]}
           >
             {deltaPositive ? "+" : ""}
@@ -136,7 +241,7 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
               <Text
                 style={[
                   styles.factorText,
-                  c.isKeystone && { color: COLORS.accent },
+                  c.isKeystone && { color: colors.accent },
                 ]}
               >
                 {f}
@@ -148,102 +253,3 @@ export default function CorrelationCard({ correlation: c, index }: Props) {
     </Animated.View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: { gap: SPACING.sm },
-  keystoneCard: {
-    borderWidth: 1,
-    borderColor: COLORS.borderAccent,
-  },
-  keystoneBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs + 2,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: RADIUS.sm,
-    marginBottom: SPACING.xs,
-  },
-  keystoneIcon: { fontSize: 12 },
-  keystoneLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.text,
-    fontSize: 9,
-  } as object,
-  keystoneHint: {
-    ...TYPOGRAPHY.caption,
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 9,
-    flex: 1,
-    textAlign: "right",
-  } as object,
-  topRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  emoji: { fontSize: 28 },
-  badgeRow: {
-    flexDirection: "row",
-    gap: SPACING.xs,
-    flexWrap: "wrap",
-    justifyContent: "flex-end",
-  },
-  badge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-  },
-  badgeText: {
-    ...TYPOGRAPHY.caption,
-    fontSize: 10,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  } as object,
-  title: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-    fontWeight: "700",
-  } as object,
-  description: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-  } as object,
-  deltaRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-  },
-  delta: {
-    ...TYPOGRAPHY.title,
-    fontWeight: "800",
-  } as object,
-  deltaLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-  } as object,
-  factorsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACING.xs,
-    marginTop: SPACING.xs,
-  },
-  factor: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  keystoneFactor: {
-    borderColor: COLORS.borderAccent,
-    backgroundColor: COLORS.accentGlow,
-  },
-  factorText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    textTransform: "capitalize",
-  } as object,
-});
