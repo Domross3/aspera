@@ -24,10 +24,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { supabase } from "../src/lib/supabase";
-import { COLORS, SPACING, TYPOGRAPHY } from "../src/constants/theme";
+import { SPACING, TYPOGRAPHY } from "../src/constants/theme";
+import { useTheme } from "../src/theme/ThemeProvider";
+import { useThemedStyles } from "../src/theme/useThemedStyles";
+import type { AsperaColors } from "../src/theme/ThemeProvider";
 
 export default function SignInScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,7 +78,7 @@ export default function SignInScreen() {
 
   return (
     <LinearGradient
-      colors={COLORS.gradients.background as [string, string]}
+      colors={colors.gradients.background as [string, string]}
       style={styles.container}
     >
       <View
@@ -86,12 +91,12 @@ export default function SignInScreen() {
         ]}
       >
         <View style={styles.header}>
-          <Text style={[TYPOGRAPHY.hero, { color: COLORS.text }]}>Aspera</Text>
+          <Text style={[TYPOGRAPHY.hero, { color: colors.text }]}>Aspera</Text>
           <Text
             style={[
               TYPOGRAPHY.body,
               {
-                color: COLORS.textSecondary,
+                color: colors.textSecondary,
                 marginTop: SPACING.sm,
                 textAlign: "center",
               },
@@ -115,14 +120,14 @@ export default function SignInScreen() {
               onPress={handleAppleSignIn}
             />
           ) : (
-            <Text style={[TYPOGRAPHY.body, { color: COLORS.danger }]}>
+            <Text style={[TYPOGRAPHY.body, { color: colors.danger }]}>
               Apple Sign In is iOS-only for now.
             </Text>
           )}
 
           {busy && (
             <View style={{ marginTop: SPACING.md }}>
-              <ActivityIndicator color={COLORS.accent} />
+              <ActivityIndicator color={colors.accent} />
             </View>
           )}
 
@@ -131,7 +136,7 @@ export default function SignInScreen() {
               style={[
                 TYPOGRAPHY.caption,
                 {
-                  color: COLORS.danger,
+                  color: colors.danger,
                   marginTop: SPACING.md,
                   textAlign: "center",
                 },
@@ -145,7 +150,7 @@ export default function SignInScreen() {
             style={[
               TYPOGRAPHY.caption,
               {
-                color: COLORS.textMuted,
+                color: colors.textMuted,
                 marginTop: SPACING.xl,
                 textAlign: "center",
               },
@@ -160,24 +165,25 @@ export default function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: {
-    flex: 1,
-    paddingHorizontal: SPACING.xl,
-    justifyContent: "space-between",
-  },
-  header: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  actions: {
-    alignItems: "center",
-  },
-  appleButton: {
-    width: "100%",
-    maxWidth: 320,
-    height: 52,
-  },
-});
+const makeStyles = (_c: AsperaColors) =>
+  StyleSheet.create({
+    container: { flex: 1 },
+    content: {
+      flex: 1,
+      paddingHorizontal: SPACING.xl,
+      justifyContent: "space-between",
+    },
+    header: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    actions: {
+      alignItems: "center",
+    },
+    appleButton: {
+      width: "100%",
+      maxWidth: 320,
+      height: 52,
+    },
+  });

@@ -16,7 +16,10 @@ import {
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   visible: boolean;
@@ -44,6 +47,8 @@ export default function TimePickerModal({
   onCancel,
   onConfirm,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [date, setDate] = useState(() => parseHHMM(initial));
 
   // Resync when reopened — the consumer may have advanced to a different row.
@@ -101,7 +106,7 @@ export default function TimePickerModal({
             onChange={(_event, d) => {
               if (d) setDate(d);
             }}
-            textColor={COLORS.text}
+            textColor={colors.text}
             style={styles.picker}
           />
         </View>
@@ -110,44 +115,45 @@ export default function TimePickerModal({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
-  backdropTouch: {
-    flex: 1,
-  },
-  sheet: {
-    backgroundColor: COLORS.surface,
-    borderTopLeftRadius: RADIUS.lg,
-    borderTopRightRadius: RADIUS.lg,
-    paddingBottom: SPACING.lg,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-  },
-  cancelText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-  } as object,
-  titleText: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-  } as object,
-  doneText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontWeight: "700",
-  } as object,
-  picker: {
-    height: 200,
-  },
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "flex-end",
+    },
+    backdropTouch: {
+      flex: 1,
+    },
+    sheet: {
+      backgroundColor: c.surface,
+      borderTopLeftRadius: RADIUS.lg,
+      borderTopRightRadius: RADIUS.lg,
+      paddingBottom: SPACING.lg,
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
+    cancelText: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+    } as object,
+    titleText: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+    } as object,
+    doneText: {
+      ...TYPOGRAPHY.body,
+      color: c.accent,
+      fontWeight: "700",
+    } as object,
+    picker: {
+      height: 200,
+    },
+  });

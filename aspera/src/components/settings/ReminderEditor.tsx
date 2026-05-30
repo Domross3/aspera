@@ -28,7 +28,10 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 import type { EventTypeDef, ReminderSchedule, UserReminder } from "../../types";
 import TimePickerModal from "./TimePickerModal";
 
@@ -66,6 +69,8 @@ export default function ReminderEditor({
   onSave,
   onDelete,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [draft, setDraft] = useState<UserReminder>(
     () => initial ?? emptyDraft(),
   );
@@ -208,7 +213,7 @@ export default function ReminderEditor({
               <Text style={styles.sectionLabel}>Label</Text>
               <TextInput
                 placeholder="e.g. Drink water, Take lion's mane"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 value={draft.label}
                 onChangeText={(v) => setDraft((d) => ({ ...d, label: v }))}
                 style={styles.input}
@@ -253,7 +258,7 @@ export default function ReminderEditor({
                         <Ionicons
                           name="time-outline"
                           size={16}
-                          color={COLORS.accent}
+                          color={colors.accent}
                         />
                         <Text style={styles.timeChipText}>{t}</Text>
                       </TouchableOpacity>
@@ -264,7 +269,7 @@ export default function ReminderEditor({
                         <Ionicons
                           name="close-circle"
                           size={20}
-                          color={COLORS.textMuted}
+                          color={colors.textMuted}
                         />
                       </TouchableOpacity>
                     </View>
@@ -277,7 +282,7 @@ export default function ReminderEditor({
                     <Ionicons
                       name="add-circle"
                       size={16}
-                      color={COLORS.accent}
+                      color={colors.accent}
                     />
                     <Text style={styles.addInlineText}>Add another time</Text>
                   </TouchableOpacity>
@@ -507,6 +512,7 @@ function KindTile({
   active: boolean;
   onPress: () => void;
 }) {
+  const styles = useThemedStyles(makeStyles);
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -520,229 +526,230 @@ function KindTile({
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
-  backdropTouch: { flex: 1 },
-  sheet: {
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: RADIUS.lg,
-    borderTopRightRadius: RADIUS.lg,
-    maxHeight: "92%",
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-  },
-  cancelText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-  } as object,
-  titleText: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-  } as object,
-  doneText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontWeight: "700",
-  } as object,
-  doneDisabled: { color: COLORS.textMuted },
-  body: { padding: SPACING.lg, paddingBottom: SPACING.xl + 40 },
-  sectionLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textMuted,
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: SPACING.sm,
-  } as object,
-  miniLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textMuted,
-    fontSize: 10,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-    marginBottom: 4,
-  } as object,
-  input: {
-    ...TYPOGRAPHY.body,
-    backgroundColor: COLORS.surfaceElevated,
-    borderColor: COLORS.border,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    color: COLORS.text,
-  } as object,
-  kindRow: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-  },
-  kindTile: {
-    flex: 1,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    alignItems: "center",
-  },
-  kindTileActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
-  },
-  kindTileText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    fontSize: 14,
-  } as object,
-  kindTileTextActive: {
-    color: COLORS.text,
-    fontWeight: "700",
-  } as object,
-  timeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: SPACING.sm,
-  },
-  timeChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  timeChipText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontWeight: "700",
-    fontSize: 14,
-  } as object,
-  addInlineRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingVertical: SPACING.sm,
-  },
-  addInlineText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontWeight: "600",
-    fontSize: 13,
-  } as object,
-  countStepper: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.md,
-    justifyContent: "center",
-    marginBottom: SPACING.md,
-  },
-  countValue: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.accent,
-    fontWeight: "700",
-    minWidth: 80,
-    textAlign: "center",
-  } as object,
-  adjBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  adjText: {
-    color: COLORS.text,
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 20,
-  },
-  windowRow: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-  },
-  windowCell: {
-    flex: 1,
-  },
-  weekdaysRow: {
-    flexDirection: "row",
-    gap: 6,
-  },
-  weekdayChip: {
-    flex: 1,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    alignItems: "center",
-  },
-  weekdayChipActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
-  },
-  weekdayText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    fontSize: 13,
-  } as object,
-  weekdayTextActive: {
-    color: COLORS.text,
-    fontWeight: "700",
-  } as object,
-  linkRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACING.xs,
-  },
-  linkChip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 6,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  linkChipActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
-  },
-  linkChipText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 13,
-  } as object,
-  linkChipTextActive: {
-    color: COLORS.text,
-    fontWeight: "600",
-  } as object,
-  deleteRow: {
-    marginTop: SPACING.xl,
-    alignItems: "center",
-    paddingVertical: SPACING.md,
-  },
-  deleteText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.danger,
-    fontWeight: "600",
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    backdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "flex-end",
+    },
+    backdropTouch: { flex: 1 },
+    sheet: {
+      backgroundColor: c.background,
+      borderTopLeftRadius: RADIUS.lg,
+      borderTopRightRadius: RADIUS.lg,
+      maxHeight: "92%",
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
+    cancelText: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+    } as object,
+    titleText: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+    } as object,
+    doneText: {
+      ...TYPOGRAPHY.body,
+      color: c.accent,
+      fontWeight: "700",
+    } as object,
+    doneDisabled: { color: c.textMuted },
+    body: { padding: SPACING.lg, paddingBottom: SPACING.xl + 40 },
+    sectionLabel: {
+      ...TYPOGRAPHY.label,
+      color: c.textMuted,
+      fontSize: 11,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+      marginBottom: SPACING.sm,
+    } as object,
+    miniLabel: {
+      ...TYPOGRAPHY.label,
+      color: c.textMuted,
+      fontSize: 10,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      marginBottom: 4,
+    } as object,
+    input: {
+      ...TYPOGRAPHY.body,
+      backgroundColor: c.surfaceElevated,
+      borderColor: c.border,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm + 2,
+      color: c.text,
+    } as object,
+    kindRow: {
+      flexDirection: "row",
+      gap: SPACING.sm,
+    },
+    kindTile: {
+      flex: 1,
+      paddingVertical: SPACING.md,
+      paddingHorizontal: SPACING.md,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      alignItems: "center",
+    },
+    kindTileActive: {
+      borderColor: c.accent,
+      backgroundColor: c.accentGlow,
+    },
+    kindTileText: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+      fontSize: 14,
+    } as object,
+    kindTileTextActive: {
+      color: c.text,
+      fontWeight: "700",
+    } as object,
+    timeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: SPACING.sm,
+    },
+    timeChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: 8,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    timeChipText: {
+      ...TYPOGRAPHY.body,
+      color: c.accent,
+      fontWeight: "700",
+      fontSize: 14,
+    } as object,
+    addInlineRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingVertical: SPACING.sm,
+    },
+    addInlineText: {
+      ...TYPOGRAPHY.body,
+      color: c.accent,
+      fontWeight: "600",
+      fontSize: 13,
+    } as object,
+    countStepper: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.md,
+      justifyContent: "center",
+      marginBottom: SPACING.md,
+    },
+    countValue: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.accent,
+      fontWeight: "700",
+      minWidth: 80,
+      textAlign: "center",
+    } as object,
+    adjBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: c.surfaceElevated,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    adjText: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "600",
+      lineHeight: 20,
+    },
+    windowRow: {
+      flexDirection: "row",
+      gap: SPACING.sm,
+    },
+    windowCell: {
+      flex: 1,
+    },
+    weekdaysRow: {
+      flexDirection: "row",
+      gap: 6,
+    },
+    weekdayChip: {
+      flex: 1,
+      paddingVertical: SPACING.sm,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      alignItems: "center",
+    },
+    weekdayChipActive: {
+      borderColor: c.accent,
+      backgroundColor: c.accentGlow,
+    },
+    weekdayText: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+      fontSize: 13,
+    } as object,
+    weekdayTextActive: {
+      color: c.text,
+      fontWeight: "700",
+    } as object,
+    linkRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.xs,
+    },
+    linkChip: {
+      paddingHorizontal: SPACING.md,
+      paddingVertical: 6,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    linkChipActive: {
+      borderColor: c.accent,
+      backgroundColor: c.accentGlow,
+    },
+    linkChipText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 13,
+    } as object,
+    linkChipTextActive: {
+      color: c.text,
+      fontWeight: "600",
+    } as object,
+    deleteRow: {
+      marginTop: SPACING.xl,
+      alignItems: "center",
+      paddingVertical: SPACING.md,
+    },
+    deleteText: {
+      ...TYPOGRAPHY.body,
+      color: c.danger,
+      fontWeight: "600",
+    } as object,
+  });

@@ -42,7 +42,10 @@ import {
   normalizeForDismissal,
 } from "../../src/lib/momentPromotion";
 import SchemaBuilder from "../../src/components/log/SchemaBuilder";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
+import { useTheme } from "../../src/theme/ThemeProvider";
+import { useThemedStyles } from "../../src/theme/useThemedStyles";
+import type { AsperaColors } from "../../src/theme/ThemeProvider";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
 import TrendLineCard, {
@@ -126,9 +129,6 @@ function buildTrend(
   key: "avgMood" | "avgEnergy" | "avgStress",
   windowDays = 7,
 ): TrendPoint[] {
-  // Always emit a fixed-window array so the chart x-axis covers a full
-  // rolling week. Days without captures land as `value: null`, which the
-  // TrendLineCard renders as a gap (no dot, no line crossing the day).
   const byDate = new Map(points.map((p) => [p.date, p]));
   const anchor = new Date();
   anchor.setHours(12, 0, 0, 0);
@@ -150,16 +150,10 @@ function buildTrend(
   return result;
 }
 
-// A unified timeline item — mood check-in OR moment. Used by Recent
-// Captures so the two stream into a single chronological feed.
 type TimelineItem =
   | { kind: "mood"; data: MoodCheckIn }
   | { kind: "moment"; data: Moment };
 
-// Build the seed EventTypeDef the SchemaBuilder opens with when the
-// user accepts a promotion suggestion. Defaults to recurrent (since the
-// label has been logged repeatedly) and gives them a starting "Notes"
-// text field that they can extend.
 function buildPromotionSeed(label: string): EventTypeDef {
   return {
     id: `t-${Math.random().toString(36).slice(2, 10)}`,
@@ -175,22 +169,17 @@ export default function MoodScreen() {
   const router = useRouter();
   const { session } = useAuth();
   const { settings, update: updateSettings } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [recentCheckins, setRecentCheckins] = useState<MoodCheckIn[]>([]);
   const [recentMoments, setRecentMoments] = useState<Moment[]>([]);
   const [momentSheetVisible, setMomentSheetVisible] = useState(false);
   const [moodPadSaving, setMoodPadSaving] = useState(false);
-  // When non-null, a SchemaBuilder is open with this draft preloaded —
-  // used by the promotion-nudge banner to drive event-type creation
-  // directly from the Mood tab without a tab switch.
   const [promotionDraft, setPromotionDraft] = useState<EventTypeDef | null>(
     null,
   );
 
   const loadCheckins = useCallback(async () => {
-    // Mock-seed removed — the user wants the real state of their data
-    // so they can see what's actually captured. If unauthenticated we
-    // still hydrate from local AsyncStorage (will be empty until the
-    // user has logged something).
     if (!session) {
       const [recent, moments] = await Promise.all([
         getRecentMoodCheckIns(14),
@@ -208,9 +197,6 @@ export default function MoodScreen() {
       ]);
       setRecentCheckins(cloudCheckins);
       setRecentMoments(cloudMoments);
-      // Warm the local cache idempotently so offline fallback + the local-only
-      // AI prompt paths see cloud data. These overwrite per-day buckets (vs.
-      // append), so repeated warms never duplicate.
       void Promise.all([
         replaceCachedMoodCheckIns(cloudCheckins),
         replaceCachedMoments(cloudMoments),
@@ -255,9 +241,6 @@ export default function MoodScreen() {
     [recentCheckins],
   );
 
-  // Promotion candidate: scan recent moments for a label that has been
-  // logged ≥3 times in 14 days and isn't on the user's dismissed list.
-  // Returns null when nothing qualifies.
   const promotionCandidate = useMemo(
     () =>
       detectPromotionCandidate(
@@ -287,13 +270,9 @@ export default function MoodScreen() {
     const existing = settings.eventTypes ?? [];
     await updateSettings({ eventTypes: [...existing, next] });
     setPromotionDraft(null);
-    // Land them on the Log tab so the new metric is visible — the next
-    // section they want is structured data entry, not more moments.
     router.navigate("/(tabs)/log" as never);
   };
 
-  // Interleaved Recent Captures: mood check-ins + moments, sorted by
-  // timestamp (newest first). The renderer discriminates on `kind`.
   const recentEntries = useMemo<TimelineItem[]>(() => {
     const items: TimelineItem[] = [
       ...recentCheckins.map((c) => ({ kind: "mood" as const, data: c })),
@@ -317,8 +296,6 @@ export default function MoodScreen() {
   );
 
   const handleMomentSave = async (moment: Moment) => {
-    // Optimistic local write, then background cloud sync — mirror the
-    // mood-checkin pattern exactly.
     await saveMoment(moment);
     if (session) {
       insertMoment(session.user.id, moment).catch((err) => {
@@ -349,7 +326,7 @@ export default function MoodScreen() {
 
   return (
     <LinearGradient
-      colors={COLORS.gradients.background as [string, string]}
+      colors={colors.gradients.background as [string, string]}
       style={styles.container}
     >
       <ScrollView
@@ -366,7 +343,7 @@ export default function MoodScreen() {
         <Text
           style={[
             TYPOGRAPHY.hero,
-            { color: COLORS.text, marginBottom: SPACING.xs },
+            { color: colors.text, marginBottom: SPACING.xs },
           ]}
         >
           Mood
@@ -374,7 +351,7 @@ export default function MoodScreen() {
         <Text
           style={[
             TYPOGRAPHY.body,
-            { color: COLORS.textSecondary, marginBottom: SPACING.xl },
+            { color: colors.textSecondary, marginBottom: SPACING.xl },
           ]}
         >
           Track how you trend over time, then capture moments when something
@@ -385,7 +362,7 @@ export default function MoodScreen() {
 
         {summary ? (
           <>
-            <GradientCard colors={COLORS.gradients.accent}>
+            <GradientCard colors={colors.gradients.accent}>
               <Text style={styles.overviewEyebrow}>OVER TIME</Text>
               <Text style={styles.overviewTitle}>
                 {todayCaptureCount > 0
@@ -426,7 +403,7 @@ export default function MoodScreen() {
             <TrendLineCard
               title="Mood"
               subtitle="Daily average across your recent captures"
-              accentColor={COLORS.success}
+              accentColor={colors.success}
               points={moodTrend}
               maxValue={5}
               formatValue={(value) => value.toFixed(1)}
@@ -434,7 +411,7 @@ export default function MoodScreen() {
             <TrendLineCard
               title="Energy"
               subtitle="Where your momentum has been landing"
-              accentColor={COLORS.warning}
+              accentColor={colors.warning}
               points={energyTrend}
               maxValue={5}
               formatValue={(value) => value.toFixed(1)}
@@ -442,7 +419,7 @@ export default function MoodScreen() {
             <TrendLineCard
               title="Stress"
               subtitle="Pressure level over the same stretch"
-              accentColor={COLORS.danger}
+              accentColor={colors.danger}
               points={stressTrend}
               maxValue={5}
               formatValue={(value) => value.toFixed(1)}
@@ -471,7 +448,7 @@ export default function MoodScreen() {
               <Ionicons
                 name="trending-up"
                 size={18}
-                color={COLORS.accent}
+                color={colors.accent}
                 style={{ marginTop: 2 }}
               />
               <View style={{ flex: 1 }}>
@@ -520,14 +497,14 @@ export default function MoodScreen() {
             activeOpacity={0.7}
             style={styles.momentButton}
           >
-            <Ionicons name="add-circle" size={16} color={COLORS.accent} />
+            <Ionicons name="add-circle" size={16} color={colors.accent} />
             <Text style={styles.momentButtonText}>Moment</Text>
           </TouchableOpacity>
         </View>
         {recentEntries.length === 0 ? (
           <GradientCard style={{ marginBottom: SPACING.sm }}>
             <Text style={styles.captureNote}>
-              No captures yet. Log a mood pulse below or tap “Moment” to note
+              No captures yet. Log a mood pulse below or tap "Moment" to note
               something that just happened.
             </Text>
           </GradientCard>
@@ -570,7 +547,7 @@ export default function MoodScreen() {
               >
                 <View style={styles.captureRow}>
                   <View style={styles.momentLabelRow}>
-                    <Ionicons name="bookmark" size={14} color={COLORS.accent} />
+                    <Ionicons name="bookmark" size={14} color={colors.accent} />
                     <Text style={styles.momentLabel}>{m.label}</Text>
                     {typeof m.duration === "number" ? (
                       <Text style={styles.momentDuration}>
@@ -609,187 +586,188 @@ export default function MoodScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { paddingHorizontal: SPACING.lg },
-  overviewEyebrow: {
-    ...TYPOGRAPHY.label,
-    color: "rgba(255,255,255,0.65)",
-    marginBottom: SPACING.xs,
-  } as object,
-  overviewTitle: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-  } as object,
-  overviewBody: {
-    ...TYPOGRAPHY.body,
-    color: "rgba(255,255,255,0.78)",
-    marginTop: SPACING.sm,
-    lineHeight: 20,
-  } as object,
-  summaryRow: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-    marginTop: SPACING.md,
-  },
-  summaryTile: {
-    flex: 1,
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.sm,
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.12)",
-  },
-  summaryValue: {
-    ...TYPOGRAPHY.title,
-    color: COLORS.text,
-  } as object,
-  summaryLabel: {
-    ...TYPOGRAPHY.caption,
-    color: "rgba(255,255,255,0.72)",
-    marginTop: 2,
-  } as object,
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: SPACING.xl,
-  },
-  emptyEmoji: {
-    fontSize: 42,
-    marginBottom: SPACING.md,
-  },
-  emptyTitle: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-    textAlign: "center",
-  } as object,
-  emptyBody: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    textAlign: "center",
-    marginTop: SPACING.xs,
-  } as object,
-  captureRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: SPACING.md,
-  },
-  captureMoodRow: {
-    flexDirection: "row",
-    gap: SPACING.xs,
-  },
-  momentLabelRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-    flex: 1,
-  },
-  momentLabel: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    fontWeight: "600",
-    fontSize: 14,
-  } as object,
-  momentDuration: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 12,
-  } as object,
-  recentHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: SPACING.sm,
-  },
-  momentButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: SPACING.sm + 2,
-    paddingVertical: 6,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    marginTop: SPACING.xl,
-  },
-  momentButtonText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontWeight: "700",
-    fontSize: 12,
-  } as object,
-  promotionBanner: {
-    marginTop: SPACING.xl,
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: "rgba(108,99,255,0.35)",
-    backgroundColor: "rgba(108,99,255,0.08)",
-    gap: SPACING.md,
-  },
-  promotionRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: SPACING.sm,
-  },
-  promotionTitle: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-    fontSize: 14,
-    marginBottom: 2,
-  } as object,
-  promotionBody: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 12,
-    lineHeight: 17,
-  } as object,
-  promotionLabel: {
-    color: COLORS.accent,
-    fontWeight: "700",
-  } as object,
-  promotionActions: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    gap: SPACING.sm,
-  },
-  promotionSecondary: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 6,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  promotionSecondaryText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontWeight: "600",
-    fontSize: 12,
-  } as object,
-  promotionPrimary: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 6,
-    borderRadius: RADIUS.pill,
-    backgroundColor: COLORS.accent,
-  },
-  promotionPrimaryText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.text,
-    fontWeight: "700",
-    fontSize: 12,
-  } as object,
-  captureEmoji: {
-    fontSize: 18,
-  },
-  captureTime: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-  } as object,
-  captureNote: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.sm,
-    lineHeight: 20,
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    content: { paddingHorizontal: SPACING.lg },
+    overviewEyebrow: {
+      ...TYPOGRAPHY.label,
+      color: "rgba(255,255,255,0.65)",
+      marginBottom: SPACING.xs,
+    } as object,
+    overviewTitle: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+    } as object,
+    overviewBody: {
+      ...TYPOGRAPHY.body,
+      color: "rgba(255,255,255,0.78)",
+      marginTop: SPACING.sm,
+      lineHeight: 20,
+    } as object,
+    summaryRow: {
+      flexDirection: "row",
+      gap: SPACING.sm,
+      marginTop: SPACING.md,
+    },
+    summaryTile: {
+      flex: 1,
+      borderRadius: RADIUS.lg,
+      paddingVertical: SPACING.md,
+      paddingHorizontal: SPACING.sm,
+      alignItems: "center",
+      backgroundColor: "rgba(255,255,255,0.12)",
+    },
+    summaryValue: {
+      ...TYPOGRAPHY.title,
+      color: c.text,
+    } as object,
+    summaryLabel: {
+      ...TYPOGRAPHY.caption,
+      color: "rgba(255,255,255,0.72)",
+      marginTop: 2,
+    } as object,
+    emptyState: {
+      alignItems: "center",
+      paddingVertical: SPACING.xl,
+    },
+    emptyEmoji: {
+      fontSize: 42,
+      marginBottom: SPACING.md,
+    },
+    emptyTitle: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+      textAlign: "center",
+    } as object,
+    emptyBody: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+      textAlign: "center",
+      marginTop: SPACING.xs,
+    } as object,
+    captureRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: SPACING.md,
+    },
+    captureMoodRow: {
+      flexDirection: "row",
+      gap: SPACING.xs,
+    },
+    momentLabelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+      flex: 1,
+    },
+    momentLabel: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      fontWeight: "600",
+      fontSize: 14,
+    } as object,
+    momentDuration: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 12,
+    } as object,
+    recentHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: SPACING.sm,
+    },
+    momentButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: SPACING.sm + 2,
+      paddingVertical: 6,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      marginTop: SPACING.xl,
+    },
+    momentButtonText: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontWeight: "700",
+      fontSize: 12,
+    } as object,
+    promotionBanner: {
+      marginTop: SPACING.xl,
+      padding: SPACING.md,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: "rgba(108,99,255,0.35)",
+      backgroundColor: "rgba(108,99,255,0.08)",
+      gap: SPACING.md,
+    },
+    promotionRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: SPACING.sm,
+    },
+    promotionTitle: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+      fontSize: 14,
+      marginBottom: 2,
+    } as object,
+    promotionBody: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 12,
+      lineHeight: 17,
+    } as object,
+    promotionLabel: {
+      color: c.accent,
+      fontWeight: "700",
+    } as object,
+    promotionActions: {
+      flexDirection: "row",
+      justifyContent: "flex-end",
+      gap: SPACING.sm,
+    },
+    promotionSecondary: {
+      paddingHorizontal: SPACING.md,
+      paddingVertical: 6,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    promotionSecondaryText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontWeight: "600",
+      fontSize: 12,
+    } as object,
+    promotionPrimary: {
+      paddingHorizontal: SPACING.md,
+      paddingVertical: 6,
+      borderRadius: RADIUS.pill,
+      backgroundColor: c.accent,
+    },
+    promotionPrimaryText: {
+      ...TYPOGRAPHY.caption,
+      color: c.text,
+      fontWeight: "700",
+      fontSize: 12,
+    } as object,
+    captureEmoji: {
+      fontSize: 18,
+    },
+    captureTime: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+    } as object,
+    captureNote: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+      marginTop: SPACING.sm,
+      lineHeight: 20,
+    } as object,
+  });

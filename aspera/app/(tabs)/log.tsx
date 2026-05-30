@@ -25,7 +25,10 @@ import {
   DEFAULT_LOG_SECTION_ORDER,
   MusicGenre,
 } from "../../src/types";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
+import { useTheme } from "../../src/theme/ThemeProvider";
+import { useThemedStyles } from "../../src/theme/useThemedStyles";
+import type { AsperaColors } from "../../src/theme/ThemeProvider";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
 import CaffeinePicker from "../../src/components/log/CaffeinePicker";
@@ -47,9 +50,6 @@ import { clearInsights } from "../../src/storage/storage";
 
 // ── Section descriptors + ordering ───────────────────────────────────────
 
-// What the Log tab is currently rendering, in order. System sections map
-// to bespoke widgets (Sleep, Caffeine, etc.); user sections render via
-// the schema-driven EventTypeRenderer. Edit mode operates on this list.
 type SectionDescriptor =
   | { kind: "system"; id: LogSectionId; label: string }
   | { kind: "user"; type: EventTypeDef };
@@ -59,16 +59,11 @@ function buildSections(
   hidden: (LogSectionId | string)[],
   eventTypes: EventTypeDef[],
 ): SectionDescriptor[] {
-  // Default order if the user has never customized it.
   const base: (LogSectionId | string)[] =
     order && order.length > 0
       ? [...order]
       : [...DEFAULT_LOG_SECTION_ORDER, ...eventTypes.map((t) => t.id)];
 
-  // Append anything the saved order doesn't know about — handles two
-  // cases gracefully: a new system section landing in an app update, and
-  // a user creating a new event type that hasn't been merged into their
-  // saved order yet.
   const known = new Set(base);
   for (const sysId of DEFAULT_LOG_SECTION_ORDER) {
     if (!known.has(sysId)) {
@@ -93,16 +88,10 @@ function buildSections(
       if (sys) return { kind: "system", id: sys.id, label: sys.label };
       const userType = userById.get(id);
       if (userType) return { kind: "user", type: userType };
-      // Unknown id (stale order entry referencing a deleted event type).
       return null;
     })
     .filter((d): d is SectionDescriptor => d !== null);
 
-  // Hoist recurrent event types to the very top so multiply-occurring things
-  // (workout, dose, etc.) are the first thing the user sees + logs — above
-  // the Evening Reflection — rather than buried under a dozen system
-  // sections. Single-cardinality user types keep their place in the order.
-  // Stable partition preserves relative ordering within each group.
   const recurrent = ordered.filter(
     (d) => d.kind === "user" && d.type.cardinality === "recurrent",
   );
@@ -118,10 +107,6 @@ function todayId(): string {
   return new Date().toISOString().split("T")[0];
 }
 
-// Today's draft — friendly pre-fills so a user opening a fresh app can
-// adjust rather than start from zero. We keep these even though they're
-// somewhat "opinionated" because most users do have caffeine + ambient
-// music + a meal, and adjusting is faster than typing from scratch.
 function defaultLog(): DailyLog {
   const id = todayId();
   return {
@@ -143,10 +128,6 @@ function defaultLog(): DailyLog {
   };
 }
 
-// Empty shell for a past day with no existing log. Differs from
-// `defaultLog` in that nothing is pre-filled — we don't want to invent
-// "you had espresso last Tuesday" out of thin air when the user is
-// backfilling. Caller is responsible for `id`/`date`.
 function blankLog(date: string): DailyLog {
   return {
     id: date,
@@ -174,6 +155,9 @@ export default function LogScreen() {
   const router = useRouter();
   const { todayLog, save, getLogFor } = useLogs();
   const { settings, update: updateSettings } = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const logStyles = useThemedStyles(makeLogStyles);
 
   const [selectedDate, setSelectedDate] = useState<string>(todayId());
   const isToday = selectedDate === todayId();
@@ -183,16 +167,8 @@ export default function LogScreen() {
   const [saved, setSaved] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
-  // SchemaBuilder state. `"__new__"` is a sentinel for "creating a new
-  // type"; a real EventTypeDef.id puts the builder into edit-mode.
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
 
-  // Load the right log into the form whenever the selected date changes.
-  // For today this just follows the live `todayLog` from useLogs. For
-  // past days we hit getLogFor (cloud → cache fallback) and render blank
-  // if nothing was ever saved for that day. Critical: blank past-day
-  // form so a transient visit doesn't accidentally save defaults like
-  // "espresso 150mg" for a day the user didn't actually log.
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -215,13 +191,8 @@ export default function LogScreen() {
   };
 
   const handleSave = async () => {
-    // Saving from the Log tab means the user has reviewed Performance Output,
-    // so the day's focus/energy/tasks count as a real rating from here on.
     const log: DailyLog = { ...form, createdAt: Date.now(), outputRated: true };
     await save(log);
-    // Retroactive edits invalidate the insights cache so the next Insights
-    // view regenerates against the corrected history. Today-day saves
-    // don't need this — insights regenerate naturally on the next call.
     if (isPastDay) {
       await clearInsights();
     }
@@ -230,8 +201,6 @@ export default function LogScreen() {
     setTimeout(() => setSaved(false), 2500);
   };
 
-  // Compute the visible section list. Memoize because edit-mode operations
-  // re-render the list every change.
   const eventTypes = settings.eventTypes ?? [];
   const sections = useMemo(
     () =>
@@ -256,8 +225,6 @@ export default function LogScreen() {
     });
   };
 
-  // Per-field hiding within multi-field system sections (e.g. dropping
-  // "Tasks Completed" from Performance Output). Keyed by dotted path.
   const hiddenSystemFields = settings.hiddenSystemFields ?? [];
   const isFieldHidden = (key: string) => hiddenSystemFields.includes(key);
   const toggleFieldHidden = (key: string) => {
@@ -269,8 +236,6 @@ export default function LogScreen() {
   };
 
   const moveSection = (index: number, direction: -1 | 1) => {
-    // Build the ordering as the user currently sees it, including the
-    // implicit fall-through for sections not yet in `logSectionOrder`.
     const visibleIds = sections.map((s) =>
       s.kind === "system" ? s.id : s.type.id,
     );
@@ -280,10 +245,6 @@ export default function LogScreen() {
   };
 
   const removeEventType = (typeId: string) => {
-    // Remove from settings + clear all of its entries from today's draft.
-    // Historical logs on disk keep their entries; the renderer just won't
-    // surface them (the type no longer exists, so they're orphaned). That
-    // matches the SchemaBuilder's delete-confirm copy.
     void updateSettings({
       eventTypes: (settings.eventTypes ?? []).filter((t) => t.id !== typeId),
       logSectionOrder: (settings.logSectionOrder ?? []).filter(
@@ -309,10 +270,6 @@ export default function LogScreen() {
         null)
       : null;
 
-  // Identify field ids that have stored values across all of today's
-  // entries for this type. Historical logs aren't loaded here, so we err
-  // toward "unlocked" — Phase 4 retroactive logging plugs in a more
-  // complete check. For v1 this is a usable signal.
   const fieldsWithData = useMemo(() => {
     if (!editingTypeId || editingTypeId === "__new__") return new Set<string>();
     const ids = new Set<string>();
@@ -337,8 +294,6 @@ export default function LogScreen() {
 
     void updateSettings({ eventTypes: nextTypes });
 
-    // For new types, slot the id into the order at the end if it's not
-    // already in there.
     if (!known) {
       const baseOrder = settings.logSectionOrder ?? [
         ...DEFAULT_LOG_SECTION_ORDER,
@@ -397,7 +352,7 @@ export default function LogScreen() {
                     <Ionicons
                       name="chevron-forward"
                       size={14}
-                      color={COLORS.accent}
+                      color={colors.accent}
                     />
                   </View>
                 </>
@@ -409,7 +364,7 @@ export default function LogScreen() {
                   <Ionicons
                     name="chevron-forward"
                     size={14}
-                    color={COLORS.accent}
+                    color={colors.accent}
                   />
                 </View>
               )}
@@ -462,7 +417,7 @@ export default function LogScreen() {
                 <Text
                   style={[
                     TYPOGRAPHY.caption,
-                    { color: COLORS.textMuted, marginBottom: SPACING.sm },
+                    { color: colors.textMuted, marginBottom: SPACING.sm },
                   ]}
                 >
                   INTENSITY
@@ -511,9 +466,6 @@ export default function LogScreen() {
           </GradientCard>
         );
       case "output": {
-        // Each sub-field can be hidden via edit mode. Outside edit mode a
-        // hidden field renders nothing; inside edit mode it stays visible
-        // (dimmed) with a toggle so the user can bring it back.
         const renderOutputField = (
           key: string,
           node: React.ReactElement,
@@ -531,7 +483,7 @@ export default function LogScreen() {
                   <Ionicons
                     name={hidden ? "eye-off" : "remove-circle"}
                     size={14}
-                    color={hidden ? COLORS.textMuted : COLORS.danger}
+                    color={hidden ? colors.textMuted : colors.danger}
                   />
                   <Text style={styles.fieldHideText}>
                     {hidden ? "Hidden — tap to show" : "Hide this field"}
@@ -552,7 +504,7 @@ export default function LogScreen() {
                 onChange={(v) =>
                   patch("output", { ...form.output, focusRating: v })
                 }
-                accentColor={COLORS.accent}
+                accentColor={colors.accent}
               />,
             )}
             {renderOutputField(
@@ -563,7 +515,7 @@ export default function LogScreen() {
                 onChange={(v) =>
                   patch("output", { ...form.output, energyRating: v })
                 }
-                accentColor={COLORS.warning}
+                accentColor={colors.warning}
               />,
             )}
             {renderOutputField(
@@ -575,7 +527,7 @@ export default function LogScreen() {
                 onChange={(v) =>
                   patch("output", { ...form.output, tasksCompleted: v })
                 }
-                accentColor={COLORS.success}
+                accentColor={colors.success}
               />,
             )}
           </GradientCard>
@@ -627,7 +579,7 @@ export default function LogScreen() {
 
   return (
     <LinearGradient
-      colors={COLORS.gradients.background as [string, string]}
+      colors={colors.gradients.background as [string, string]}
       style={styles.container}
     >
       <KeyboardAvoidingView
@@ -650,12 +602,12 @@ export default function LogScreen() {
               <Text
                 style={[
                   TYPOGRAPHY.hero,
-                  { color: COLORS.text, marginBottom: SPACING.xs },
+                  { color: colors.text, marginBottom: SPACING.xs },
                 ]}
               >
                 Daily Log
               </Text>
-              <Text style={[TYPOGRAPHY.body, { color: COLORS.textSecondary }]}>
+              <Text style={[TYPOGRAPHY.body, { color: colors.textSecondary }]}>
                 {new Date(`${selectedDate}T12:00:00`).toLocaleDateString(
                   "en-US",
                   {
@@ -678,22 +630,18 @@ export default function LogScreen() {
               <Ionicons
                 name={editMode ? "checkmark" : "create-outline"}
                 size={22}
-                color={editMode ? COLORS.success : COLORS.accent}
+                color={editMode ? colors.success : colors.accent}
               />
             </TouchableOpacity>
           </View>
 
-          {/* 7-day week strip — taps switch which day's log is being edited. */}
           <View style={{ marginTop: SPACING.md }}>
             <WeekStrip selectedDate={selectedDate} onSelect={setSelectedDate} />
           </View>
 
-          {/* Past-day banner — only when not on today. Includes a fast
-              "back to today" affordance because the week-strip tap target
-              for today is small. */}
           {isPastDay ? (
             <View style={styles.pastDayBanner}>
-              <Ionicons name="time-outline" size={16} color={COLORS.warning} />
+              <Ionicons name="time-outline" size={16} color={colors.warning} />
               <Text style={styles.pastDayText}>
                 Editing a past day · changes here will refresh your insights
               </Text>
@@ -735,7 +683,7 @@ export default function LogScreen() {
                         <Ionicons
                           name="arrow-up"
                           size={14}
-                          color={COLORS.text}
+                          color={colors.text}
                         />
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -752,7 +700,7 @@ export default function LogScreen() {
                         <Ionicons
                           name="arrow-down"
                           size={14}
-                          color={COLORS.text}
+                          color={colors.text}
                         />
                       </TouchableOpacity>
                       {isUser ? (
@@ -764,7 +712,7 @@ export default function LogScreen() {
                           <Ionicons
                             name="pencil"
                             size={13}
-                            color={COLORS.text}
+                            color={colors.text}
                           />
                         </TouchableOpacity>
                       ) : null}
@@ -776,7 +724,7 @@ export default function LogScreen() {
                         <Ionicons
                           name="remove"
                           size={16}
-                          color={COLORS.danger}
+                          color={colors.danger}
                         />
                       </TouchableOpacity>
                     </View>
@@ -795,7 +743,7 @@ export default function LogScreen() {
               activeOpacity={0.7}
               style={styles.newTypeTile}
             >
-              <Ionicons name="add-circle" size={22} color={COLORS.accent} />
+              <Ionicons name="add-circle" size={22} color={colors.accent} />
               <Text style={styles.newTypeText}>New metric</Text>
             </TouchableOpacity>
           ) : null}
@@ -814,7 +762,6 @@ export default function LogScreen() {
             />
           ) : null}
 
-          {/* Save Button */}
           <TouchableOpacity
             onPress={handleSave}
             activeOpacity={0.85}
@@ -823,8 +770,8 @@ export default function LogScreen() {
             <LinearGradient
               colors={
                 saved
-                  ? (COLORS.gradients.success as [string, string])
-                  : (COLORS.gradients.accent as [string, string])
+                  ? (colors.gradients.success as [string, string])
+                  : (colors.gradients.accent as [string, string])
               }
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
@@ -870,6 +817,9 @@ function HiddenSectionsRow({
   eventTypes: EventTypeDef[];
   onUnhide: (id: LogSectionId | string) => void;
 }) {
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
+
   const labels = useMemo(() => {
     const sysById = new Map(LOG_SECTIONS.map((s) => [s.id, s.label]));
     const userById = new Map(eventTypes.map((t) => [t.id, t.name]));
@@ -892,7 +842,7 @@ function HiddenSectionsRow({
             activeOpacity={0.7}
             style={styles.hiddenChip}
           >
-            <Ionicons name="add" size={12} color={COLORS.textSecondary} />
+            <Ionicons name="add" size={12} color={colors.textSecondary} />
             <Text style={styles.hiddenChipText}>{item.label}</Text>
           </TouchableOpacity>
         ))}
@@ -901,185 +851,187 @@ function HiddenSectionsRow({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { paddingHorizontal: SPACING.lg },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    gap: SPACING.md,
-  },
-  editButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 6,
-  },
-  sectionHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: SPACING.sm,
-  },
-  editControls: {
-    flexDirection: "row",
-    gap: SPACING.xs,
-    alignItems: "center",
-  },
-  editIconBtn: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  editIconBtnDisabled: {
-    opacity: 0.35,
-  },
-  editIconBtnDanger: {
-    borderColor: "rgba(248,113,113,0.4)",
-  },
-  fieldHideToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-    marginBottom: SPACING.xs,
-  },
-  fieldHideText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 11,
-  } as object,
-  newTypeTile: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderStyle: "dashed",
-    marginTop: SPACING.md,
-  },
-  newTypeText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontWeight: "700",
-  } as object,
-  hiddenWrap: {
-    marginTop: SPACING.lg,
-  },
-  hiddenLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textMuted,
-    fontSize: 10,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
-    marginBottom: SPACING.sm,
-  } as object,
-  hiddenChips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACING.xs,
-  },
-  hiddenChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 6,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  hiddenChipText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 12,
-  } as object,
-  saveButton: {
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md + 2,
-    alignItems: "center",
-  },
-  saveButtonText: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-    fontWeight: "700",
-  } as object,
-  pastDayBanner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.md,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: "rgba(251,191,36,0.3)",
-    backgroundColor: "rgba(251,191,36,0.08)",
-  },
-  pastDayText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.warning,
-    fontSize: 12,
-    flex: 1,
-  } as object,
-  backToToday: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontWeight: "700",
-    fontSize: 12,
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    content: { paddingHorizontal: SPACING.lg },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: SPACING.md,
+    },
+    editButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 6,
+    },
+    sectionHeaderRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: SPACING.sm,
+    },
+    editControls: {
+      flexDirection: "row",
+      gap: SPACING.xs,
+      alignItems: "center",
+    },
+    editIconBtn: {
+      width: 26,
+      height: 26,
+      borderRadius: 13,
+      backgroundColor: c.surfaceElevated,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    editIconBtnDisabled: {
+      opacity: 0.35,
+    },
+    editIconBtnDanger: {
+      borderColor: "rgba(248,113,113,0.4)",
+    },
+    fieldHideToggle: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+      marginBottom: SPACING.xs,
+    },
+    fieldHideText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 11,
+    } as object,
+    newTypeTile: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: SPACING.sm,
+      paddingVertical: SPACING.md,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderStyle: "dashed",
+      marginTop: SPACING.md,
+    },
+    newTypeText: {
+      ...TYPOGRAPHY.body,
+      color: c.accent,
+      fontWeight: "700",
+    } as object,
+    hiddenWrap: {
+      marginTop: SPACING.lg,
+    },
+    hiddenLabel: {
+      ...TYPOGRAPHY.label,
+      color: c.textMuted,
+      fontSize: 10,
+      textTransform: "uppercase",
+      letterSpacing: 0.4,
+      marginBottom: SPACING.sm,
+    } as object,
+    hiddenChips: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.xs,
+    },
+    hiddenChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 6,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    hiddenChipText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 12,
+    } as object,
+    saveButton: {
+      borderRadius: RADIUS.lg,
+      paddingVertical: SPACING.md + 2,
+      alignItems: "center",
+    },
+    saveButtonText: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+      fontWeight: "700",
+    } as object,
+    pastDayBanner: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm + 2,
+      marginTop: SPACING.md,
+      marginBottom: SPACING.md,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: "rgba(251,191,36,0.3)",
+      backgroundColor: "rgba(251,191,36,0.08)",
+    },
+    pastDayText: {
+      ...TYPOGRAPHY.caption,
+      color: c.warning,
+      fontSize: 12,
+      flex: 1,
+    } as object,
+    backToToday: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontWeight: "700",
+      fontSize: 12,
+    } as object,
+  });
 
-const logStyles = StyleSheet.create({
-  rockRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-    paddingVertical: SPACING.xs,
-  },
-  rockBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: COLORS.accent,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rockBadgeText: {
-    color: COLORS.text,
-    fontSize: 11,
-    fontWeight: "800",
-  },
-  rockText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    flex: 1,
-  } as object,
-  editLinkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "flex-end",
-    gap: 4,
-    marginTop: SPACING.xs,
-  },
-  editLinkText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontWeight: "600",
-  } as object,
-});
+const makeLogStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    rockRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      paddingVertical: SPACING.xs,
+    },
+    rockBadge: {
+      width: 22,
+      height: 22,
+      borderRadius: 11,
+      backgroundColor: c.accent,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    rockBadgeText: {
+      color: c.text,
+      fontSize: 11,
+      fontWeight: "800",
+    },
+    rockText: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      flex: 1,
+    } as object,
+    editLinkRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "flex-end",
+      gap: 4,
+      marginTop: SPACING.xs,
+    },
+    editLinkText: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontWeight: "600",
+    } as object,
+  });
