@@ -11,10 +11,13 @@ import {
   UIManager,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import GradientCard from "../common/GradientCard";
 import type { SearchResponse, ConfidenceLevel } from "../../types/search";
 import { executeSearch, clearSearchCache } from "../../lib/searchOrchestrator";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 if (
   Platform.OS === "android" &&
@@ -22,12 +25,6 @@ if (
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
-
-const CONFIDENCE_COLORS: Record<ConfidenceLevel, string> = {
-  high: COLORS.success,
-  medium: COLORS.warning,
-  low: COLORS.danger,
-};
 
 const EXAMPLE_QUERIES = [
   "Do I focus better after yoga?",
@@ -39,7 +36,138 @@ const EXAMPLE_QUERIES = [
 // /api/mobile/claude on the server (see claudeProxy.ts).
 type Props = Record<string, never>;
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    container: {
+      marginBottom: SPACING.lg,
+    },
+    inputRow: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      backgroundColor: c.surface,
+      borderRadius: RADIUS.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm + 2,
+      minHeight: 48,
+      gap: SPACING.sm,
+    },
+    searchIcon: {
+      marginRight: 2,
+      marginTop: 2,
+    },
+    input: {
+      flex: 1,
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      padding: 0,
+    } as object,
+    chipRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.xs,
+      marginTop: SPACING.sm,
+    },
+    chip: {
+      paddingHorizontal: SPACING.sm + 2,
+      paddingVertical: SPACING.xs + 1,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: c.borderAccent,
+      backgroundColor: c.accentGlow,
+    },
+    chipText: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontSize: 11,
+    } as object,
+    resultCard: {
+      marginTop: SPACING.sm,
+    },
+    metaRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.sm,
+      marginTop: SPACING.sm,
+      paddingTop: SPACING.sm,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.border,
+    },
+    badge: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 3,
+      borderRadius: RADIUS.pill,
+      gap: 4,
+    },
+    badgeDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+    },
+    badgeText: {
+      ...TYPOGRAPHY.caption,
+      fontSize: 11,
+      fontWeight: "600",
+    } as object,
+    metaText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 11,
+    } as object,
+    confoundsBox: {
+      marginTop: SPACING.sm,
+      paddingTop: SPACING.sm,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.border,
+    },
+    confoundItem: {
+      marginBottom: SPACING.xs,
+    },
+    confoundText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      lineHeight: 18,
+    } as object,
+    confoundExplanation: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 11,
+      lineHeight: 16,
+      marginLeft: 14,
+      marginTop: 2,
+    } as object,
+    followUpBox: {
+      marginTop: SPACING.sm,
+      paddingTop: SPACING.sm,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: c.border,
+    },
+    followUpChip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+      paddingVertical: SPACING.xs,
+    },
+    followUpText: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontSize: 12,
+    } as object,
+  });
+
 export default function SearchBar(_props: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
+
+  const CONFIDENCE_COLORS: Record<ConfidenceLevel, string> = {
+    high: colors.success,
+    medium: colors.warning,
+    low: colors.danger,
+  };
+
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<SearchResponse | null>(null);
@@ -88,13 +216,13 @@ export default function SearchBar(_props: Props) {
         <Ionicons
           name="search"
           size={18}
-          color={COLORS.textMuted}
+          color={colors.textMuted}
           style={styles.searchIcon}
         />
         <TextInput
           style={styles.input}
           placeholder="Ask about your patterns..."
-          placeholderTextColor={COLORS.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={query}
           onChangeText={setQuery}
           onSubmitEditing={() => handleSearch()}
@@ -109,10 +237,10 @@ export default function SearchBar(_props: Props) {
             onPress={handleClear}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="close-circle" size={18} color={COLORS.textMuted} />
+            <Ionicons name="close-circle" size={18} color={colors.textMuted} />
           </TouchableOpacity>
         )}
-        {loading && <ActivityIndicator size="small" color={COLORS.accent} />}
+        {loading && <ActivityIndicator size="small" color={colors.accent} />}
       </View>
 
       {/* Example chips — only when idle with no query */}
@@ -134,7 +262,7 @@ export default function SearchBar(_props: Props) {
       {/* Error */}
       {error && (
         <GradientCard colors={["#2A1515", "#1A0E0E"]} style={styles.resultCard}>
-          <Text style={[TYPOGRAPHY.caption, { color: COLORS.danger }]}>
+          <Text style={[TYPOGRAPHY.caption, { color: colors.danger }]}>
             {error}
           </Text>
         </GradientCard>
@@ -144,7 +272,7 @@ export default function SearchBar(_props: Props) {
       {result && (
         <GradientCard style={styles.resultCard}>
           {/* Answer */}
-          <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+          <Text style={[TYPOGRAPHY.body, { color: colors.text }]}>
             {result.answer}
           </Text>
 
@@ -185,24 +313,24 @@ export default function SearchBar(_props: Props) {
               <Text
                 style={[
                   TYPOGRAPHY.label,
-                  { color: COLORS.textMuted, marginBottom: SPACING.xs },
+                  { color: colors.textMuted, marginBottom: SPACING.xs },
                 ]}
               >
                 CAVEATS
               </Text>
-              {result.confounds.map((c, i) => (
+              {result.confounds.map((conf, i) => (
                 <View key={i} style={styles.confoundItem}>
                   <Text style={styles.confoundText}>
-                    {c.impact === "major"
+                    {conf.impact === "major"
                       ? "!!"
-                      : c.impact === "moderate"
+                      : conf.impact === "moderate"
                         ? "!"
                         : "-"}{" "}
-                    {c.factor}
+                    {conf.factor}
                   </Text>
-                  {c.explanation && (
+                  {conf.explanation && (
                     <Text style={styles.confoundExplanation}>
-                      {c.explanation}
+                      {conf.explanation}
                     </Text>
                   )}
                 </View>
@@ -216,7 +344,7 @@ export default function SearchBar(_props: Props) {
               <Text
                 style={[
                   TYPOGRAPHY.label,
-                  { color: COLORS.textMuted, marginBottom: SPACING.xs },
+                  { color: colors.textMuted, marginBottom: SPACING.xs },
                 ]}
               >
                 DIG DEEPER
@@ -231,7 +359,7 @@ export default function SearchBar(_props: Props) {
                   <Ionicons
                     name="arrow-forward-circle-outline"
                     size={14}
-                    color={COLORS.accent}
+                    color={colors.accent}
                   />
                   <Text style={styles.followUpText}>{q}</Text>
                 </TouchableOpacity>
@@ -243,124 +371,3 @@ export default function SearchBar(_props: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: SPACING.lg,
-  },
-  inputRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    minHeight: 48,
-    gap: SPACING.sm,
-  },
-  searchIcon: {
-    marginRight: 2,
-    marginTop: 2,
-  },
-  input: {
-    flex: 1,
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    padding: 0,
-  } as object,
-  chipRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACING.xs,
-    marginTop: SPACING.sm,
-  },
-  chip: {
-    paddingHorizontal: SPACING.sm + 2,
-    paddingVertical: SPACING.xs + 1,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.borderAccent,
-    backgroundColor: COLORS.accentGlow,
-  },
-  chipText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontSize: 11,
-  } as object,
-  resultCard: {
-    marginTop: SPACING.sm,
-  },
-  metaRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.sm,
-    marginTop: SPACING.sm,
-    paddingTop: SPACING.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
-  },
-  badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
-    borderRadius: RADIUS.pill,
-    gap: 4,
-  },
-  badgeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  badgeText: {
-    ...TYPOGRAPHY.caption,
-    fontSize: 11,
-    fontWeight: "600",
-  } as object,
-  metaText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 11,
-  } as object,
-  confoundsBox: {
-    marginTop: SPACING.sm,
-    paddingTop: SPACING.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
-  },
-  confoundItem: {
-    marginBottom: SPACING.xs,
-  },
-  confoundText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    lineHeight: 18,
-  } as object,
-  confoundExplanation: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 11,
-    lineHeight: 16,
-    marginLeft: 14,
-    marginTop: 2,
-  } as object,
-  followUpBox: {
-    marginTop: SPACING.sm,
-    paddingTop: SPACING.sm,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: COLORS.border,
-  },
-  followUpChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-    paddingVertical: SPACING.xs,
-  },
-  followUpText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontSize: 12,
-  } as object,
-});

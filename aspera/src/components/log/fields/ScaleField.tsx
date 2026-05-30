@@ -10,8 +10,10 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, TYPOGRAPHY } from "../../../constants/theme";
+import { SPACING, TYPOGRAPHY } from "../../../constants/theme";
 import type { FieldDef } from "../../../types";
+import { useThemedStyles } from "../../../theme/useThemedStyles";
+import type { AsperaColors } from "../../../theme/ThemeProvider";
 
 interface Props {
   field: FieldDef;
@@ -19,7 +21,79 @@ interface Props {
   onChange: (next: number | undefined) => void;
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    wrap: {
+      paddingVertical: SPACING.xs,
+    },
+    headerRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: SPACING.sm,
+    },
+    label: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+    } as object,
+    value: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.accent,
+      fontWeight: "700",
+    } as object,
+    valueMuted: {
+      color: c.textMuted,
+      fontWeight: "500",
+    } as object,
+    dotsRow: {
+      flexDirection: "row",
+      gap: 4,
+      marginBottom: SPACING.sm,
+    },
+    dot: {
+      flex: 1,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: c.border,
+    },
+    dotActive: {
+      backgroundColor: c.accent,
+    },
+    adjRow: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: SPACING.md,
+    },
+    clearBtn: {
+      paddingHorizontal: SPACING.sm,
+      paddingVertical: 6,
+    },
+    clearText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 12,
+    } as object,
+    adjBtn: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: c.surfaceElevated,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    adjText: {
+      color: c.text,
+      fontSize: 16,
+      fontWeight: "600",
+      lineHeight: 20,
+    },
+  });
+
 export default function ScaleField({ field, value, onChange }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const min = field.config?.min ?? 1;
   const max = field.config?.max ?? 10;
   const current =
@@ -92,73 +166,3 @@ export default function ScaleField({ field, value, onChange }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    paddingVertical: SPACING.xs,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: SPACING.sm,
-  },
-  label: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-  } as object,
-  value: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.accent,
-    fontWeight: "700",
-  } as object,
-  valueMuted: {
-    color: COLORS.textMuted,
-    fontWeight: "500",
-  } as object,
-  dotsRow: {
-    flexDirection: "row",
-    gap: 4,
-    marginBottom: SPACING.sm,
-  },
-  dot: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.border,
-  },
-  dotActive: {
-    backgroundColor: COLORS.accent,
-  },
-  adjRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: SPACING.md,
-  },
-  clearBtn: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 6,
-  },
-  clearText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 12,
-  } as object,
-  adjBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.surfaceElevated,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  adjText: {
-    color: COLORS.text,
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 20,
-  },
-});

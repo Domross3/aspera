@@ -1,20 +1,17 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { WeeklyTrend } from "../../types";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import TrendBar from "./TrendBar";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   trends: WeeklyTrend[];
 }
 
 type Metric = "focusRating" | "energyRating" | "tasksCompleted";
-
-const METRICS: { key: Metric; label: string; color: string; max: number }[] = [
-  { key: "focusRating", label: "Focus", color: COLORS.accent, max: 5 },
-  { key: "energyRating", label: "Energy", color: COLORS.warning, max: 5 },
-  { key: "tasksCompleted", label: "Tasks", color: COLORS.success, max: 20 },
-];
 
 // Pad trends to a fixed 7-day rolling window ending today. Days without
 // a trend entry render with `value: null` so TrendBar shows an em-dash
@@ -46,10 +43,52 @@ function padToWeek(
   return result;
 }
 
-export default function TrendBarsSection({ trends }: Props) {
-  const [activeMetric, setActiveMetric] = useState<Metric>("focusRating");
-  const metric = METRICS.find((m) => m.key === activeMetric)!;
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    selector: {
+      flexDirection: "row",
+      marginBottom: SPACING.md,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    tab: {
+      flex: 1,
+      paddingVertical: SPACING.sm,
+      alignItems: "center",
+      borderBottomWidth: 2,
+      borderBottomColor: "transparent",
+    },
+    tabText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontWeight: "600",
+    } as object,
+    barsRow: {
+      flexDirection: "row",
+      alignItems: "flex-end",
+      gap: 4,
+      marginTop: SPACING.sm,
+    },
+  });
 
+export default function TrendBarsSection({ trends }: Props) {
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
+  const [activeMetric, setActiveMetric] = useState<Metric>("focusRating");
+
+  const METRICS: { key: Metric; label: string; color: string; max: number }[] =
+    [
+      { key: "focusRating", label: "Focus", color: colors.accent, max: 5 },
+      { key: "energyRating", label: "Energy", color: colors.warning, max: 5 },
+      {
+        key: "tasksCompleted",
+        label: "Tasks",
+        color: colors.success,
+        max: 20,
+      },
+    ];
+
+  const metric = METRICS.find((m) => m.key === activeMetric)!;
   const padded = padToWeek(trends, activeMetric);
 
   return (
@@ -95,30 +134,3 @@ export default function TrendBarsSection({ trends }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  selector: {
-    flexDirection: "row",
-    marginBottom: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: SPACING.sm,
-    alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "transparent",
-  },
-  tabText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontWeight: "600",
-  } as object,
-  barsRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 4,
-    marginTop: SPACING.sm,
-  },
-});

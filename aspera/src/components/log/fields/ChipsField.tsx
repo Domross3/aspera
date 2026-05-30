@@ -5,8 +5,11 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../../constants/theme";
 import type { FieldDef } from "../../../types";
+import { useTheme } from "../../../theme/ThemeProvider";
+import { useThemedStyles } from "../../../theme/useThemedStyles";
+import type { AsperaColors } from "../../../theme/ThemeProvider";
 
 interface Props {
   field: FieldDef;
@@ -14,7 +17,51 @@ interface Props {
   onChange: (next: string[]) => void;
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    wrap: {
+      paddingVertical: SPACING.xs,
+    },
+    label: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      marginBottom: SPACING.sm,
+    } as object,
+    chipsRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.xs,
+    },
+    chip: {
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.xs + 2,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    chipActive: {
+      borderColor: c.accent,
+      backgroundColor: c.accentGlow,
+    },
+    chipText: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      fontSize: 13,
+    } as object,
+    chipTextActive: {
+      color: c.text,
+      fontWeight: "600",
+    } as object,
+    emptyHint: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontStyle: "italic",
+    } as object,
+  });
+
 export default function ChipsField({ field, value, onChange }: Props) {
+  const styles = useThemedStyles(makeStyles);
   const options = field.config?.options ?? [];
   const multi = field.config?.multi ?? false;
   const selected: string[] = Array.isArray(value)
@@ -66,45 +113,3 @@ export default function ChipsField({ field, value, onChange }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrap: {
-    paddingVertical: SPACING.xs,
-  },
-  label: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    marginBottom: SPACING.sm,
-  } as object,
-  chipsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACING.xs,
-  },
-  chip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs + 2,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  chipActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
-  },
-  chipText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontSize: 13,
-  } as object,
-  chipTextActive: {
-    color: COLORS.text,
-    fontWeight: "600",
-  } as object,
-  emptyHint: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontStyle: "italic",
-  } as object,
-});
