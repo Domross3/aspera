@@ -17,12 +17,15 @@ import {
   View,
 } from "react-native";
 import * as Haptics from "expo-haptics";
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from "../../constants/theme";
+import { RADIUS, SPACING, TYPOGRAPHY } from "../../constants/theme";
 import type { Restriction } from "../../types";
 import { clampDelaySeconds, pickPrompt } from "../../lib/gratificationDelay";
 import BreathingOrb from "../common/BreathingOrb";
 import PaperGrain from "../common/PaperGrain";
 import { useFadeUp } from "../common/useFadeUp";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   visible: boolean;
@@ -39,6 +42,9 @@ export default function BreathPauseSheet({
   onCancel,
   onUnlock,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const totalSeconds =
     restriction && restriction.spec.kind === "delay"
       ? clampDelaySeconds(restriction.spec.delaySeconds)
@@ -124,19 +130,25 @@ export default function BreathPauseSheet({
       <View style={styles.backdrop}>
         <PaperGrain />
         <View style={styles.body}>
-          <Text style={styles.eyebrow}>A pause · {appName}</Text>
+          <Text style={[styles.eyebrow, { color: colors.textMuted }]}>
+            A pause · {appName}
+          </Text>
 
           <View style={styles.orbRegion}>
             <BreathingOrb size={212}>
-              <Text style={styles.orbWord}>Breathe</Text>
-              <Text style={styles.orbTimer}>
+              <Text style={[styles.orbWord, { color: colors.text }]}>
+                Breathe
+              </Text>
+              <Text style={[styles.orbTimer, { color: colors.textSecondary }]}>
                 {unlocking ? "opening" : timer}
               </Text>
             </BreathingOrb>
           </View>
 
           <View style={styles.promptWrap}>
-            <Animated.Text style={[styles.prompt, promptStyle]}>
+            <Animated.Text
+              style={[styles.prompt, promptStyle, { color: colors.textSecondary }]}
+            >
               {prompt}
             </Animated.Text>
           </View>
@@ -144,16 +156,26 @@ export default function BreathPauseSheet({
           <TouchableOpacity
             activeOpacity={0.84}
             onPress={onCancel}
-            style={styles.primary}
+            style={[
+              styles.primary,
+              {
+                borderColor: colors.border,
+                backgroundColor: colors.surfaceElevated,
+              },
+            ]}
           >
-            <Text style={styles.primaryText}>I&apos;m okay to wait</Text>
+            <Text style={[styles.primaryText, { color: colors.text }]}>
+              I&apos;m okay to wait
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             hitSlop={12}
             onPress={onCancel}
             style={styles.quiet}
           >
-            <Text style={styles.quietText}>Open {appName}</Text>
+            <Text style={[styles.quietText, { color: colors.textMuted }]}>
+              Open {appName}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -161,84 +183,77 @@ export default function BreathPauseSheet({
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    alignItems: "center",
-    justifyContent: "flex-start",
-    paddingHorizontal: 32,
-    paddingTop: 84,
-    paddingBottom: 40,
-  },
-  body: {
-    flex: 1,
-    width: "100%",
-    alignItems: "center",
-    maxWidth: 360,
-  },
-  eyebrow: {
-    ...TYPOGRAPHY.aspLabel,
-    color: COLORS.textMuted,
-    letterSpacing: 1.54,
-    marginBottom: 70,
-  } as object,
-  orbRegion: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  orbWord: {
-    fontFamily: "Quicksand",
-    fontSize: 22,
-    fontWeight: "400",
-    color: COLORS.text,
-    opacity: 0.92,
-  },
-  orbTimer: {
-    ...TYPOGRAPHY.mono,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-  } as object,
-  promptWrap: {
-    minHeight: 86,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 34,
-  },
-  prompt: {
-    ...TYPOGRAPHY.body,
-    fontSize: 18,
-    lineHeight: 27,
-    color: COLORS.textSecondary,
-    textAlign: "center",
-    maxWidth: 280,
-  } as object,
-  primary: {
-    width: "100%",
-    maxWidth: 260,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 15,
-    paddingHorizontal: 30,
-    borderRadius: RADIUS.soft,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surfaceElevated,
-    marginBottom: 14,
-  },
-  primaryText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    fontWeight: "500",
-  } as object,
-  quiet: {
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-  },
-  quietText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    letterSpacing: 0.48,
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: c.background,
+      alignItems: "center",
+      justifyContent: "flex-start",
+      paddingHorizontal: 32,
+      paddingTop: 84,
+      paddingBottom: 40,
+    },
+    body: {
+      flex: 1,
+      width: "100%",
+      alignItems: "center",
+      maxWidth: 360,
+    },
+    eyebrow: {
+      ...TYPOGRAPHY.aspLabel,
+      letterSpacing: 1.54,
+      marginBottom: 70,
+    } as object,
+    orbRegion: {
+      flex: 1,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    orbWord: {
+      fontFamily: "Quicksand",
+      fontSize: 22,
+      fontWeight: "400",
+      opacity: 0.92,
+    },
+    orbTimer: {
+      ...TYPOGRAPHY.mono,
+      marginTop: SPACING.xs,
+    } as object,
+    promptWrap: {
+      minHeight: 86,
+      alignItems: "center",
+      justifyContent: "center",
+      marginBottom: 34,
+    },
+    prompt: {
+      ...TYPOGRAPHY.body,
+      fontSize: 18,
+      lineHeight: 27,
+      textAlign: "center",
+      maxWidth: 280,
+    } as object,
+    primary: {
+      width: "100%",
+      maxWidth: 260,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: 15,
+      paddingHorizontal: 30,
+      borderRadius: RADIUS.soft,
+      borderWidth: StyleSheet.hairlineWidth,
+      marginBottom: 14,
+    },
+    primaryText: {
+      ...TYPOGRAPHY.body,
+      fontWeight: "500",
+    } as object,
+    quiet: {
+      paddingVertical: SPACING.sm,
+      paddingHorizontal: SPACING.md,
+    },
+    quietText: {
+      ...TYPOGRAPHY.caption,
+      letterSpacing: 0.48,
+    } as object,
+  });
