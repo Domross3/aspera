@@ -49,11 +49,20 @@ export async function syncRestrictionNative(
   native: RestrictionNativeBridge,
 ): Promise<void> {
   if (restriction.active) {
-    // Delay mode has no schedule/monitor — it's a persistent shield that the
-    // breath-pause lifts briefly via grantCheat. Shield directly rather than
-    // routing through the DeviceActivity monitor used by the other kinds.
+    // Delay mode cannot be implemented by directly applying a ManagedSettings
+    // shield: Apple's default shield is a hard block and cannot host our React
+    // Native breath-pause sheet. True in-shield delay needs a native
+    // ManagedSettingsUI Shield Action extension. Until that exists, keep delay
+    // as a manual Aspera pause and aggressively clear any stale shield state.
     if (restriction.spec.kind === "delay") {
-      await native.applyShield(restriction.id);
+      const inactiveNativeConfig = {
+        ...toNativeRestrictionConfig(restriction),
+        active: false,
+      };
+      await native.startMonitoring(inactiveNativeConfig).catch(async () => {
+        await native.stopMonitoring(restriction.id);
+      });
+      await native.clearShield(restriction.id);
       return;
     }
     await native.startMonitoring(toNativeRestrictionConfig(restriction));

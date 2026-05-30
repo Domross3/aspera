@@ -25,7 +25,8 @@ import * as Updates from "expo-updates";
 import { useNotifications } from "../src/hooks/useNotifications";
 import { useSettings } from "../src/hooks/useSettings";
 import { useAuth } from "../src/hooks/useAuth";
-import { COLORS } from "../src/constants/theme";
+import Wordmark from "../src/components/common/Wordmark";
+import { ThemeProvider, useTheme } from "../src/theme/ThemeProvider";
 import {
   QUICK_MOOD_NOTIFICATION_KIND,
   ensureQuickMoodSchedule,
@@ -47,6 +48,7 @@ import {
 function AppLayout() {
   const router = useRouter();
   const segments = useSegments();
+  const { theme, colors } = useTheme();
   const [fontsLoaded] = useFonts({
     HankenGrotesk: HankenGrotesk_400Regular,
     HankenGroteskLight: HankenGrotesk_300Light,
@@ -231,19 +233,23 @@ function AppLayout() {
       <View
         style={{
           flex: 1,
-          backgroundColor: COLORS.background,
+          backgroundColor: colors.background,
           justifyContent: "center",
           alignItems: "center",
         }}
       >
-        <ActivityIndicator color={COLORS.accent} />
+        {fontsLoaded ? (
+          <Wordmark />
+        ) : (
+          <ActivityIndicator color={colors.accent} />
+        )}
       </View>
     );
   }
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style={theme === "dark" ? "light" : "dark"} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="sign-in" />
@@ -276,7 +282,9 @@ function AppLayout() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AppLayout />
+      <ThemeProvider>
+        <AppLayout />
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

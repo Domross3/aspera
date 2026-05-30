@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLogs } from "../../src/hooks/useLogs";
 import { useSettings } from "../../src/hooks/useSettings";
@@ -33,6 +34,22 @@ import { DailyLog } from "../../src/types";
 
 function todayId() {
   return new Date().toISOString().split("T")[0];
+}
+
+function formatInstrumentStamp(date: Date): string {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${day}.${month} · ${hours}:${minutes}`;
+}
+
+function greetingForDate(date: Date): string {
+  const hour = date.getHours();
+  if (hour < 12) return "Morning";
+  if (hour < 17) return "Afternoon";
+  if (hour < 22) return "Evening";
+  return "Night";
 }
 
 function defaultLogShell(): DailyLog {
@@ -61,6 +78,7 @@ function defaultLogShell(): DailyLog {
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { todayLog, recentLogs, loading, save, streak, reservesRemaining } =
     useLogs();
   const { settings } = useSettings();
@@ -224,30 +242,14 @@ export default function TodayScreen() {
           ]}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
-          <Text
-            style={[
-              TYPOGRAPHY.label,
-              { color: COLORS.textMuted, marginBottom: SPACING.xs },
-            ]}
-          >
-            {new Date()
-              .toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-              })
-              .toUpperCase()}
-          </Text>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: SPACING.xl,
-            }}
-          >
-            <Text style={[TYPOGRAPHY.hero, { color: COLORS.text }]}>Today</Text>
+          <View style={styles.instrumentHeader}>
+            <Text style={styles.instrumentLabel}>Today</Text>
+            <Text style={styles.instrumentStamp}>
+              {formatInstrumentStamp(new Date())}
+            </Text>
+          </View>
+          <View style={styles.greetingRow}>
+            <Text style={styles.greeting}>{greetingForDate(new Date())}</Text>
             {/* Hidden demo trigger for Somatic Interceptor — invisible 44x44 tap target.
                 Disabled (long-press does nothing) when the user has switched the
                 interceptor off in settings, so the off-toggle is fully honored. */}
@@ -262,6 +264,19 @@ export default function TodayScreen() {
               activeOpacity={0}
             />
           </View>
+
+          <TouchableOpacity
+            activeOpacity={0.84}
+            onPress={() => router.navigate("/(tabs)/mood" as never)}
+            style={styles.checkInEntry}
+          >
+            <MiniPad />
+            <View style={styles.checkInText}>
+              <Text style={styles.checkInTitle}>Check in</Text>
+              <Text style={styles.checkInMeta}>mood × energy</Text>
+            </View>
+            <Text style={styles.checkInArrow}>→</Text>
+          </TouchableOpacity>
 
           {/* AI Recommendation */}
           <RecommendationBanner
@@ -520,7 +535,100 @@ export default function TodayScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  content: { paddingHorizontal: SPACING.lg },
+  content: { paddingHorizontal: 24 },
+  instrumentHeader: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    marginBottom: SPACING.sm,
+  },
+  instrumentLabel: {
+    ...TYPOGRAPHY.aspLabel,
+    letterSpacing: 2.42,
+    color: COLORS.textMuted,
+  } as object,
+  instrumentStamp: {
+    ...TYPOGRAPHY.aspLabel,
+    letterSpacing: 1.1,
+    color: COLORS.faint,
+  } as object,
+  greetingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 28,
+  },
+  greeting: {
+    fontFamily: "HankenGroteskMedium",
+    fontSize: 27,
+    fontWeight: "500",
+    color: COLORS.text,
+  } as object,
+  checkInEntry: {
+    minHeight: 76,
+    borderRadius: RADIUS.instrument,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: SPACING.lg,
+  },
+  checkInText: {
+    flex: 1,
+    marginLeft: SPACING.md,
+  },
+  checkInTitle: {
+    ...TYPOGRAPHY.subtitle,
+    color: COLORS.text,
+  } as object,
+  checkInMeta: {
+    ...TYPOGRAPHY.aspLabel,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  } as object,
+  checkInArrow: {
+    color: COLORS.textMuted,
+    fontSize: 22,
+  },
+  miniPad: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.border,
+  },
+  miniPadV: {
+    position: "absolute",
+    left: "50%",
+    top: 7,
+    bottom: 7,
+    width: StyleSheet.hairlineWidth,
+    backgroundColor: COLORS.line,
+  },
+  miniPadH: {
+    position: "absolute",
+    top: "50%",
+    left: 7,
+    right: 7,
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: COLORS.line,
+  },
+  miniPadDot: {
+    position: "absolute",
+    left: "66%",
+    top: "40%",
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.glow,
+    shadowColor: COLORS.glow,
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+  },
   pillsWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -554,3 +662,13 @@ const styles = StyleSheet.create({
     fontSize: 11,
   } as object,
 });
+
+function MiniPad() {
+  return (
+    <View style={styles.miniPad}>
+      <View style={styles.miniPadV} />
+      <View style={styles.miniPadH} />
+      <View style={styles.miniPadDot} />
+    </View>
+  );
+}

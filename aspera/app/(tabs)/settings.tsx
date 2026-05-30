@@ -37,8 +37,10 @@ import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
 import ContinuousSlider from "../../src/components/common/ContinuousSlider";
+import Wordmark from "../../src/components/common/Wordmark";
 import TimePickerModal from "../../src/components/settings/TimePickerModal";
 import ReminderEditor from "../../src/components/settings/ReminderEditor";
+import { useTheme } from "../../src/theme/ThemeProvider";
 import type { NotificationSettings, UserReminder } from "../../src/types";
 
 // iOS caps scheduled notifications at ~64 per app. We schedule 7 days
@@ -82,6 +84,7 @@ function statusColors(status: string): { bg: string; fg: string } {
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const { theme, toggleTheme } = useTheme();
   const { settings, loading, update } = useSettings();
   const {
     connections,
@@ -498,14 +501,9 @@ export default function SettingsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Text
-          style={[
-            TYPOGRAPHY.hero,
-            { color: COLORS.text, marginBottom: SPACING.xs },
-          ]}
-        >
-          Settings
-        </Text>
+        <View style={styles.wordmarkHeader}>
+          <Wordmark compact />
+        </View>
         <Text
           style={[
             TYPOGRAPHY.body,
@@ -514,6 +512,34 @@ export default function SettingsScreen() {
         >
           Configure your AI-powered optimizer
         </Text>
+
+        <GradientCard style={{ marginBottom: SPACING.lg }}>
+          <View style={styles.row}>
+            <View style={{ flex: 1 }}>
+              <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.text }]}>
+                Warm paper mode
+              </Text>
+              <Text
+                style={[
+                  TYPOGRAPHY.caption,
+                  { color: COLORS.textMuted, marginTop: SPACING.xs },
+                ]}
+              >
+                Light theme tokens are saved locally; older static surfaces will
+                migrate into the live theme hook over time.
+              </Text>
+            </View>
+            <Switch
+              value={theme === "light"}
+              onValueChange={() => void toggleTheme()}
+              trackColor={{
+                false: "rgba(255,255,255,0.16)",
+                true: "rgba(215,210,198,0.35)",
+              }}
+              thumbColor={theme === "light" ? COLORS.glow : COLORS.textMuted}
+            />
+          </View>
+        </GradientCard>
 
         {/* Integrations */}
         <SectionLabel label="Integrations" />
@@ -1085,6 +1111,10 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   content: { paddingHorizontal: SPACING.lg },
+  wordmarkHeader: {
+    alignItems: "flex-start",
+    marginBottom: SPACING.sm,
+  },
   validationHint: {
     ...TYPOGRAPHY.caption,
     color: COLORS.warning,
