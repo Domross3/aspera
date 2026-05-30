@@ -21,6 +21,7 @@ import {
 } from "../../src/types";
 import {
   getRecentMoodCheckIns,
+  saveMoodCheckIn,
   saveMoment,
   getRecentMoments,
   replaceCachedMoodCheckIns,
@@ -29,9 +30,11 @@ import {
 import {
   fetchRecentMoodCheckIns,
   fetchRecentMoments,
+  insertMoodCheckIn,
   insertMoment,
 } from "../../src/lib/cloudStore";
 import MomentCapture from "../../src/components/mood/MomentCapture";
+import MoodPad from "../../src/components/mood/MoodPad";
 import { useAuth } from "../../src/hooks/useAuth";
 import { useSettings } from "../../src/hooks/useSettings";
 import {
@@ -46,6 +49,7 @@ import TrendLineCard, {
   TrendPoint,
 } from "../../src/components/common/TrendLineCard";
 import TimeOfDayCurve from "../../src/components/mood/TimeOfDayCurve";
+import { moodPadPointToCheckIn, MoodPadPoint } from "../../src/lib/moodPad";
 
 interface DailyMoodSnapshot {
   date: string;
@@ -174,6 +178,7 @@ export default function MoodScreen() {
   const [recentCheckins, setRecentCheckins] = useState<MoodCheckIn[]>([]);
   const [recentMoments, setRecentMoments] = useState<Moment[]>([]);
   const [momentSheetVisible, setMomentSheetVisible] = useState(false);
+  const [moodPadSaving, setMoodPadSaving] = useState(false);
   // When non-null, a SchemaBuilder is open with this draft preloaded —
   // used by the promotion-nudge banner to drive event-type creation
   // directly from the Mood tab without a tab switch.
@@ -324,6 +329,24 @@ export default function MoodScreen() {
     await loadCheckins();
   };
 
+  const handleMoodPadSave = async (point: MoodPadPoint) => {
+    if (moodPadSaving) return;
+    setMoodPadSaving(true);
+    try {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      const checkIn = moodPadPointToCheckIn(point);
+      await saveMoodCheckIn(checkIn);
+      if (session) {
+        insertMoodCheckIn(session.user.id, checkIn).catch((err) => {
+          console.warn("[mood-pad] cloud sync failed; cached locally", err);
+        });
+      }
+      await loadCheckins();
+    } finally {
+      setMoodPadSaving(false);
+    }
+  };
+
   return (
     <LinearGradient
       colors={COLORS.gradients.background as [string, string]}
@@ -357,6 +380,8 @@ export default function MoodScreen() {
           Track how you trend over time, then capture moments when something
           shifts.
         </Text>
+
+        <MoodPad saving={moodPadSaving} onSave={handleMoodPadSave} />
 
         {summary ? (
           <>

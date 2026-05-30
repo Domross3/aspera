@@ -85,6 +85,49 @@ describe("restriction bridge", () => {
     );
   });
 
+  it("does not hard-shield active delay restrictions", async () => {
+    const native = createNativeMock();
+    const calls: string[] = [];
+    native.startMonitoring = jest.fn(async () => {
+      calls.push("native:neutralize");
+    });
+    native.clearShield = jest.fn(async () => {
+      calls.push("native:clear");
+    });
+    native.applyShield = jest.fn(async () => {
+      calls.push("native:shield");
+    });
+    const persistence = {
+      upsertRestriction: jest.fn(async () => {
+        calls.push("supabase:upsert");
+      }),
+      deleteRestriction: jest.fn(async () => {}),
+    };
+    const restriction: Restriction = {
+      ...createDefaultRestriction("delay", 1000),
+      active: true,
+      selectedAppCount: 1,
+      spec: { kind: "delay", delaySeconds: 30 },
+    };
+
+    await saveRestrictionWithNative("user-a", restriction, persistence, native);
+
+    expect(calls).toEqual([
+      "native:neutralize",
+      "native:clear",
+      "supabase:upsert",
+    ]);
+    expect(native.applyShield).not.toHaveBeenCalled();
+    expect(native.startMonitoring).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: restriction.id,
+        active: false,
+        mode: "delay",
+        delaySeconds: 30,
+      }),
+    );
+  });
+
   it("stops monitoring and clears shields before saving an inactive restriction", async () => {
     const native = createNativeMock();
     const persistence = {

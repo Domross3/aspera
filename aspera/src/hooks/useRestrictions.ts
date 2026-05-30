@@ -10,6 +10,7 @@ import {
   pickRestrictionSelection,
   type RestrictionNativeBridge,
   saveRestrictionWithNative,
+  syncRestrictionNative,
 } from "../lib/restrictionBridge";
 import {
   applyShield,
@@ -64,6 +65,16 @@ export function useRestrictions(): UseRestrictionsResult {
     setError(null);
     try {
       const rows = await fetchRestrictions(userId);
+      await Promise.all(
+        rows
+          .filter(
+            (restriction) =>
+              restriction.active && restriction.spec.kind === "delay",
+          )
+          .map((restriction) =>
+            syncRestrictionNative(restriction, nativeBridge).catch(() => {}),
+          ),
+      );
       setRestrictions(rows);
     } catch (err) {
       setError(errorMessage(err));

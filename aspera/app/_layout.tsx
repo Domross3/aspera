@@ -3,13 +3,30 @@ import { useEffect, useRef } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator, AppState } from "react-native";
+import { useFonts } from "expo-font";
+import {
+  HankenGrotesk_300Light,
+  HankenGrotesk_400Regular,
+  HankenGrotesk_500Medium,
+  HankenGrotesk_600SemiBold,
+} from "@expo-google-fonts/hanken-grotesk";
+import {
+  Quicksand_400Regular,
+  Quicksand_500Medium,
+  Quicksand_600SemiBold,
+} from "@expo-google-fonts/quicksand";
+import {
+  GeistMono_400Regular,
+  GeistMono_500Medium,
+} from "@expo-google-fonts/geist-mono";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as Notifications from "expo-notifications";
 import * as Updates from "expo-updates";
 import { useNotifications } from "../src/hooks/useNotifications";
 import { useSettings } from "../src/hooks/useSettings";
 import { useAuth } from "../src/hooks/useAuth";
-import { COLORS } from "../src/constants/theme";
+import Wordmark from "../src/components/common/Wordmark";
+import { ThemeProvider, useTheme } from "../src/theme/ThemeProvider";
 import {
   QUICK_MOOD_NOTIFICATION_KIND,
   ensureQuickMoodSchedule,
@@ -31,6 +48,18 @@ import {
 function AppLayout() {
   const router = useRouter();
   const segments = useSegments();
+  const { theme, colors } = useTheme();
+  const [fontsLoaded] = useFonts({
+    HankenGrotesk: HankenGrotesk_400Regular,
+    HankenGroteskLight: HankenGrotesk_300Light,
+    HankenGroteskMedium: HankenGrotesk_500Medium,
+    HankenGroteskSemiBold: HankenGrotesk_600SemiBold,
+    Quicksand: Quicksand_400Regular,
+    QuicksandMedium: Quicksand_500Medium,
+    QuicksandSemiBold: Quicksand_600SemiBold,
+    GeistMono: GeistMono_400Regular,
+    GeistMonoMedium: GeistMono_500Medium,
+  });
   const { settings, loading: settingsLoading } = useSettings();
   const { session, loading: authLoading } = useAuth();
   useNotifications();
@@ -199,24 +228,28 @@ function AppLayout() {
   // Splash placeholder while the persisted Supabase session is being
   // hydrated from AsyncStorage. Prevents a flash of /sign-in for users
   // who are already authenticated.
-  if (authLoading) {
+  if (!fontsLoaded || authLoading) {
     return (
       <View
         style={{
           flex: 1,
-          backgroundColor: COLORS.background,
+          backgroundColor: colors.background,
           justifyContent: "center",
           alignItems: "center",
         }}
       >
-        <ActivityIndicator color={COLORS.accent} />
+        {fontsLoaded ? (
+          <Wordmark />
+        ) : (
+          <ActivityIndicator color={colors.accent} />
+        )}
       </View>
     );
   }
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style={theme === "dark" ? "light" : "dark"} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="sign-in" />
@@ -249,7 +282,9 @@ function AppLayout() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AppLayout />
+      <ThemeProvider>
+        <AppLayout />
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }
