@@ -17,7 +17,10 @@ import {
   getMorningBriefing,
   generateAnxiousReappraisal,
 } from "../../src/api/claude";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
+import { useTheme } from "../../src/theme/ThemeProvider";
+import { useThemedStyles } from "../../src/theme/useThemedStyles";
+import type { AsperaColors } from "../../src/theme/ThemeProvider";
 import SomaticInterceptor from "../../src/components/interceptor/SomaticInterceptor";
 import GradientCard from "../../src/components/common/GradientCard";
 import SummaryPill from "../../src/components/today/SummaryPill";
@@ -30,6 +33,7 @@ import QuickLogTiles from "../../src/components/today/QuickLogTiles";
 import TrendLineCard, {
   TrendPoint,
 } from "../../src/components/common/TrendLineCard";
+import SubstitutionCard from "../../src/components/today/SubstitutionCard";
 import { DailyLog } from "../../src/types";
 
 function todayId() {
@@ -76,6 +80,137 @@ function defaultLogShell(): DailyLog {
   };
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    content: { paddingHorizontal: 24 },
+    instrumentHeader: {
+      flexDirection: "row",
+      alignItems: "baseline",
+      justifyContent: "space-between",
+      marginBottom: SPACING.sm,
+    },
+    instrumentLabel: {
+      ...TYPOGRAPHY.aspLabel,
+      letterSpacing: 2.42,
+      color: c.textMuted,
+    } as object,
+    instrumentStamp: {
+      ...TYPOGRAPHY.aspLabel,
+      letterSpacing: 1.1,
+      color: c.faint,
+    } as object,
+    greetingRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 28,
+    },
+    greeting: {
+      fontFamily: "HankenGroteskMedium",
+      fontSize: 27,
+      fontWeight: "500",
+      color: c.text,
+    } as object,
+    checkInEntry: {
+      minHeight: 76,
+      borderRadius: RADIUS.instrument,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      paddingHorizontal: 18,
+      paddingVertical: 16,
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: SPACING.lg,
+    },
+    checkInText: {
+      flex: 1,
+      marginLeft: SPACING.md,
+    },
+    checkInTitle: {
+      ...TYPOGRAPHY.subtitle,
+      color: c.text,
+    } as object,
+    checkInMeta: {
+      ...TYPOGRAPHY.aspLabel,
+      color: c.textMuted,
+      marginTop: 2,
+    } as object,
+    checkInArrow: {
+      color: c.textMuted,
+      fontSize: 22,
+    },
+    miniPad: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+    },
+    miniPadV: {
+      position: "absolute",
+      left: "50%",
+      top: 7,
+      bottom: 7,
+      width: StyleSheet.hairlineWidth,
+      backgroundColor: c.line,
+    },
+    miniPadH: {
+      position: "absolute",
+      top: "50%",
+      left: 7,
+      right: 7,
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: c.line,
+    },
+    miniPadDot: {
+      position: "absolute",
+      left: "66%",
+      top: "40%",
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: c.glow,
+      shadowColor: c.glow,
+      shadowOpacity: 0.45,
+      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 0 },
+    },
+    pillsWrap: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.sm,
+    },
+    // Peak day
+    peakRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: SPACING.xs,
+      gap: SPACING.xs,
+    },
+    peakStat: {
+      ...TYPOGRAPHY.caption,
+      color: "rgba(255,255,255,0.8)",
+      fontWeight: "600",
+    } as object,
+    peakDot: {
+      color: "rgba(255,255,255,0.4)",
+      fontSize: 12,
+    },
+    peakPill: {
+      backgroundColor: "rgba(255,255,255,0.15)",
+      paddingHorizontal: SPACING.sm + 2,
+      paddingVertical: SPACING.xs,
+      borderRadius: RADIUS.pill,
+    },
+    peakPillText: {
+      ...TYPOGRAPHY.caption,
+      color: "rgba(255,255,255,0.9)",
+      fontSize: 11,
+    } as object,
+  });
+
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -84,6 +219,9 @@ export default function TodayScreen() {
   const { settings } = useSettings();
   const [recommendation, setRecommendation] = useState<string | null>(null);
   const [recLoading, setRecLoading] = useState(false);
+
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   // Somatic Interceptor state
   const [interceptorVisible, setInterceptorVisible] = useState(false);
@@ -228,7 +366,7 @@ export default function TodayScreen() {
 
   return (
     <LinearGradient
-      colors={COLORS.gradients.background as [string, string]}
+      colors={colors.gradients.background as [string, string]}
       style={styles.container}
     >
       <Animated.View style={{ flex: 1, opacity: fadeAnim }}>
@@ -270,7 +408,7 @@ export default function TodayScreen() {
             onPress={() => router.navigate("/(tabs)/mood" as never)}
             style={styles.checkInEntry}
           >
-            <MiniPad />
+            <MiniPad styles={styles} />
             <View style={styles.checkInText}>
               <Text style={styles.checkInTitle}>Check in</Text>
               <Text style={styles.checkInMeta}>mood × energy</Text>
@@ -307,7 +445,7 @@ export default function TodayScreen() {
               <TrendLineCard
                 title="Focus"
                 subtitle={`${recentLogs.length}-day trendline with weekly average`}
-                accentColor={COLORS.accent}
+                accentColor={colors.accent}
                 points={focusTrend}
                 maxValue={5}
                 formatValue={(value) => value.toFixed(1)}
@@ -315,7 +453,7 @@ export default function TodayScreen() {
               <TrendLineCard
                 title="Energy"
                 subtitle={`${recentLogs.length}-day trendline with weekly average`}
-                accentColor={COLORS.warning}
+                accentColor={colors.warning}
                 points={energyTrend}
                 maxValue={5}
                 formatValue={(value) => value.toFixed(1)}
@@ -326,7 +464,7 @@ export default function TodayScreen() {
           {/* Best day callout */}
           {bestDay && (
             <GradientCard
-              colors={COLORS.gradients.accent}
+              colors={colors.gradients.accent}
               style={{ marginTop: SPACING.md }}
             >
               <Text
@@ -337,7 +475,7 @@ export default function TodayScreen() {
               <Text
                 style={[
                   TYPOGRAPHY.subtitle,
-                  { color: COLORS.text, marginTop: SPACING.xs },
+                  { color: colors.text, marginTop: SPACING.xs },
                 ]}
               >
                 {new Date(bestDay.date + "T12:00:00").toLocaleDateString(
@@ -394,6 +532,11 @@ export default function TodayScreen() {
               changed. */}
           <PatternsSection />
 
+          {/* Engine B — substitution / filler card. Stays silent until
+              ≥7 days of screen-time history are available and a credible
+              pattern clears the heuristic floors. */}
+          <SubstitutionCard />
+
           {/* Spotify recents + genre insight previously rendered here off
               mock data. Removed so the Today surface reflects only real
               data; the cards return once a real Spotify integration lands. */}
@@ -414,7 +557,7 @@ export default function TodayScreen() {
                       ? "None"
                       : `${log.caffeine.type} · ${log.caffeine.amount}mg`
                   }
-                  color={COLORS.warning}
+                  color={colors.warning}
                 />
                 <SummaryPill
                   icon="barbell-outline"
@@ -424,13 +567,13 @@ export default function TodayScreen() {
                       ? "Rest"
                       : `${log.workout.type} · ${log.workout.intensity}/10`
                   }
-                  color={COLORS.accent}
+                  color={colors.accent}
                 />
                 <SummaryPill
                   icon="musical-notes-outline"
                   label="Music"
                   value={log.music.join(", ")}
-                  color={COLORS.accentAlt}
+                  color={colors.accentAlt}
                 />
               </View>
 
@@ -439,20 +582,20 @@ export default function TodayScreen() {
                   icon="water-outline"
                   label="Hydration"
                   value={`${log.nutrition.hydration} glasses`}
-                  color={COLORS.accentAlt}
+                  color={colors.accentAlt}
                 />
                 <SummaryPill
                   icon="restaurant-outline"
                   label="Nutrition"
                   value={`Meal quality ${log.nutrition.mealQuality}/5`}
-                  color={COLORS.success}
+                  color={colors.success}
                 />
                 {(log.sleepHours ?? 0) > 0 && (
                   <SummaryPill
                     icon="moon-outline"
                     label="Sleep"
                     value={`${log.sleepHours}h`}
-                    color={COLORS.accentAlt}
+                    color={colors.accentAlt}
                   />
                 )}
                 {(log.daylightMinutes ?? 0) > 0 && (
@@ -460,7 +603,7 @@ export default function TodayScreen() {
                     icon="sunny-outline"
                     label="Daylight"
                     value={`${log.daylightMinutes}m`}
-                    color={COLORS.warning}
+                    color={colors.warning}
                   />
                 )}
                 {(log.drinks ?? 0) > 0 && (
@@ -468,7 +611,7 @@ export default function TodayScreen() {
                     icon="wine-outline"
                     label="Drinks"
                     value={`${log.drinks}`}
-                    color={COLORS.danger}
+                    color={colors.danger}
                   />
                 )}
               </View>
@@ -488,7 +631,7 @@ export default function TodayScreen() {
               <Text
                 style={[
                   TYPOGRAPHY.subtitle,
-                  { color: COLORS.text, textAlign: "center" },
+                  { color: colors.text, textAlign: "center" },
                 ]}
               >
                 No entry yet today
@@ -497,7 +640,7 @@ export default function TodayScreen() {
                 style={[
                   TYPOGRAPHY.body,
                   {
-                    color: COLORS.textSecondary,
+                    color: colors.textSecondary,
                     textAlign: "center",
                     marginTop: SPACING.xs,
                   },
@@ -533,137 +676,9 @@ export default function TodayScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { paddingHorizontal: 24 },
-  instrumentHeader: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    justifyContent: "space-between",
-    marginBottom: SPACING.sm,
-  },
-  instrumentLabel: {
-    ...TYPOGRAPHY.aspLabel,
-    letterSpacing: 2.42,
-    color: COLORS.textMuted,
-  } as object,
-  instrumentStamp: {
-    ...TYPOGRAPHY.aspLabel,
-    letterSpacing: 1.1,
-    color: COLORS.faint,
-  } as object,
-  greetingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 28,
-  },
-  greeting: {
-    fontFamily: "HankenGroteskMedium",
-    fontSize: 27,
-    fontWeight: "500",
-    color: COLORS.text,
-  } as object,
-  checkInEntry: {
-    minHeight: 76,
-    borderRadius: RADIUS.instrument,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.lg,
-  },
-  checkInText: {
-    flex: 1,
-    marginLeft: SPACING.md,
-  },
-  checkInTitle: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-  } as object,
-  checkInMeta: {
-    ...TYPOGRAPHY.aspLabel,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  } as object,
-  checkInArrow: {
-    color: COLORS.textMuted,
-    fontSize: 22,
-  },
-  miniPad: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-  },
-  miniPadV: {
-    position: "absolute",
-    left: "50%",
-    top: 7,
-    bottom: 7,
-    width: StyleSheet.hairlineWidth,
-    backgroundColor: COLORS.line,
-  },
-  miniPadH: {
-    position: "absolute",
-    top: "50%",
-    left: 7,
-    right: 7,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: COLORS.line,
-  },
-  miniPadDot: {
-    position: "absolute",
-    left: "66%",
-    top: "40%",
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.glow,
-    shadowColor: COLORS.glow,
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 0 },
-  },
-  pillsWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACING.sm,
-  },
-  // Peak day
-  peakRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: SPACING.xs,
-    gap: SPACING.xs,
-  },
-  peakStat: {
-    ...TYPOGRAPHY.caption,
-    color: "rgba(255,255,255,0.8)",
-    fontWeight: "600",
-  } as object,
-  peakDot: {
-    color: "rgba(255,255,255,0.4)",
-    fontSize: 12,
-  },
-  peakPill: {
-    backgroundColor: "rgba(255,255,255,0.15)",
-    paddingHorizontal: SPACING.sm + 2,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.pill,
-  },
-  peakPillText: {
-    ...TYPOGRAPHY.caption,
-    color: "rgba(255,255,255,0.9)",
-    fontSize: 11,
-  } as object,
-});
+type StylesType = ReturnType<typeof makeStyles>;
 
-function MiniPad() {
+function MiniPad({ styles }: { styles: StylesType }) {
   return (
     <View style={styles.miniPad}>
       <View style={styles.miniPadV} />
