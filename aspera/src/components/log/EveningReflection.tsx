@@ -18,7 +18,10 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 import GradientCard from "../common/GradientCard";
 import SectionLabel from "../common/SectionLabel";
 import { BigRockOutcome } from "../../types";
@@ -33,31 +36,73 @@ interface Props {
   }) => void;
 }
 
-const OUTCOME_BUTTONS: {
-  value: BigRockOutcome;
-  label: string;
-  color: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}[] = [
-  {
-    value: "done",
-    label: "Done",
-    color: COLORS.success,
-    icon: "checkmark-circle",
-  },
-  {
-    value: "partial",
-    label: "Partial",
-    color: COLORS.warning,
-    icon: "ellipse-outline",
-  },
-  {
-    value: "missed",
-    label: "Missed",
-    color: COLORS.textMuted,
-    icon: "close-circle",
-  },
-];
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    hint: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      marginBottom: SPACING.md,
+    } as object,
+    gentlePrompt: {
+      ...TYPOGRAPHY.body,
+      color: c.textSecondary,
+      lineHeight: 22,
+    } as object,
+    rockBlock: {
+      paddingVertical: SPACING.sm,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
+    rockText: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      marginBottom: SPACING.sm,
+    } as object,
+    outcomeRow: {
+      flexDirection: "row",
+      gap: SPACING.xs,
+    },
+    outcomeBtn: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 4,
+      paddingVertical: SPACING.xs + 2,
+      paddingHorizontal: SPACING.xs,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surfaceElevated,
+    },
+    outcomeLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.text,
+      fontWeight: "600",
+    } as object,
+    noteWrap: {
+      marginTop: SPACING.md,
+    },
+    noteLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textSecondary,
+      marginBottom: SPACING.xs,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    } as object,
+    noteInput: {
+      backgroundColor: c.surfaceElevated,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: c.border,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
+      color: c.text,
+      minHeight: 56,
+      textAlignVertical: "top",
+      ...TYPOGRAPHY.body,
+    } as object,
+  });
 
 export default function EveningReflection({
   bigRocks,
@@ -72,6 +117,35 @@ export default function EveningReflection({
     outcomes ?? bigRocks.map(() => "missed"),
   );
   const [localNote, setLocalNote] = useState(reflectionNote ?? "");
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
+  // OUTCOME_BUTTONS references colors at render time so it responds to theme.
+  const OUTCOME_BUTTONS: {
+    value: BigRockOutcome;
+    label: string;
+    color: string;
+    icon: keyof typeof Ionicons.glyphMap;
+  }[] = [
+    {
+      value: "done",
+      label: "Done",
+      color: colors.success,
+      icon: "checkmark-circle",
+    },
+    {
+      value: "partial",
+      label: "Partial",
+      color: colors.warning,
+      icon: "ellipse-outline",
+    },
+    {
+      value: "missed",
+      label: "Missed",
+      color: colors.textMuted,
+      icon: "close-circle",
+    },
+  ];
 
   // If parent re-hydrates from cloud, mirror those values in.
   useEffect(() => {
@@ -144,12 +218,12 @@ export default function EveningReflection({
                       <Ionicons
                         name={btn.icon}
                         size={14}
-                        color={active ? COLORS.background : btn.color}
+                        color={active ? colors.background : btn.color}
                       />
                       <Text
                         style={[
                           styles.outcomeLabel,
-                          active && { color: COLORS.background },
+                          active && { color: colors.background },
                         ]}
                       >
                         {btn.label}
@@ -171,7 +245,7 @@ export default function EveningReflection({
             value={localNote}
             onChangeText={updateNote}
             placeholder="e.g. start with the deck before email"
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             maxLength={140}
             multiline
           />
@@ -180,70 +254,3 @@ export default function EveningReflection({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  hint: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
-  } as object,
-  gentlePrompt: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    lineHeight: 22,
-  } as object,
-  rockBlock: {
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-  },
-  rockText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    marginBottom: SPACING.sm,
-  } as object,
-  outcomeRow: {
-    flexDirection: "row",
-    gap: SPACING.xs,
-  },
-  outcomeBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    paddingVertical: SPACING.xs + 2,
-    paddingHorizontal: SPACING.xs,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surfaceElevated,
-  },
-  outcomeLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.text,
-    fontWeight: "600",
-  } as object,
-  noteWrap: {
-    marginTop: SPACING.md,
-  },
-  noteLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  } as object,
-  noteInput: {
-    backgroundColor: COLORS.surfaceElevated,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    color: COLORS.text,
-    minHeight: 56,
-    textAlignVertical: "top",
-    ...TYPOGRAPHY.body,
-  } as object,
-});

@@ -9,7 +9,10 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 const PRESET_TAGS = [
   { label: "Cold Shower", emoji: "🥶" },
@@ -29,11 +32,103 @@ interface Props {
   onChange: (tags: string[]) => void;
 }
 
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    editToggle: {
+      flexDirection: "row",
+      alignItems: "center",
+      alignSelf: "flex-end",
+      gap: 4,
+      marginBottom: SPACING.sm,
+      paddingVertical: 2,
+      paddingHorizontal: 4,
+    },
+    editLabel: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 12,
+    } as object,
+    wrap: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: SPACING.sm,
+    },
+    chip: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 4,
+      paddingHorizontal: SPACING.sm + 2,
+      paddingVertical: SPACING.xs + 2,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+    },
+    chipActive: {
+      borderColor: c.accent,
+      backgroundColor: c.accentGlow,
+    },
+    chipEditing: {
+      borderStyle: "dashed",
+    },
+    chipHidden: {
+      borderColor: c.border,
+      borderStyle: "dashed",
+      opacity: 0.6,
+    },
+    addChip: {
+      borderColor: c.borderAccent,
+      borderStyle: "dashed",
+    },
+    removeBtn: {
+      marginRight: 2,
+    },
+    emoji: { fontSize: 13 },
+    label: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+    } as object,
+    labelActive: { color: c.accent },
+    hiddenSection: {
+      marginTop: SPACING.md,
+    },
+    hiddenHeading: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontSize: 11,
+      marginBottom: SPACING.xs,
+    } as object,
+    inputRow: {
+      flexDirection: "row",
+      gap: SPACING.sm,
+      marginTop: SPACING.sm,
+    },
+    input: {
+      flex: 1,
+      backgroundColor: c.background,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: c.border,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm,
+      color: c.text,
+      ...(TYPOGRAPHY.body as object),
+    },
+    addBtn: {
+      backgroundColor: c.accent,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      justifyContent: "center",
+    },
+  });
+
 export default function CustomTags({ selected, onChange }: Props) {
   const [showInput, setShowInput] = useState(false);
   const [customText, setCustomText] = useState("");
   const [editing, setEditing] = useState(false);
   const [hiddenTags, setHiddenTags] = useState<string[]>([]);
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   useEffect(() => {
     AsyncStorage.getItem(HIDDEN_TAGS_KEY).then((raw) => {
@@ -103,9 +198,9 @@ export default function CustomTags({ selected, onChange }: Props) {
         <Ionicons
           name={editing ? "checkmark-circle" : "create-outline"}
           size={16}
-          color={editing ? COLORS.success : COLORS.textMuted}
+          color={editing ? colors.success : colors.textMuted}
         />
-        <Text style={[styles.editLabel, editing && { color: COLORS.success }]}>
+        <Text style={[styles.editLabel, editing && { color: colors.success }]}>
           {editing ? "Done" : "Edit"}
         </Text>
       </TouchableOpacity>
@@ -133,7 +228,7 @@ export default function CustomTags({ selected, onChange }: Props) {
                   <Ionicons
                     name="close-circle"
                     size={14}
-                    color={COLORS.danger}
+                    color={colors.danger}
                   />
                 </TouchableOpacity>
               )}
@@ -163,7 +258,7 @@ export default function CustomTags({ selected, onChange }: Props) {
                 onPress={() => removeCustomTag(t)}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
-                <Ionicons name="close-circle" size={14} color={COLORS.danger} />
+                <Ionicons name="close-circle" size={14} color={colors.danger} />
               </TouchableOpacity>
             )}
             <Text style={styles.emoji}>🏷️</Text>
@@ -178,8 +273,8 @@ export default function CustomTags({ selected, onChange }: Props) {
             onPress={() => setShowInput(true)}
             activeOpacity={0.7}
           >
-            <Ionicons name="add" size={16} color={COLORS.accent} />
-            <Text style={[styles.label, { color: COLORS.accent }]}>Custom</Text>
+            <Ionicons name="add" size={16} color={colors.accent} />
+            <Text style={[styles.label, { color: colors.accent }]}>Custom</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -201,10 +296,10 @@ export default function CustomTags({ selected, onChange }: Props) {
                   <Ionicons
                     name="add-circle"
                     size={14}
-                    color={COLORS.success}
+                    color={colors.success}
                   />
                   <Text style={styles.emoji}>{preset?.emoji ?? "🏷️"}</Text>
-                  <Text style={[styles.label, { color: COLORS.textMuted }]}>
+                  <Text style={[styles.label, { color: colors.textMuted }]}>
                     {label}
                   </Text>
                 </TouchableOpacity>
@@ -220,106 +315,17 @@ export default function CustomTags({ selected, onChange }: Props) {
             value={customText}
             onChangeText={setCustomText}
             placeholder="Tag name..."
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             style={styles.input}
             autoFocus
             onSubmitEditing={addCustom}
             returnKeyType="done"
           />
           <TouchableOpacity style={styles.addBtn} onPress={addCustom}>
-            <Text style={{ color: COLORS.text, fontWeight: "700" }}>Add</Text>
+            <Text style={{ color: colors.text, fontWeight: "700" }}>Add</Text>
           </TouchableOpacity>
         </View>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  editToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-end",
-    gap: 4,
-    marginBottom: SPACING.sm,
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-  },
-  editLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 12,
-  } as object,
-  wrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: SPACING.sm,
-  },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    paddingHorizontal: SPACING.sm + 2,
-    paddingVertical: SPACING.xs + 2,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  chipActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
-  },
-  chipEditing: {
-    borderStyle: "dashed",
-  },
-  chipHidden: {
-    borderColor: COLORS.border,
-    borderStyle: "dashed",
-    opacity: 0.6,
-  },
-  addChip: {
-    borderColor: COLORS.borderAccent,
-    borderStyle: "dashed",
-  },
-  removeBtn: {
-    marginRight: 2,
-  },
-  emoji: { fontSize: 13 },
-  label: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-  } as object,
-  labelActive: { color: COLORS.accent },
-  hiddenSection: {
-    marginTop: SPACING.md,
-  },
-  hiddenHeading: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontSize: 11,
-    marginBottom: SPACING.xs,
-  } as object,
-  inputRow: {
-    flexDirection: "row",
-    gap: SPACING.sm,
-    marginTop: SPACING.sm,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    color: COLORS.text,
-    ...(TYPOGRAPHY.body as object),
-  },
-  addBtn: {
-    backgroundColor: COLORS.accent,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    justifyContent: "center",
-  },
-});

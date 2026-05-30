@@ -13,7 +13,10 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 import type { EventEntry, EventTypeDef } from "../../types";
 import FieldRenderer, { defaultValueFor } from "./fields";
 
@@ -25,6 +28,57 @@ interface Props {
   isPastDay: boolean; // affects default timestamp for new recurrent entries
   onChange: (next: EventEntry[]) => void;
 }
+
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    fieldStack: {
+      gap: SPACING.md,
+    },
+    recurrentWrap: {
+      gap: SPACING.sm,
+    },
+    emptyHint: {
+      ...TYPOGRAPHY.caption,
+      color: c.textMuted,
+      fontStyle: "italic",
+    } as object,
+    entryCard: {
+      backgroundColor: c.surface,
+      borderRadius: RADIUS.md,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+      padding: SPACING.md,
+      gap: SPACING.md,
+    },
+    entryHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    timeChip: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontWeight: "700",
+      fontSize: 13,
+    } as object,
+    addRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: SPACING.xs,
+      paddingVertical: SPACING.sm + 2,
+      borderRadius: RADIUS.md,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderStyle: "dashed",
+    },
+    addText: {
+      ...TYPOGRAPHY.body,
+      color: c.accent,
+      fontWeight: "600",
+      fontSize: 14,
+    } as object,
+  });
 
 function buildSeedFieldValues(
   fields: EventTypeDef["fields"],
@@ -65,6 +119,9 @@ export default function EventTypeRenderer({
   isPastDay,
   onChange,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   // ── Single cardinality ────────────────────────────────────────────────
   if (type.cardinality === "single") {
     const entry = entries[0];
@@ -151,7 +208,7 @@ export default function EventTypeRenderer({
     <View style={styles.recurrentWrap}>
       {entries.length === 0 ? (
         <Text style={styles.emptyHint}>
-          No entries yet — tap “+ Add” when {type.name.toLowerCase()} happens.
+          No entries yet — tap "+ Add" when {type.name.toLowerCase()} happens.
         </Text>
       ) : (
         entries.map((entry) => (
@@ -167,7 +224,7 @@ export default function EventTypeRenderer({
                 <Ionicons
                   name="close-circle"
                   size={20}
-                  color={COLORS.textMuted}
+                  color={colors.textMuted}
                 />
               </TouchableOpacity>
             </View>
@@ -189,59 +246,9 @@ export default function EventTypeRenderer({
         activeOpacity={0.7}
         style={styles.addRow}
       >
-        <Ionicons name="add-circle" size={18} color={COLORS.accent} />
+        <Ionicons name="add-circle" size={18} color={colors.accent} />
         <Text style={styles.addText}>Add {type.name.toLowerCase()}</Text>
       </TouchableOpacity>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  fieldStack: {
-    gap: SPACING.md,
-  },
-  recurrentWrap: {
-    gap: SPACING.sm,
-  },
-  emptyHint: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontStyle: "italic",
-  } as object,
-  entryCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-    gap: SPACING.md,
-  },
-  entryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  timeChip: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontWeight: "700",
-    fontSize: 13,
-  } as object,
-  addRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm + 2,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderStyle: "dashed",
-  },
-  addText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontWeight: "600",
-    fontSize: 14,
-  } as object,
-});
