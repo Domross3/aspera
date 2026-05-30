@@ -31,7 +31,10 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 import type { EventTypeDef, FieldDef, FieldKind } from "../../types";
 
 interface Props {
@@ -86,6 +89,8 @@ export default function SchemaBuilder({
   onSave,
   onDelete,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [draft, setDraft] = useState<EventTypeDef>(
     () => initial ?? emptyDraft(),
   );
@@ -141,7 +146,7 @@ export default function SchemaBuilder({
     if (fieldsWithData.has(id)) {
       Alert.alert(
         "This field has stored entries",
-        "Removing it will clear those values across historical logs. Use “Delete and recreate” if you want a fresh field — or keep this one.",
+        'Removing it will clear those values across historical logs. Use “Delete and recreate” if you want a fresh field — or keep this one.',
       );
       return;
     }
@@ -245,7 +250,7 @@ export default function SchemaBuilder({
                   <Text style={styles.miniLabel}>Icon</Text>
                   <TextInput
                     placeholder="🙂"
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={draft.emoji ?? ""}
                     onChangeText={(v) =>
                       setDraft((d) => ({ ...d, emoji: v.slice(0, 2) }))
@@ -258,7 +263,7 @@ export default function SchemaBuilder({
                   <Text style={styles.miniLabel}>Name</Text>
                   <TextInput
                     placeholder="e.g. Lion's mane, Workout, Sex"
-                    placeholderTextColor={COLORS.textMuted}
+                    placeholderTextColor={colors.textMuted}
                     value={draft.name}
                     onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))}
                     style={styles.nameInput}
@@ -307,8 +312,8 @@ export default function SchemaBuilder({
               </Text>
               {draft.fields.length === 0 ? (
                 <Text style={styles.hint}>
-                  A single-toggle field is fine for things like “took my
-                  vitamin.” Add a scale, counter, or chips for richer logs.
+                  A single-toggle field is fine for things like "took my
+                  vitamin." Add a scale, counter, or chips for richer logs.
                 </Text>
               ) : null}
               {draft.fields.map((field, index) => (
@@ -332,7 +337,7 @@ export default function SchemaBuilder({
                 activeOpacity={0.7}
                 style={styles.addFieldRow}
               >
-                <Ionicons name="add-circle" size={18} color={COLORS.accent} />
+                <Ionicons name="add-circle" size={18} color={colors.accent} />
                 <Text style={styles.addFieldText}>Add field</Text>
               </TouchableOpacity>
 
@@ -368,6 +373,8 @@ function CardinalityChoice({
   disabled?: boolean;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -382,7 +389,7 @@ function CardinalityChoice({
       <Text
         style={[
           styles.cardinalityLabel,
-          active && { color: COLORS.text, fontWeight: "700" },
+          active && { color: colors.text, fontWeight: "700" },
         ]}
       >
         {label}
@@ -411,18 +418,20 @@ function FieldEditor({
   onConfigChange: (patch: Partial<NonNullable<FieldDef["config"]>>) => void;
   onRemove: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.fieldCard}>
       <View style={styles.fieldHeaderRow}>
         <Text style={styles.fieldIndex}>Field {index + 1}</Text>
         <TouchableOpacity onPress={onRemove} hitSlop={8}>
-          <Ionicons name="close-circle" size={20} color={COLORS.textMuted} />
+          <Ionicons name="close-circle" size={20} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
 
       <TextInput
         placeholder="Field name (e.g. Intensity, Type)"
-        placeholderTextColor={COLORS.textMuted}
+        placeholderTextColor={colors.textMuted}
         value={field.name}
         onChangeText={onChangeName}
         style={styles.input}
@@ -471,8 +480,8 @@ function FieldEditor({
         <Switch
           value={field.required}
           onValueChange={onToggleRequired}
-          trackColor={{ false: COLORS.border, true: COLORS.accent }}
-          thumbColor={COLORS.text}
+          trackColor={{ false: colors.border, true: colors.accent }}
+          thumbColor={colors.text}
         />
       </View>
     </View>
@@ -486,6 +495,8 @@ function KindConfigEditor({
   field: FieldDef;
   onConfigChange: (patch: Partial<NonNullable<FieldDef["config"]>>) => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const cfg = field.config ?? {};
 
   switch (field.kind) {
@@ -531,7 +542,7 @@ function KindConfigEditor({
           <Text style={styles.miniLabel}>Options (comma-separated)</Text>
           <TextInput
             placeholder="e.g. run, lift, yoga, walk"
-            placeholderTextColor={COLORS.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={(cfg.options ?? []).join(", ")}
             onChangeText={(v) =>
               onConfigChange({
@@ -548,8 +559,8 @@ function KindConfigEditor({
             <Switch
               value={cfg.multi ?? false}
               onValueChange={(v) => onConfigChange({ multi: v })}
-              trackColor={{ false: COLORS.border, true: COLORS.accent }}
-              thumbColor={COLORS.text}
+              trackColor={{ false: colors.border, true: colors.accent }}
+              thumbColor={colors.text}
             />
           </View>
         </View>
@@ -571,8 +582,8 @@ function KindConfigEditor({
           <Switch
             value={cfg.multiline ?? false}
             onValueChange={(v) => onConfigChange({ multiline: v })}
-            trackColor={{ false: COLORS.border, true: COLORS.accent }}
-            thumbColor={COLORS.text}
+            trackColor={{ false: colors.border, true: colors.accent }}
+            thumbColor={colors.text}
           />
         </View>
       );
@@ -591,6 +602,7 @@ function ConfigNumberInput({
   value: number;
   onChange: (n: number) => void;
 }) {
+  const styles = useThemedStyles(makeStyles);
   const [text, setText] = useState(String(value));
   useEffect(() => {
     setText(String(value));
@@ -623,6 +635,8 @@ function ConfigTextInput({
   placeholder?: string;
   onChange: (v: string) => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.configCell}>
       <Text style={styles.miniLabel}>{label}</Text>
@@ -630,58 +644,58 @@ function ConfigTextInput({
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor={COLORS.textMuted}
+        placeholderTextColor={colors.textMuted}
         style={styles.input}
       />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: AsperaColors) => ({
   flex: { flex: 1 },
   backdrop: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
+    justifyContent: "flex-end" as const,
   },
   backdropTouch: { flex: 1 },
   sheet: {
-    backgroundColor: COLORS.background,
+    backgroundColor: c.background,
     borderTopLeftRadius: RADIUS.lg,
     borderTopRightRadius: RADIUS.lg,
-    maxHeight: "92%",
+    maxHeight: "92%" as const,
   },
   headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: c.border,
   },
   cancelText: {
     ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
+    color: c.textSecondary,
   } as object,
   titleText: {
     ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
+    color: c.text,
   } as object,
   doneText: {
     ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontWeight: "700",
+    color: c.accent,
+    fontWeight: "700" as const,
   } as object,
   doneDisabled: {
-    color: COLORS.textMuted,
+    color: c.textMuted,
   },
   body: {
     padding: SPACING.lg,
     paddingBottom: SPACING.xl + 40,
   },
   nameRow: {
-    flexDirection: "row",
+    flexDirection: "row" as const,
     gap: SPACING.sm,
     marginBottom: SPACING.lg,
   },
@@ -689,41 +703,41 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.subtitle,
     width: 56,
     paddingVertical: SPACING.sm + 2,
-    textAlign: "center",
-    backgroundColor: COLORS.surfaceElevated,
-    borderColor: COLORS.border,
+    textAlign: "center" as const,
+    backgroundColor: c.surfaceElevated,
+    borderColor: c.border,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: RADIUS.md,
-    color: COLORS.text,
+    color: c.text,
   } as object,
   fieldHelp: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontStyle: "italic",
+    color: c.textMuted,
+    fontStyle: "italic" as const,
     marginTop: -SPACING.md,
     marginBottom: SPACING.lg,
   } as object,
   nameInput: {
     ...TYPOGRAPHY.body,
     flex: 1,
-    backgroundColor: COLORS.surfaceElevated,
-    borderColor: COLORS.border,
+    backgroundColor: c.surfaceElevated,
+    borderColor: c.border,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm + 2,
-    color: COLORS.text,
+    color: c.text,
   } as object,
   sectionLabel: {
     ...TYPOGRAPHY.label,
-    color: COLORS.textMuted,
+    color: c.textMuted,
     marginBottom: SPACING.sm,
-    textTransform: "uppercase",
+    textTransform: "uppercase" as const,
     letterSpacing: 0.5,
     fontSize: 11,
   } as object,
   cardinalityRow: {
-    flexDirection: "row",
+    flexDirection: "row" as const,
     gap: SPACING.sm,
   },
   cardinalityTile: {
@@ -731,82 +745,82 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
+    borderColor: c.border,
+    backgroundColor: c.surface,
     gap: 4,
   },
   cardinalityTileActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
+    borderColor: c.accent,
+    backgroundColor: c.accentGlow,
   },
   cardinalityTileDisabled: {
     opacity: 0.4,
   },
   cardinalityLabel: {
     ...TYPOGRAPHY.body,
-    color: COLORS.text,
+    color: c.text,
   } as object,
   cardinalityCaption: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
+    color: c.textMuted,
     fontSize: 11,
   } as object,
   hint: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    fontStyle: "italic",
+    color: c.textMuted,
+    fontStyle: "italic" as const,
     marginTop: SPACING.xs,
   } as object,
   fieldCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: c.surface,
     borderRadius: RADIUS.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
+    borderColor: c.border,
     padding: SPACING.md,
     gap: SPACING.sm,
     marginBottom: SPACING.sm,
   },
   fieldHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
   },
   fieldIndex: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
+    color: c.textMuted,
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "700" as const,
     letterSpacing: 0.5,
-    textTransform: "uppercase",
+    textTransform: "uppercase" as const,
   } as object,
   input: {
     ...TYPOGRAPHY.body,
-    backgroundColor: COLORS.background,
-    borderColor: COLORS.border,
+    backgroundColor: c.background,
+    borderColor: c.border,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    color: COLORS.text,
+    color: c.text,
     fontSize: 14,
   } as object,
   miniLabel: {
     ...TYPOGRAPHY.label,
-    color: COLORS.textMuted,
+    color: c.textMuted,
     fontSize: 10,
-    textTransform: "uppercase",
+    textTransform: "uppercase" as const,
     letterSpacing: 0.4,
     marginBottom: 4,
   } as object,
   miniHint: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.warning,
+    color: c.warning,
     fontSize: 11,
-    fontStyle: "italic",
+    fontStyle: "italic" as const,
   } as object,
   kindRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: "row" as const,
+    flexWrap: "wrap" as const,
     gap: SPACING.xs,
   },
   kindChip: {
@@ -814,67 +828,67 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: RADIUS.pill,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.background,
+    borderColor: c.border,
+    backgroundColor: c.background,
   },
   kindChipActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
+    borderColor: c.accent,
+    backgroundColor: c.accentGlow,
   },
   kindChipDisabled: {
     opacity: 0.4,
   },
   kindChipText: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
+    color: c.textSecondary,
     fontSize: 12,
   } as object,
   kindChipTextActive: {
-    color: COLORS.text,
-    fontWeight: "600",
+    color: c.text,
+    fontWeight: "600" as const,
   } as object,
   configRow: {
-    flexDirection: "row",
+    flexDirection: "row" as const,
     gap: SPACING.sm,
   },
   configCell: {
     flex: 1,
   },
   requiredRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
     paddingTop: SPACING.xs,
   },
   requiredLabel: {
     ...TYPOGRAPHY.body,
-    color: COLORS.text,
+    color: c.text,
   } as object,
   addFieldRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
     gap: SPACING.xs,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    borderStyle: "dashed",
+    borderColor: c.border,
+    borderStyle: "dashed" as const,
     marginTop: SPACING.sm,
   },
   addFieldText: {
     ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontWeight: "600",
+    color: c.accent,
+    fontWeight: "600" as const,
   } as object,
   deleteRow: {
     marginTop: SPACING.xl,
-    alignItems: "center",
+    alignItems: "center" as const,
     paddingVertical: SPACING.md,
   },
   deleteText: {
     ...TYPOGRAPHY.body,
-    color: COLORS.danger,
-    fontWeight: "600",
+    color: c.danger,
+    fontWeight: "600" as const,
   } as object,
 });

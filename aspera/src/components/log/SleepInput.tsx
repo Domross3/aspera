@@ -1,8 +1,11 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   value: number;
@@ -10,6 +13,9 @@ interface Props {
 }
 
 export default function SleepInput({ value, onChange }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const adjust = (delta: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next = Math.round((value + delta) * 10) / 10;
@@ -28,12 +34,12 @@ export default function SleepInput({ value, onChange }: Props) {
             : "—";
   const qualityColor =
     value >= 8
-      ? COLORS.success
+      ? colors.success
       : value >= 7
-        ? COLORS.accentAlt
+        ? colors.accentAlt
         : value >= 6
-          ? COLORS.warning
-          : COLORS.danger;
+          ? colors.warning
+          : colors.danger;
 
   return (
     <View>
@@ -41,7 +47,7 @@ export default function SleepInput({ value, onChange }: Props) {
 
       <View style={styles.row}>
         <TouchableOpacity style={styles.btn} onPress={() => adjust(-0.5)}>
-          <Ionicons name="remove" size={20} color={COLORS.text} />
+          <Ionicons name="remove" size={20} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.countWrap}>
@@ -50,7 +56,7 @@ export default function SleepInput({ value, onChange }: Props) {
         </View>
 
         <TouchableOpacity style={styles.btn} onPress={() => adjust(0.5)}>
-          <Ionicons name="add" size={20} color={COLORS.text} />
+          <Ionicons name="add" size={20} color={colors.text} />
         </TouchableOpacity>
       </View>
 
@@ -101,64 +107,64 @@ export default function SleepInput({ value, onChange }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: AsperaColors) => ({
   heading: {
     ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
+    color: c.textSecondary,
     marginBottom: SPACING.md,
   } as object,
   row: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
     gap: SPACING.lg,
   },
   btn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.surfaceElevated,
+    backgroundColor: c.surfaceElevated,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: c.border,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
   },
-  countWrap: { alignItems: "center", minWidth: 70 },
+  countWrap: { alignItems: "center" as const, minWidth: 70 },
   count: {
     ...TYPOGRAPHY.hero,
-    color: COLORS.accentAlt,
+    color: c.accentAlt,
     lineHeight: 42,
   } as object,
   unit: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
+    color: c.textMuted,
   } as object,
   qualityRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
     gap: SPACING.sm,
     marginTop: SPACING.md,
   },
   qualityLabel: {
     ...TYPOGRAPHY.caption,
-    fontWeight: "700",
+    fontWeight: "700" as const,
     width: 40,
   } as object,
   barTrack: {
     flex: 1,
     height: 6,
-    backgroundColor: COLORS.surfaceElevated,
+    backgroundColor: c.surfaceElevated,
     borderRadius: 3,
-    overflow: "hidden",
+    overflow: "hidden" as const,
   },
   barFill: {
-    height: "100%",
+    height: "100%" as const,
     borderRadius: 3,
   },
   chips: {
-    flexDirection: "row",
-    justifyContent: "center",
-    flexWrap: "wrap",
+    flexDirection: "row" as const,
+    justifyContent: "center" as const,
+    flexWrap: "wrap" as const,
     gap: SPACING.sm,
     marginTop: SPACING.md,
   },
@@ -167,19 +173,19 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs + 2,
     borderRadius: RADIUS.pill,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surfaceElevated,
+    borderColor: c.border,
+    backgroundColor: c.surfaceElevated,
   },
   chipActive: {
-    backgroundColor: COLORS.accentAlt,
-    borderColor: COLORS.accentAlt,
+    backgroundColor: c.accentAlt,
+    borderColor: c.accentAlt,
   },
   chipText: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontWeight: "600",
+    color: c.textSecondary,
+    fontWeight: "600" as const,
   } as object,
   chipTextActive: {
-    color: "#000",
+    color: c.background,
   },
 });

@@ -1,7 +1,10 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   value: number; // 1–10
@@ -14,6 +17,9 @@ export default function IntensitySlider({
   disabled = false,
   onChange,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const set = (v: number) => {
     if (disabled) return;
     const clamped = Math.max(1, Math.min(10, v));
@@ -24,8 +30,8 @@ export default function IntensitySlider({
   };
 
   const intensityColor = disabled
-    ? COLORS.textMuted
-    : (COLORS.intensity[value - 1] ?? COLORS.accent);
+    ? colors.textMuted
+    : (colors.intensity[value - 1] ?? colors.accent);
 
   return (
     <View style={disabled && styles.disabled}>
@@ -40,7 +46,7 @@ export default function IntensitySlider({
               style={[
                 styles.segment,
                 {
-                  backgroundColor: active ? COLORS.intensity[i] : COLORS.border,
+                  backgroundColor: active ? colors.intensity[i] : colors.border,
                   height: 12 + i * 2.5, // graduated height
                 },
               ]}
@@ -80,11 +86,11 @@ export default function IntensitySlider({
   );
 }
 
-const styles = StyleSheet.create({
-  disabled: { opacity: 0.4 },
+const makeStyles = (c: AsperaColors) => ({
+  disabled: { opacity: 0.4 } as const,
   segmentRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
+    flexDirection: "row" as const,
+    alignItems: "flex-end" as const,
     gap: 3,
     paddingVertical: SPACING.sm,
   },
@@ -94,37 +100,37 @@ const styles = StyleSheet.create({
     minHeight: 12,
   },
   labels: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
     marginTop: SPACING.xs,
   },
   labelText: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
+    color: c.textMuted,
   } as object,
   valueRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
     gap: SPACING.sm,
   },
   valueText: {
     ...TYPOGRAPHY.subtitle,
-    fontWeight: "700",
+    fontWeight: "700" as const,
   } as object,
   adjBtn: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: COLORS.surfaceElevated,
+    backgroundColor: c.surfaceElevated,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    alignItems: "center",
-    justifyContent: "center",
+    borderColor: c.border,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
   },
   adjText: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: "600" as const,
     lineHeight: 22,
   },
 });
