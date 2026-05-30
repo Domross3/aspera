@@ -84,16 +84,59 @@ export const RADIUS = {
 };
 
 export const TYPOGRAPHY: Record<string, TextStyle> = {
-  hero: { fontSize: 36, fontWeight: "800", letterSpacing: -0.5 },
-  title: { fontSize: 22, fontWeight: "700", letterSpacing: -0.3 },
-  subtitle: { fontSize: 17, fontWeight: "600" },
-  body: { fontSize: 15, fontWeight: "400", lineHeight: 22 },
-  caption: { fontSize: 12, fontWeight: "500", letterSpacing: 0.3 },
+  hero: {
+    fontFamily: "Quicksand",
+    fontSize: 36,
+    fontWeight: "500",
+    letterSpacing: 0,
+  },
+  title: {
+    fontFamily: "Quicksand",
+    fontSize: 22,
+    fontWeight: "500",
+    letterSpacing: 0,
+  },
+  subtitle: { fontFamily: "HankenGrotesk", fontSize: 17, fontWeight: "600" },
+  body: {
+    fontFamily: "HankenGrotesk",
+    fontSize: 15,
+    fontWeight: "400",
+    lineHeight: 22,
+  },
+  caption: {
+    fontFamily: "HankenGrotesk",
+    fontSize: 12,
+    fontWeight: "500",
+    letterSpacing: 0.3,
+  },
   label: {
+    fontFamily: "GeistMono",
     fontSize: 11,
-    fontWeight: "700",
+    fontWeight: "500",
     letterSpacing: 1.2,
     textTransform: "uppercase",
+  },
+  aspLabel: {
+    fontFamily: "GeistMono",
+    fontSize: 11,
+    fontWeight: "500",
+    lineHeight: 16,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+    color: COLORS.textMuted,
+  },
+  mono: {
+    fontFamily: "GeistMono",
+    fontSize: 12,
+    fontWeight: "400",
+    letterSpacing: 0.4,
+  },
+  wordmark: {
+    fontFamily: "Quicksand",
+    fontSize: 34,
+    fontWeight: "500",
+    letterSpacing: 1.36,
+    lineHeight: 36,
   },
 };
 

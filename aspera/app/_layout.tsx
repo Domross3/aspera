@@ -3,6 +3,22 @@ import { useEffect, useRef } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator, AppState } from "react-native";
+import { useFonts } from "expo-font";
+import {
+  HankenGrotesk_300Light,
+  HankenGrotesk_400Regular,
+  HankenGrotesk_500Medium,
+  HankenGrotesk_600SemiBold,
+} from "@expo-google-fonts/hanken-grotesk";
+import {
+  Quicksand_400Regular,
+  Quicksand_500Medium,
+  Quicksand_600SemiBold,
+} from "@expo-google-fonts/quicksand";
+import {
+  GeistMono_400Regular,
+  GeistMono_500Medium,
+} from "@expo-google-fonts/geist-mono";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import * as Notifications from "expo-notifications";
 import * as Updates from "expo-updates";
@@ -31,6 +47,17 @@ import {
 function AppLayout() {
   const router = useRouter();
   const segments = useSegments();
+  const [fontsLoaded] = useFonts({
+    HankenGrotesk: HankenGrotesk_400Regular,
+    HankenGroteskLight: HankenGrotesk_300Light,
+    HankenGroteskMedium: HankenGrotesk_500Medium,
+    HankenGroteskSemiBold: HankenGrotesk_600SemiBold,
+    Quicksand: Quicksand_400Regular,
+    QuicksandMedium: Quicksand_500Medium,
+    QuicksandSemiBold: Quicksand_600SemiBold,
+    GeistMono: GeistMono_400Regular,
+    GeistMonoMedium: GeistMono_500Medium,
+  });
   const { settings, loading: settingsLoading } = useSettings();
   const { session, loading: authLoading } = useAuth();
   useNotifications();
@@ -199,7 +226,7 @@ function AppLayout() {
   // Splash placeholder while the persisted Supabase session is being
   // hydrated from AsyncStorage. Prevents a flash of /sign-in for users
   // who are already authenticated.
-  if (authLoading) {
+  if (!fontsLoaded || authLoading) {
     return (
       <View
         style={{
