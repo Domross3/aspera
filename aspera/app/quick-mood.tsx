@@ -39,12 +39,17 @@ import { saveMoodCheckIn } from "../src/storage/storage";
 import { insertMoodCheckIn } from "../src/lib/cloudStore";
 import { useAuth } from "../src/hooks/useAuth";
 import { MoodCheckIn } from "../src/types";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../src/constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../src/constants/theme";
+import { useTheme } from "../src/theme/ThemeProvider";
+import { useThemedStyles } from "../src/theme/useThemedStyles";
+import type { AsperaColors } from "../src/theme/ThemeProvider";
 
 export default function QuickMoodModal() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { session } = useAuth();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [mood, setMood] = useState(3);
   const [energy, setEnergy] = useState(3);
   const [note, setNote] = useState("");
@@ -94,7 +99,7 @@ export default function QuickMoodModal() {
 
   return (
     <LinearGradient
-      colors={COLORS.gradients.background as [string, string]}
+      colors={colors.gradients.background as [string, string]}
       style={styles.container}
     >
       <KeyboardAvoidingView
@@ -118,13 +123,13 @@ export default function QuickMoodModal() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[TYPOGRAPHY.title, { color: COLORS.text }]}>
+            <Text style={[TYPOGRAPHY.title, { color: colors.text }]}>
               Pulse check
             </Text>
             <Text
               style={[
                 TYPOGRAPHY.body,
-                { color: COLORS.textSecondary, marginTop: SPACING.xs },
+                { color: colors.textSecondary, marginTop: SPACING.xs },
               ]}
             >
               How are you right now?
@@ -140,7 +145,7 @@ export default function QuickMoodModal() {
               max={5}
               step={0.1}
               onChange={setMood}
-              accentColor={COLORS.accent}
+              accentColor={colors.accent}
             />
           </View>
 
@@ -153,7 +158,7 @@ export default function QuickMoodModal() {
               max={5}
               step={0.1}
               onChange={setEnergy}
-              accentColor={COLORS.gradients.energy[0]}
+              accentColor={colors.gradients.energy[0]}
             />
           </View>
 
@@ -164,7 +169,7 @@ export default function QuickMoodModal() {
               value={note}
               onChangeText={setNote}
               placeholder="What's happening? (optional)"
-              placeholderTextColor={COLORS.textMuted}
+              placeholderTextColor={colors.textMuted}
               multiline
               maxLength={200}
               returnKeyType="done"
@@ -190,12 +195,12 @@ export default function QuickMoodModal() {
               style={styles.actionButton}
             >
               <LinearGradient
-                colors={COLORS.gradients.accent as [string, string]}
+                colors={colors.gradients.accent as [string, string]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={[styles.saveGradient, saving && { opacity: 0.6 }]}
               >
-                <Ionicons name="checkmark" size={20} color={COLORS.text} />
+                <Ionicons name="checkmark" size={20} color={colors.text} />
                 <Text style={styles.saveText}>Save</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -206,48 +211,49 @@ export default function QuickMoodModal() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { paddingHorizontal: SPACING.lg, gap: SPACING.lg },
-  header: { marginBottom: SPACING.md },
-  section: { marginBottom: SPACING.sm },
-  noteInput: {
-    backgroundColor: COLORS.surfaceElevated,
-    borderColor: COLORS.border,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    color: COLORS.text,
-    fontSize: 15,
-    minHeight: 64,
-    textAlignVertical: "top",
-  },
-  actions: {
-    flexDirection: "row",
-    gap: SPACING.md,
-    marginTop: SPACING.md,
-  },
-  actionButton: { flex: 1, borderRadius: RADIUS.lg, overflow: "hidden" },
-  skipButton: {
-    backgroundColor: COLORS.surface,
-    borderColor: COLORS.border,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: SPACING.md + 2,
-  },
-  skipText: {
-    color: COLORS.textSecondary,
-    fontWeight: "600",
-    fontSize: 16,
-  },
-  saveGradient: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: SPACING.xs,
-    paddingVertical: SPACING.md + 2,
-  },
-  saveText: { color: COLORS.text, fontWeight: "700", fontSize: 16 },
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    container: { flex: 1 },
+    scroll: { paddingHorizontal: SPACING.lg, gap: SPACING.lg },
+    header: { marginBottom: SPACING.md },
+    section: { marginBottom: SPACING.sm },
+    noteInput: {
+      backgroundColor: c.surfaceElevated,
+      borderColor: c.border,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.md,
+      color: c.text,
+      fontSize: 15,
+      minHeight: 64,
+      textAlignVertical: "top",
+    },
+    actions: {
+      flexDirection: "row",
+      gap: SPACING.md,
+      marginTop: SPACING.md,
+    },
+    actionButton: { flex: 1, borderRadius: RADIUS.lg, overflow: "hidden" },
+    skipButton: {
+      backgroundColor: c.surface,
+      borderColor: c.border,
+      borderWidth: StyleSheet.hairlineWidth,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingVertical: SPACING.md + 2,
+    },
+    skipText: {
+      color: c.textSecondary,
+      fontWeight: "600",
+      fontSize: 16,
+    },
+    saveGradient: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: SPACING.xs,
+      paddingVertical: SPACING.md + 2,
+    },
+    saveText: { color: c.text, fontWeight: "700", fontSize: 16 },
+  });

@@ -21,7 +21,10 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
+import { SPACING, TYPOGRAPHY, RADIUS } from "../../src/constants/theme";
+import { useTheme } from "../../src/theme/ThemeProvider";
+import { useThemedStyles } from "../../src/theme/useThemedStyles";
+import type { AsperaColors } from "../../src/theme/ThemeProvider";
 import GradientCard from "../../src/components/common/GradientCard";
 import SectionLabel from "../../src/components/common/SectionLabel";
 import CheatUnlockSheet from "../../src/components/tech/CheatUnlockSheet";
@@ -41,6 +44,8 @@ export default function TechScreen() {
   const screenTime = useScreenTime();
   const restrictionState = useRestrictions();
   const settingsState = useSettings();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
   const [editorVisible, setEditorVisible] = useState(false);
   const [editingRestriction, setEditingRestriction] =
     useState<Restriction | null>(null);
@@ -102,7 +107,7 @@ export default function TechScreen() {
 
   return (
     <LinearGradient
-      colors={COLORS.gradients.background as [string, string]}
+      colors={colors.gradients.background as [string, string]}
       style={styles.container}
     >
       <ScrollView
@@ -118,7 +123,7 @@ export default function TechScreen() {
         <Text
           style={[
             TYPOGRAPHY.hero,
-            { color: COLORS.text, marginBottom: SPACING.xs },
+            { color: colors.text, marginBottom: SPACING.xs },
           ]}
         >
           Tech
@@ -126,7 +131,7 @@ export default function TechScreen() {
         <Text
           style={[
             TYPOGRAPHY.body,
-            { color: COLORS.textSecondary, marginBottom: SPACING.lg },
+            { color: colors.textSecondary, marginBottom: SPACING.lg },
           ]}
         >
           Your relationship with your devices — data, boundaries, experiments.
@@ -162,13 +167,13 @@ export default function TechScreen() {
           />
         ) : (
           <GradientCard style={{ marginBottom: SPACING.md }}>
-            <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.text }]}>
+            <Text style={[TYPOGRAPHY.subtitle, { color: colors.text }]}>
               Connect Screen Time first
             </Text>
             <Text
               style={[
                 TYPOGRAPHY.caption,
-                { color: COLORS.textMuted, marginTop: SPACING.xs },
+                { color: colors.textMuted, marginTop: SPACING.xs },
               ]}
             >
               Once authorization is approved, you can choose apps and save
@@ -179,7 +184,7 @@ export default function TechScreen() {
 
         <SectionLabel label="Experiments" />
         <GradientCard>
-          <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+          <Text style={[TYPOGRAPHY.caption, { color: colors.textMuted }]}>
             Self-experimentation UI ships in Phase 8 · 8f. The bootstrap
             comparison engine + confidence labeling is already in place
             (`src/lib/experiments/`), 37 jest tests passing — you can already
@@ -223,13 +228,16 @@ function ScreenTimeAuthCard({
   screenTime: ReturnType<typeof useScreenTime>;
 }) {
   const { available, authStatus, requesting, connect } = screenTime;
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   if (!available) {
     return (
       <GradientCard style={{ marginBottom: SPACING.md }}>
-        <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.text }]}>
+        <Text style={[TYPOGRAPHY.subtitle, { color: colors.text }]}>
           Update required
         </Text>
-        <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+        <Text style={[TYPOGRAPHY.caption, { color: colors.textMuted }]}>
           Screen Time controls need the latest native build of Aspera. This copy
           of the app doesn&apos;t include the module yet.
         </Text>
@@ -240,10 +248,10 @@ function ScreenTimeAuthCard({
   if (authStatus === "approved") {
     return (
       <GradientCard style={{ marginBottom: SPACING.md }}>
-        <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.success }]}>
+        <Text style={[TYPOGRAPHY.subtitle, { color: colors.success }]}>
           Connected
         </Text>
-        <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
+        <Text style={[TYPOGRAPHY.caption, { color: colors.textMuted }]}>
           Screen Time is authorized. You can choose apps, save active limits,
           and open Aspera to spend a cheat when you need a 30-minute lift.
         </Text>
@@ -254,13 +262,13 @@ function ScreenTimeAuthCard({
   if (authStatus === "denied") {
     return (
       <GradientCard style={{ marginBottom: SPACING.md }}>
-        <Text style={[TYPOGRAPHY.subtitle, { color: COLORS.danger }]}>
+        <Text style={[TYPOGRAPHY.subtitle, { color: colors.danger }]}>
           Authorization denied
         </Text>
         <Text
           style={[
             TYPOGRAPHY.caption,
-            { color: COLORS.textMuted, marginBottom: SPACING.sm },
+            { color: colors.textMuted, marginBottom: SPACING.sm },
           ]}
         >
           iOS won&apos;t let Aspera re-ask from inside the app. Re-enable it in
@@ -283,7 +291,7 @@ function ScreenTimeAuthCard({
       <Text
         style={[
           TYPOGRAPHY.subtitle,
-          { color: COLORS.text, marginBottom: SPACING.xs },
+          { color: colors.text, marginBottom: SPACING.xs },
         ]}
       >
         Connect Screen Time
@@ -291,7 +299,7 @@ function ScreenTimeAuthCard({
       <Text
         style={[
           TYPOGRAPHY.caption,
-          { color: COLORS.textMuted, marginBottom: SPACING.md },
+          { color: colors.textMuted, marginBottom: SPACING.md },
         ]}
       >
         Authorize Aspera to manage app limits + read per-category usage. The
@@ -306,13 +314,13 @@ function ScreenTimeAuthCard({
         disabled={requesting}
       >
         <LinearGradient
-          colors={COLORS.gradients.accent as [string, string]}
+          colors={colors.gradients.accent as [string, string]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={[styles.primaryBtn, requesting && { opacity: 0.6 }]}
         >
           {requesting ? (
-            <ActivityIndicator color={COLORS.text} size="small" />
+            <ActivityIndicator color={colors.text} size="small" />
           ) : (
             <Text style={styles.primaryBtnText}>Connect Screen Time</Text>
           )}
@@ -322,31 +330,32 @@ function ScreenTimeAuthCard({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { paddingHorizontal: SPACING.lg },
-  primaryBtn: {
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.md,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  primaryBtnText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    fontWeight: "700",
-  } as object,
-  secondaryBtn: {
-    borderRadius: RADIUS.md,
-    paddingVertical: SPACING.sm + 2,
-    paddingHorizontal: SPACING.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-    alignSelf: "flex-start",
-  },
-  secondaryBtnText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.accent,
-    fontWeight: "600",
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    container: { flex: 1, backgroundColor: c.background },
+    content: { paddingHorizontal: SPACING.lg },
+    primaryBtn: {
+      borderRadius: RADIUS.lg,
+      paddingVertical: SPACING.md,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    primaryBtnText: {
+      ...TYPOGRAPHY.body,
+      color: c.text,
+      fontWeight: "700",
+    } as object,
+    secondaryBtn: {
+      borderRadius: RADIUS.md,
+      paddingVertical: SPACING.sm + 2,
+      paddingHorizontal: SPACING.md,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: c.border,
+      alignSelf: "flex-start",
+    },
+    secondaryBtnText: {
+      ...TYPOGRAPHY.caption,
+      color: c.accent,
+      fontWeight: "600",
+    } as object,
+  });
