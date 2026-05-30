@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import GradientCard from "../common/GradientCard";
-import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from "../../constants/theme";
+import { RADIUS, SPACING, TYPOGRAPHY } from "../../constants/theme";
 import {
   SCREEN_TIME_CATEGORY_COLORS,
   SCREEN_TIME_CATEGORY_LABELS,
@@ -19,6 +19,9 @@ import {
 } from "../../lib/screenTime/storage";
 import type { ScreenTimeCategory } from "../../lib/screenTime/constants";
 import type { useScreenTime } from "../../hooks/useScreenTime";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   screenTime: ReturnType<typeof useScreenTime>;
@@ -33,6 +36,9 @@ const CATEGORY_ORDER: ScreenTimeCategory[] = [
 ];
 
 export default function ScreenTimeWarmupCard({ screenTime }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const latest = screenTime.latestDay;
   const daysCollected = screenTime.daysCollected;
   const progress = Math.min(1, daysCollected / SCREEN_TIME_WARMUP_DAYS);
@@ -41,22 +47,37 @@ export default function ScreenTimeWarmupCard({ screenTime }: Props) {
     <GradientCard style={{ marginBottom: SPACING.md }}>
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Ionicons name="phone-portrait-outline" size={18} color={COLORS.accent} />
-          <Text style={styles.title}>Screen Time data</Text>
+          <Ionicons
+            name="phone-portrait-outline"
+            size={18}
+            color={colors.accent}
+          />
+          <Text style={[styles.title, { color: colors.text }]}>
+            Screen Time data
+          </Text>
         </View>
-        <Text style={styles.progressText}>
+        <Text style={[styles.progressText, { color: colors.textMuted }]}>
           {daysCollected}/{SCREEN_TIME_WARMUP_DAYS}
         </Text>
       </View>
 
-      <View style={styles.track}>
-        <View style={[styles.fill, { width: `${progress * 100}%` }]} />
+      <View style={[styles.track, { backgroundColor: colors.surface }]}>
+        <View
+          style={[
+            styles.fill,
+            { width: `${progress * 100}%`, backgroundColor: colors.accent },
+          ]}
+        />
       </View>
 
       {latest ? (
         <View style={styles.summary}>
-          <Text style={styles.total}>{formatMinutesLabel(latest.totalMinutes)}</Text>
-          <Text style={styles.caption}>Latest synced day: {latest.date}</Text>
+          <Text style={[styles.total, { color: colors.text }]}>
+            {formatMinutesLabel(latest.totalMinutes)}
+          </Text>
+          <Text style={[styles.caption, { color: colors.textMuted }]}>
+            Latest synced day: {latest.date}
+          </Text>
           <View style={styles.categoryList}>
             {CATEGORY_ORDER.map((category) => {
               const minutes = latest.byCategory[category] ?? 0;
@@ -69,10 +90,15 @@ export default function ScreenTimeWarmupCard({ screenTime }: Props) {
                       { backgroundColor: SCREEN_TIME_CATEGORY_COLORS[category] },
                     ]}
                   />
-                  <Text style={styles.categoryName}>
+                  <Text
+                    style={[
+                      styles.categoryName,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
                     {SCREEN_TIME_CATEGORY_LABELS[category]}
                   </Text>
-                  <Text style={styles.categoryTime}>
+                  <Text style={[styles.categoryTime, { color: colors.text }]}>
                     {formatMinutesLabel(minutes)}
                   </Text>
                 </View>
@@ -81,27 +107,35 @@ export default function ScreenTimeWarmupCard({ screenTime }: Props) {
           </View>
         </View>
       ) : (
-        <Text style={styles.caption}>
+        <Text style={[styles.caption, { color: colors.textMuted }]}>
           Native aggregates appear here after the report sync runs on device.
         </Text>
       )}
 
       {screenTime.totalsError ? (
-        <Text style={styles.error}>{screenTime.totalsError}</Text>
+        <Text style={[styles.error, { color: colors.danger }]}>
+          {screenTime.totalsError}
+        </Text>
       ) : null}
 
       <TouchableOpacity
         activeOpacity={0.85}
         onPress={() => void screenTime.refreshTotals()}
         disabled={screenTime.loadingTotals}
-        style={[styles.button, screenTime.loadingTotals && styles.disabled]}
+        style={[
+          styles.button,
+          { backgroundColor: colors.accent },
+          screenTime.loadingTotals && styles.disabled,
+        ]}
       >
         {screenTime.loadingTotals ? (
-          <ActivityIndicator color={COLORS.text} size="small" />
+          <ActivityIndicator color={colors.text} size="small" />
         ) : (
           <>
-            <Ionicons name="sync-outline" size={16} color={COLORS.text} />
-            <Text style={styles.buttonText}>Sync report</Text>
+            <Ionicons name="sync-outline" size={16} color={colors.text} />
+            <Text style={[styles.buttonText, { color: colors.text }]}>
+              Sync report
+            </Text>
           </>
         )}
       </TouchableOpacity>
@@ -109,96 +143,86 @@ export default function ScreenTimeWarmupCard({ screenTime }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: SPACING.sm,
-  },
-  titleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-  },
-  title: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-  } as object,
-  progressText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-  } as object,
-  track: {
-    height: 6,
-    borderRadius: RADIUS.pill,
-    overflow: "hidden",
-    backgroundColor: COLORS.surface,
-    marginBottom: SPACING.md,
-  },
-  fill: {
-    height: "100%",
-    backgroundColor: COLORS.accent,
-  },
-  summary: {
-    gap: SPACING.xs,
-  },
-  total: {
-    ...TYPOGRAPHY.hero,
-    color: COLORS.text,
-    fontSize: 28,
-    lineHeight: 34,
-  } as object,
-  caption: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textMuted,
-    lineHeight: 18,
-  } as object,
-  categoryList: {
-    marginTop: SPACING.xs,
-    gap: 4,
-  },
-  categoryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: SPACING.xs,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  categoryName: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    flex: 1,
-  } as object,
-  categoryTime: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.text,
-    fontWeight: "600",
-  } as object,
-  error: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.danger,
-    marginTop: SPACING.sm,
-  } as object,
-  button: {
-    marginTop: SPACING.md,
-    minHeight: 42,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.accent,
-    alignItems: "center",
-    justifyContent: "center",
-    flexDirection: "row",
-    gap: SPACING.xs,
-  },
-  disabled: {
-    opacity: 0.65,
-  },
-  buttonText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.text,
-    fontWeight: "700",
-  } as object,
-});
+const makeStyles = (_c: AsperaColors) =>
+  StyleSheet.create({
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: SPACING.sm,
+    },
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+    },
+    title: {
+      ...TYPOGRAPHY.subtitle,
+    } as object,
+    progressText: {
+      ...TYPOGRAPHY.caption,
+    } as object,
+    track: {
+      height: 6,
+      borderRadius: RADIUS.pill,
+      overflow: "hidden",
+      marginBottom: SPACING.md,
+    },
+    fill: {
+      height: "100%",
+    },
+    summary: {
+      gap: SPACING.xs,
+    },
+    total: {
+      ...TYPOGRAPHY.hero,
+      fontSize: 28,
+      lineHeight: 34,
+    } as object,
+    caption: {
+      ...TYPOGRAPHY.caption,
+      lineHeight: 18,
+    } as object,
+    categoryList: {
+      marginTop: SPACING.xs,
+      gap: 4,
+    },
+    categoryRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: SPACING.xs,
+    },
+    dot: {
+      width: 7,
+      height: 7,
+      borderRadius: 4,
+    },
+    categoryName: {
+      ...TYPOGRAPHY.caption,
+      flex: 1,
+    } as object,
+    categoryTime: {
+      ...TYPOGRAPHY.caption,
+      fontWeight: "600",
+    } as object,
+    error: {
+      ...TYPOGRAPHY.caption,
+      marginTop: SPACING.sm,
+    } as object,
+    button: {
+      marginTop: SPACING.md,
+      minHeight: 42,
+      borderRadius: RADIUS.md,
+      alignItems: "center",
+      justifyContent: "center",
+      flexDirection: "row",
+      gap: SPACING.xs,
+    },
+    disabled: {
+      opacity: 0.65,
+    },
+    buttonText: {
+      ...TYPOGRAPHY.caption,
+      fontWeight: "700",
+    } as object,
+  });

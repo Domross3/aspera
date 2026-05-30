@@ -19,8 +19,11 @@ import {
   Platform,
 } from "react-native";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import type { Moment } from "../../types";
+import { useTheme } from "../../theme/ThemeProvider";
+import { useThemedStyles } from "../../theme/useThemedStyles";
+import type { AsperaColors } from "../../theme/ThemeProvider";
 
 interface Props {
   visible: boolean;
@@ -36,6 +39,9 @@ const DURATION_PRESETS: { minutes: number; label: string }[] = [
 ];
 
 export default function MomentCapture({ visible, onCancel, onSave }: Props) {
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+
   const [label, setLabel] = useState("");
   const [duration, setDuration] = useState<number | null>(null);
   const [note, setNote] = useState("");
@@ -85,16 +91,24 @@ export default function MomentCapture({ visible, onCancel, onSave }: Props) {
           <View style={styles.sheet}>
             <View style={styles.headerRow}>
               <TouchableOpacity onPress={onCancel} hitSlop={8}>
-                <Text style={styles.cancelText}>Cancel</Text>
+                <Text style={[styles.cancelText, { color: colors.textSecondary }]}>
+                  Cancel
+                </Text>
               </TouchableOpacity>
-              <Text style={styles.titleText}>New moment</Text>
+              <Text style={[styles.titleText, { color: colors.text }]}>
+                New moment
+              </Text>
               <TouchableOpacity
                 onPress={handleSave}
                 disabled={!canSave}
                 hitSlop={8}
               >
                 <Text
-                  style={[styles.doneText, !canSave && styles.doneDisabled]}
+                  style={[
+                    styles.doneText,
+                    { color: colors.accent },
+                    !canSave && { color: colors.textMuted },
+                  ]}
                 >
                   Save
                 </Text>
@@ -106,14 +120,16 @@ export default function MomentCapture({ visible, onCancel, onSave }: Props) {
                 value={label}
                 onChangeText={setLabel}
                 placeholder="What happened?"
-                placeholderTextColor={COLORS.textMuted}
-                style={styles.labelInput}
+                placeholderTextColor={colors.textMuted}
+                style={[styles.labelInput, { color: colors.text }]}
                 autoFocus
                 maxLength={80}
                 returnKeyType="next"
               />
 
-              <Text style={styles.miniLabel}>Duration (optional)</Text>
+              <Text style={[styles.miniLabel, { color: colors.textMuted }]}>
+                Duration (optional)
+              </Text>
               <View style={styles.chipsRow}>
                 {DURATION_PRESETS.map((preset) => {
                   const active = duration === preset.minutes;
@@ -125,12 +141,20 @@ export default function MomentCapture({ visible, onCancel, onSave }: Props) {
                         setDuration(active ? null : preset.minutes);
                       }}
                       activeOpacity={0.7}
-                      style={[styles.chip, active && styles.chipActive]}
+                      style={[
+                        styles.chip,
+                        { borderColor: colors.border, backgroundColor: colors.surface },
+                        active && {
+                          borderColor: colors.accent,
+                          backgroundColor: colors.accentGlow,
+                        },
+                      ]}
                     >
                       <Text
                         style={[
                           styles.chipText,
-                          active && styles.chipTextActive,
+                          { color: colors.textSecondary },
+                          active && { color: colors.text, fontWeight: "700" as const },
                         ]}
                       >
                         {preset.label}
@@ -140,17 +164,22 @@ export default function MomentCapture({ visible, onCancel, onSave }: Props) {
                 })}
               </View>
 
-              <Text style={[styles.miniLabel, { marginTop: SPACING.lg }]}>
+              <Text
+                style={[
+                  styles.miniLabel,
+                  { color: colors.textMuted, marginTop: SPACING.lg },
+                ]}
+              >
                 Note (optional)
               </Text>
               <TextInput
                 value={note}
                 onChangeText={setNote}
                 placeholder="Anything else worth remembering?"
-                placeholderTextColor={COLORS.textMuted}
+                placeholderTextColor={colors.textMuted}
                 multiline
                 maxLength={300}
-                style={styles.noteInput}
+                style={[styles.noteInput, { color: colors.text }]}
                 textAlignVertical="top"
                 returnKeyType="default"
                 blurOnSubmit
@@ -163,102 +192,83 @@ export default function MomentCapture({ visible, onCancel, onSave }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
-  backdropTouch: { flex: 1 },
-  sheet: {
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: RADIUS.lg,
-    borderTopRightRadius: RADIUS.lg,
-    paddingBottom: SPACING.xl,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-  },
-  cancelText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-  } as object,
-  titleText: {
-    ...TYPOGRAPHY.subtitle,
-    color: COLORS.text,
-  } as object,
-  doneText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.accent,
-    fontWeight: "700",
-  } as object,
-  doneDisabled: {
-    color: COLORS.textMuted,
-  },
-  body: {
-    padding: SPACING.lg,
-  },
-  labelInput: {
-    ...TYPOGRAPHY.title,
-    color: COLORS.text,
-    backgroundColor: COLORS.surfaceElevated,
-    borderColor: COLORS.border,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    marginBottom: SPACING.lg,
-  } as object,
-  miniLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textMuted,
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: SPACING.sm,
-  } as object,
-  chipsRow: {
-    flexDirection: "row",
-    gap: SPACING.xs,
-  },
-  chip: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
-    borderRadius: RADIUS.pill,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surface,
-  },
-  chipActive: {
-    borderColor: COLORS.accent,
-    backgroundColor: COLORS.accentGlow,
-  },
-  chipText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    fontSize: 13,
-  } as object,
-  chipTextActive: {
-    color: COLORS.text,
-    fontWeight: "700",
-  } as object,
-  noteInput: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.text,
-    backgroundColor: COLORS.surfaceElevated,
-    borderColor: COLORS.border,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    minHeight: 80,
-    fontSize: 14,
-  } as object,
-});
+const makeStyles = (c: AsperaColors) =>
+  StyleSheet.create({
+    flex: { flex: 1 },
+    backdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+      justifyContent: "flex-end",
+    },
+    backdropTouch: { flex: 1 },
+    sheet: {
+      backgroundColor: c.background,
+      borderTopLeftRadius: RADIUS.lg,
+      borderTopRightRadius: RADIUS.lg,
+      paddingBottom: SPACING.xl,
+    },
+    headerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: SPACING.lg,
+      paddingVertical: SPACING.md,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
+    cancelText: {
+      ...TYPOGRAPHY.body,
+    } as object,
+    titleText: {
+      ...TYPOGRAPHY.subtitle,
+    } as object,
+    doneText: {
+      ...TYPOGRAPHY.body,
+      fontWeight: "700",
+    } as object,
+    body: {
+      padding: SPACING.lg,
+    },
+    labelInput: {
+      ...TYPOGRAPHY.title,
+      backgroundColor: c.surfaceElevated,
+      borderColor: c.border,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.md,
+      marginBottom: SPACING.lg,
+    } as object,
+    miniLabel: {
+      ...TYPOGRAPHY.label,
+      fontSize: 11,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+      marginBottom: SPACING.sm,
+    } as object,
+    chipsRow: {
+      flexDirection: "row",
+      gap: SPACING.xs,
+    },
+    chip: {
+      paddingHorizontal: SPACING.md,
+      paddingVertical: 8,
+      borderRadius: RADIUS.pill,
+      borderWidth: 1,
+    },
+    chipText: {
+      ...TYPOGRAPHY.body,
+      fontSize: 13,
+    } as object,
+    noteInput: {
+      ...TYPOGRAPHY.body,
+      backgroundColor: c.surfaceElevated,
+      borderColor: c.border,
+      borderWidth: StyleSheet.hairlineWidth,
+      borderRadius: RADIUS.md,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.sm + 2,
+      minHeight: 80,
+      fontSize: 14,
+    } as object,
+  });
