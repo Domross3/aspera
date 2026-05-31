@@ -19,6 +19,7 @@ import {
   presentPicker,
   startMonitoring,
   stopMonitoring,
+  supportsDelayShield,
 } from "../../modules/screen-time/src";
 import { useAuth } from "./useAuth";
 import { logActiveRestrictions } from "../lib/screenTime/restrictionLog";
@@ -45,6 +46,7 @@ const nativeBridge: RestrictionNativeBridge = {
   applyShield,
   clearShield,
   clearRestrictionState,
+  supportsDelayShield: supportsDelayShield(),
 };
 
 export function useRestrictions(): UseRestrictionsResult {

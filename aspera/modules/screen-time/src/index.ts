@@ -25,6 +25,17 @@ const native =
 /** True when the native Screen Time module is present in this binary. */
 export const isScreenTimeAvailable = (): boolean => native != null;
 
+/**
+ * True only on a binary whose native module bundles the ManagedSettingsUI shield
+ * extension — the one that renders the Aspera "pause" over a delayed app and
+ * grants a timed unlock. On every build without it (all current builds) this is
+ * false, so the bridge keeps delay rules NON-BLOCKING rather than hard-shielding
+ * them into a permanent lockout.
+ */
+export function supportsDelayShield(): boolean {
+  return !!native && native.supportsDelayShield === true;
+}
+
 export function getAuthorizationStatus(): ScreenTimeAuthStatus {
   if (!native) return "unavailable";
   try {
