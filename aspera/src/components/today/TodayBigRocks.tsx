@@ -10,46 +10,68 @@
 // here on Today rather than buried in the Log form. Log tab shows them
 // read-only and links back to Today.
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { COLORS, SPACING, TYPOGRAPHY } from "../../constants/theme";
 import GradientCard from "../common/GradientCard";
 import BigRocksInput from "../log/BigRocksInput";
 import { DailyLog } from "../../types";
 import { asperaDayId } from "../../lib/day";
+import { carryForwardFocus, shouldReaffirmFocus } from "../../lib/focusCarry";
 
 interface Props {
   todayRocks: string[];
-  recentLogs: DailyLog[]; // for "yesterday's rocks" suggestion
+  recentLogs: DailyLog[]; // for carry-forward + "still these?"
   onChange: (rocks: string[]) => void | Promise<void>;
+  // True once the user has explicitly cleared/edited today's focus, so we
+  // don't re-carry-forward over a deliberate empty. Optional; defaults false.
+  todayFocusTouched?: boolean;
 }
 
 export default function TodayBigRocks({
   todayRocks,
   recentLogs,
   onChange,
+  todayFocusTouched = false,
 }: Props) {
   const [editing, setEditing] = useState(false);
+  const [dismissedReaffirm, setDismissedReaffirm] = useState(false);
   const hasRocks = todayRocks.length > 0;
 
-  // Yesterday's rocks (recentLogs[0] is today if logged; else most recent prior day).
-  // Walk until we find a different date with non-empty rocks, capping at 7.
   const todayId = asperaDayId();
-  const previousRocks =
-    recentLogs.find((l) => l.id !== todayId && l.bigRocks?.length > 0)
-      ?.bigRocks ?? [];
+  const previousRocks = carryForwardFocus(recentLogs, todayId);
+
+  // Auto carry-forward: when today has no focus yet and the user hasn't
+  // deliberately cleared it, pre-fill from the most recent prior day. Runs
+  // once per empty-state (guarded by a ref) so it never fights a manual edit
+  // or loops. The carried log keeps outputRated:false (it's a focus, not a
+  // rating) — the parent's onChange/defaultLogShell handles that.
+  const carriedRef = useRef(false);
+  useEffect(() => {
+    if (
+      !hasRocks &&
+      !todayFocusTouched &&
+      !carriedRef.current &&
+      previousRocks.length > 0
+    ) {
+      carriedRef.current = true;
+      void onChange(previousRocks);
+    }
+  }, [hasRocks, todayFocusTouched, previousRocks, onChange]);
+
+  // "Still these?" — the same focus has ridden untouched for a stretch of
+  // days, so it may be stale. Ask (relevance, not completion). Display-mode
+  // only, dismissable for the session.
+  const reaffirm =
+    hasRocks &&
+    !editing &&
+    !dismissedReaffirm &&
+    shouldReaffirmFocus(recentLogs, todayRocks);
 
   const handleStartEditing = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setEditing(true);
-  };
-
-  const handleApplyYesterday = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await onChange(previousRocks.slice(0, 3));
-    setEditing(false);
   };
 
   const handleDone = () => {
@@ -76,6 +98,25 @@ export default function TodayBigRocks({
               <Text style={styles.rockText}>{rock}</Text>
             </View>
           ))}
+          {reaffirm && (
+            <View style={styles.reaffirmRow}>
+              <Text style={styles.reaffirmText}>Still these?</Text>
+              <View style={styles.reaffirmActions}>
+                <TouchableOpacity
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setDismissedReaffirm(true);
+                  }}
+                  hitSlop={8}
+                >
+                  <Text style={styles.reaffirmYes}>Yes, keep</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleStartEditing} hitSlop={8}>
+                  <Text style={styles.reaffirmEdit}>Change</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </GradientCard>
       </View>
     );
@@ -96,23 +137,6 @@ export default function TodayBigRocks({
       </View>
       <GradientCard>
         <BigRocksInput rocks={todayRocks} onChange={onChange} />
-
-        {!hasRocks && previousRocks.length > 0 && (
-          <TouchableOpacity
-            onPress={handleApplyYesterday}
-            style={styles.suggestionButton}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="time-outline"
-              size={14}
-              color={COLORS.textSecondary}
-            />
-            <Text style={styles.suggestionText} numberOfLines={2}>
-              Use yesterday's: {previousRocks.slice(0, 3).join(" · ")}
-            </Text>
-          </TouchableOpacity>
-        )}
       </GradientCard>
     </View>
   );
@@ -158,19 +182,31 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     flex: 1,
   } as object,
-  suggestionButton: {
+  reaffirmRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    gap: SPACING.xs,
     marginTop: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs + 2,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surfaceElevated,
+    paddingTop: SPACING.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border,
   },
-  suggestionText: {
+  reaffirmText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+  } as object,
+  reaffirmActions: {
+    flexDirection: "row",
+    gap: SPACING.md,
+  },
+  reaffirmYes: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
-    flex: 1,
+    fontWeight: "600",
+  } as object,
+  reaffirmEdit: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.accent,
+    fontWeight: "600",
   } as object,
 });
