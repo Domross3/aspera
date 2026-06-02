@@ -21,16 +21,12 @@ import SomaticInterceptor from "../../src/components/interceptor/SomaticIntercep
 import GradientCard from "../../src/components/common/GradientCard";
 import SummaryPill from "../../src/components/today/SummaryPill";
 import RecommendationBanner from "../../src/components/today/RecommendationBanner";
-import StreakCounter from "../../src/components/today/StreakCounter";
 import SectionLabel from "../../src/components/common/SectionLabel";
 import TodayBigRocks from "../../src/components/today/TodayBigRocks";
 import PatternsSection from "../../src/components/today/PatternsSection";
 import QuickLogTiles from "../../src/components/today/QuickLogTiles";
-import TrendLineCard, {
-  TrendPoint,
-} from "../../src/components/common/TrendLineCard";
 import { DailyLog } from "../../src/types";
-import { asperaDayId, asperaDayIdForTs } from "../../src/lib/day";
+import { asperaDayId } from "../../src/lib/day";
 
 function todayId() {
   return asperaDayId();
@@ -62,8 +58,7 @@ function defaultLogShell(): DailyLog {
 
 export default function TodayScreen() {
   const insets = useSafeAreaInsets();
-  const { todayLog, recentLogs, loading, save, streak, reservesRemaining } =
-    useLogs();
+  const { todayLog, recentLogs, loading, save } = useLogs();
   const { settings } = useSettings();
   const [recommendation, setRecommendation] = useState<string | null>(null);
   const [recLoading, setRecLoading] = useState(false);
@@ -147,68 +142,6 @@ export default function TodayScreen() {
 
   const log = todayLog;
 
-  // Only days the user actually rated count toward trends/averages/peak.
-  // Auto-seeded shells (Big Rock, quick-log tile) carry `outputRated: false`
-  // and their default 5/5/0 values would otherwise pollute every metric.
-  // Legacy rows (undefined) are treated as rated so real history survives.
-  const ratedLogs = recentLogs.filter((l) => l.outputRated !== false);
-
-  // Compute weekly averages from rated logs
-  const weekAvg =
-    ratedLogs.length > 0
-      ? {
-          focus: +(
-            ratedLogs.reduce((s, l) => s + l.output.focusRating, 0) /
-            ratedLogs.length
-          ).toFixed(1),
-          energy: +(
-            ratedLogs.reduce((s, l) => s + l.output.energyRating, 0) /
-            ratedLogs.length
-          ).toFixed(1),
-          tasks: +(
-            ratedLogs.reduce((s, l) => s + l.output.tasksCompleted, 0) /
-            ratedLogs.length
-          ).toFixed(1),
-        }
-      : null;
-
-  // Best and worst days
-  const bestDay =
-    ratedLogs.length > 0
-      ? ratedLogs.reduce((best, l) =>
-          l.output.focusRating + l.output.energyRating >
-          best.output.focusRating + best.output.energyRating
-            ? l
-            : best,
-        )
-      : null;
-
-  // Build fixed 7-day rolling windows for the trend cards. Days without a
-  // log land as `value: null` so TrendLineCard renders a true gap rather
-  // than stretching a sparse trend across the full chart width.
-  const logsByDate = new Map(ratedLogs.map((l) => [l.id, l]));
-  const trendAnchor = new Date();
-  trendAnchor.setHours(12, 0, 0, 0);
-  const focusTrend: TrendPoint[] = [];
-  const energyTrend: TrendPoint[] = [];
-  for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
-    const d = new Date(trendAnchor);
-    d.setDate(d.getDate() - daysAgo);
-    const dateStr = asperaDayIdForTs(d.getTime());
-    const label = d
-      .toLocaleDateString("en-US", { weekday: "short" })
-      .slice(0, 2);
-    const log = logsByDate.get(dateStr);
-    focusTrend.push({
-      label,
-      value: log ? log.output.focusRating : null,
-    });
-    energyTrend.push({
-      label,
-      value: log ? log.output.energyRating : null,
-    });
-  }
-
   return (
     <LinearGradient
       colors={COLORS.gradients.background as [string, string]}
@@ -264,14 +197,10 @@ export default function TodayScreen() {
             />
           </View>
 
-          {/* AI Recommendation */}
-          <RecommendationBanner
-            recommendation={recommendation}
-            isLoading={recLoading}
-            onRefresh={fetchRecommendation}
-          />
-
-          {/* Big Rocks — morning anchor, editable inline */}
+          {/* Today's Focus — the morning anchor and first thing the user
+              sees. Leads the screen (above the AI briefing) so first sight is
+              "here's what you said matters", and it renders from local data
+              regardless of whether the Claude proxy is reachable. */}
           <TodayBigRocks
             todayRocks={log?.bigRocks ?? []}
             recentLogs={recentLogs}
@@ -281,92 +210,13 @@ export default function TodayScreen() {
             }}
           />
 
-          {/* Weekly metrics — render whenever there's at least one logged
-              day. The TrendLineCard itself handles 0/1/2+ day rendering, so
-              we just need any log in the window. */}
-          {recentLogs.length > 0 && weekAvg && (
-            <>
-              <SectionLabel
-                label="This Week's Metrics"
-                style={{ marginTop: SPACING.xl }}
-              />
-              <TrendLineCard
-                title="Focus"
-                subtitle={`${recentLogs.length}-day trendline with weekly average`}
-                accentColor={COLORS.accent}
-                points={focusTrend}
-                maxValue={5}
-                formatValue={(value) => value.toFixed(1)}
-              />
-              <TrendLineCard
-                title="Energy"
-                subtitle={`${recentLogs.length}-day trendline with weekly average`}
-                accentColor={COLORS.warning}
-                points={energyTrend}
-                maxValue={5}
-                formatValue={(value) => value.toFixed(1)}
-              />
-            </>
-          )}
-
-          {/* Best day callout */}
-          {bestDay && (
-            <GradientCard
-              colors={COLORS.gradients.accent}
-              style={{ marginTop: SPACING.md }}
-            >
-              <Text
-                style={[TYPOGRAPHY.caption, { color: "rgba(255,255,255,0.6)" }]}
-              >
-                PEAK DAY THIS WEEK
-              </Text>
-              <Text
-                style={[
-                  TYPOGRAPHY.subtitle,
-                  { color: COLORS.text, marginTop: SPACING.xs },
-                ]}
-              >
-                {new Date(bestDay.date + "T12:00:00").toLocaleDateString(
-                  "en-US",
-                  { weekday: "long", month: "short", day: "numeric" },
-                )}
-              </Text>
-              <View style={styles.peakRow}>
-                <Text style={styles.peakStat}>
-                  Focus {bestDay.output.focusRating}/5
-                </Text>
-                <Text style={styles.peakDot}>·</Text>
-                <Text style={styles.peakStat}>
-                  Energy {bestDay.output.energyRating}/5
-                </Text>
-                <Text style={styles.peakDot}>·</Text>
-                <Text style={styles.peakStat}>
-                  {bestDay.output.tasksCompleted} tasks
-                </Text>
-              </View>
-              <View style={[styles.pillsWrap, { marginTop: SPACING.sm }]}>
-                {bestDay.caffeine.type !== "none" && (
-                  <View style={styles.peakPill}>
-                    <Text style={styles.peakPillText}>
-                      ☕ {bestDay.caffeine.type} {bestDay.caffeine.amount}mg
-                    </Text>
-                  </View>
-                )}
-                {bestDay.workout.type !== "none" && (
-                  <View style={styles.peakPill}>
-                    <Text style={styles.peakPillText}>
-                      💪 {bestDay.workout.type}
-                    </Text>
-                  </View>
-                )}
-                {(bestDay.tags || []).slice(0, 3).map((t) => (
-                  <View key={t} style={styles.peakPill}>
-                    <Text style={styles.peakPillText}>{t}</Text>
-                  </View>
-                ))}
-              </View>
-            </GradientCard>
-          )}
+          {/* AI briefing — enrichment below the focuses. Degrades to a local
+              fallback when the proxy is down (see getMorningBriefing). */}
+          <RecommendationBanner
+            recommendation={recommendation}
+            isLoading={recLoading}
+            onRefresh={fetchRecommendation}
+          />
 
           {/* Quick Log — one-tap loggers for the user's recurrent event
               types. Surfaced here so multiply-occurring things ("had
@@ -494,14 +344,6 @@ export default function TodayScreen() {
             </GradientCard>
           )}
 
-          {(log || recentLogs.length > 0) && (
-            <View style={{ marginTop: SPACING.xl }}>
-              <StreakCounter
-                streak={streak}
-                reservesRemaining={reservesRemaining}
-              />
-            </View>
-          )}
         </ScrollView>
       </Animated.View>
 
@@ -527,31 +369,4 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: SPACING.sm,
   },
-  // Peak day
-  peakRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: SPACING.xs,
-    gap: SPACING.xs,
-  },
-  peakStat: {
-    ...TYPOGRAPHY.caption,
-    color: "rgba(255,255,255,0.8)",
-    fontWeight: "600",
-  } as object,
-  peakDot: {
-    color: "rgba(255,255,255,0.4)",
-    fontSize: 12,
-  },
-  peakPill: {
-    backgroundColor: "rgba(255,255,255,0.15)",
-    paddingHorizontal: SPACING.sm + 2,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.pill,
-  },
-  peakPillText: {
-    ...TYPOGRAPHY.caption,
-    color: "rgba(255,255,255,0.9)",
-    fontSize: 11,
-  } as object,
 });

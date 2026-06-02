@@ -5,7 +5,7 @@
 // deliberately quiet state when nothing did. No score, no streak, no dashboard.
 
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { COLORS, SPACING, TYPOGRAPHY } from "../../constants/theme";
 import GradientCard from "../common/GradientCard";
 import SectionLabel from "../common/SectionLabel";
@@ -18,6 +18,15 @@ export default function AgentFindingsCard() {
     analyze();
   }, [analyze]);
 
+  // Earned presence: this surface stays completely absent until the agent has
+  // a finding that cleared the FDR + effect-size gate. No header, no card, no
+  // spinner, no "nothing yet" placeholder — Aspera is silent until it has
+  // something specific to say, then it appears. (Quiet states are the norm;
+  // an empty card apologizing for itself is exactly what we're removing.)
+  if (loading || !analyzed || findings.length === 0) {
+    return null;
+  }
+
   return (
     <View>
       <SectionLabel
@@ -25,40 +34,24 @@ export default function AgentFindingsCard() {
         style={{ marginTop: SPACING.xl }}
       />
       <GradientCard>
-        {loading || !analyzed ? (
-          <View style={styles.row}>
-            <ActivityIndicator color={COLORS.text} size="small" />
-            <Text style={[TYPOGRAPHY.caption, { color: COLORS.textMuted }]}>
-              Looking through your own data…
-            </Text>
-          </View>
-        ) : findings.length === 0 ? (
-          <Text style={[TYPOGRAPHY.body, { color: COLORS.textMuted }]}>
-            Nothing stood out strongly enough to flag yet — and that's
-            intentional. Aspera stays quiet until a pattern in your own data is
-            both large and consistent. Keep logging; it watches in the
-            background.
+        <View style={styles.list}>
+          {findings.map((f) => (
+            <View key={`${f.leverId}:${f.outcomeId}`} style={styles.finding}>
+              <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
+                {f.headline}
+              </Text>
+            </View>
+          ))}
+          <Text
+            style={[
+              TYPOGRAPHY.caption,
+              { color: COLORS.textMuted, fontStyle: "italic", marginTop: SPACING.xs },
+            ]}
+          >
+            Found on your device from your own logs — no AI, nothing sent
+            anywhere. Hints worth noticing, not proven cause.
           </Text>
-        ) : (
-          <View style={styles.list}>
-            {findings.map((f) => (
-              <View key={`${f.leverId}:${f.outcomeId}`} style={styles.finding}>
-                <Text style={[TYPOGRAPHY.body, { color: COLORS.text }]}>
-                  {f.headline}
-                </Text>
-              </View>
-            ))}
-            <Text
-              style={[
-                TYPOGRAPHY.caption,
-                { color: COLORS.textMuted, fontStyle: "italic", marginTop: SPACING.xs },
-              ]}
-            >
-              Found on your device from your own logs — no AI, nothing sent
-              anywhere. Hints worth noticing, not proven cause.
-            </Text>
-          </View>
-        )}
+        </View>
       </GradientCard>
     </View>
   );

@@ -1,11 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { DailyLog, ReservesState, MAX_RESERVES_PER_WEEK } from "../types";
-import {
-  getLog,
-  getRecentLogs,
-  saveLog,
-  getReserves,
-} from "../storage/storage";
+import { DailyLog } from "../types";
+import { getLog, getRecentLogs, saveLog } from "../storage/storage";
 import {
   fetchRecentLogs,
   fetchTodayLog,
@@ -42,18 +37,10 @@ export function useLogs() {
   const [todayLog, setTodayLog] = useState<DailyLog | null>(null);
   const [recentLogs, setRecentLogs] = useState<DailyLog[]>([]);
   const [loading, setLoading] = useState(true);
-  const [reserves, setReserves] = useState<ReservesState>({
-    weekStartDate: "",
-    reservesUsed: 0,
-    reserveDates: [],
-  });
 
   const reload = useCallback(async () => {
     // Mock-seed removed — the user wants the real state of their data
     // so they can see exactly what's captured vs. what still needs work.
-    const res = await getReserves();
-    setReserves(res);
-
     const today = todayId();
 
     if (!session) {
@@ -147,48 +134,6 @@ export function useLogs() {
     [session, todayLog, recentLogs],
   );
 
-  // Reserve-aware streak computation
-  // Instead of breaking on a missed day, we spend a reserve pass.
-  const { streak, reservesUsedInStreak } = (() => {
-    let count = 0;
-    let reservesSpent = 0;
-    const today = todayId();
-    const all = todayLog
-      ? [todayLog, ...recentLogs.filter((l) => l.id !== today)]
-      : recentLogs;
-    const logIds = new Set(all.map((l) => l.id));
-
-    // Brand-new user / cleared data: no logs anywhere → streak is 0. The
-    // reserve-spending fallback below would otherwise count today + yesterday
-    // as covered-by-reserve days and produce a phantom streak.
-    if (logIds.size === 0) {
-      return { streak: 0, reservesUsedInStreak: 0 };
-    }
-
-    for (let i = 0; i < 14; i++) {
-      const expected = new Date();
-      expected.setDate(expected.getDate() - i);
-      const expectedId = expected.toISOString().split("T")[0];
-
-      if (logIds.has(expectedId)) {
-        count++;
-      } else if (reservesSpent < reserves.reservesUsed) {
-        // A reserve was used for this gap — streak survives
-        reservesSpent++;
-        count++;
-      } else if (reservesSpent < MAX_RESERVES_PER_WEEK) {
-        // Auto-spend a reserve for today's gap (prospective)
-        reservesSpent++;
-        count++;
-      } else {
-        break; // No reserves left, streak breaks
-      }
-    }
-    return { streak: count, reservesUsedInStreak: reservesSpent };
-  })();
-
-  const reservesRemaining = MAX_RESERVES_PER_WEEK - reserves.reservesUsed;
-
   return {
     todayLog,
     recentLogs,
@@ -196,9 +141,5 @@ export function useLogs() {
     save,
     reload,
     getLogFor,
-    streak,
-    reserves,
-    reservesRemaining,
-    reservesUsedInStreak,
   };
 }
