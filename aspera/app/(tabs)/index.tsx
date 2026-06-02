@@ -128,13 +128,14 @@ export default function TodayScreen() {
   const fetchRecommendation = async () => {
     setRecLoading(true);
     try {
+      // getMorningBriefing degrades to a local fallback when the proxy is
+      // down, so this normally resolves even offline. The catch is a last
+      // resort for an unexpected local error — keep it quiet, not alarmist.
       const rec = await getMorningBriefing(todayLog, recentLogs);
       setRecommendation(rec);
       await saveTodayRec(todayId(), rec);
     } catch {
-      setRecommendation(
-        "Couldn't reach the AI just now. Try again in a moment.",
-      );
+      setRecommendation("");
     } finally {
       setRecLoading(false);
     }

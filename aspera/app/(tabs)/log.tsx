@@ -405,7 +405,7 @@ export default function LogScreen() {
               ) : (
                 <View style={logStyles.editLinkRow}>
                   <Text style={logStyles.editLinkText}>
-                    Set today's Big Rocks on the Today tab
+                    Set today's focus on the Today tab
                   </Text>
                   <Ionicons
                     name="chevron-forward"

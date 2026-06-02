@@ -88,7 +88,7 @@ export default function BigRocksInput({ rocks, onChange }: Props) {
 
       {rocks.length === 0 && (
         <Text style={styles.emptyHint}>
-          Research shows focusing on your top priorities ("Big Rocks") before
+          Research shows naming your top one to three priorities before
           smaller tasks leads to higher deep-work output.
         </Text>
       )}

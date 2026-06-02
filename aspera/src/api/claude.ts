@@ -568,14 +568,15 @@ export async function getMorningBriefing(
           .join(", ")}.`
       : "";
 
-  const message = await callClaudeViaProxy({
-    model: "claude-sonnet-4-6",
-    max_tokens: 300,
-    system: systemPrompt,
-    messages: [
-      {
-        role: "user",
-        content: `Write today's morning briefing (2–3 sentences) for the user. Open by grounding in real data from the last 24 hours. Reference Big Rocks if they're set. Float at most one gentle heads-up about a likely pattern, only if the data supports it.
+  try {
+    const message = await callClaudeViaProxy({
+      model: "claude-sonnet-4-6",
+      max_tokens: 300,
+      system: systemPrompt,
+      messages: [
+        {
+          role: "user",
+          content: `Write today's morning briefing (2–3 sentences) for the user. Open by grounding in real data from the last 24 hours. Reference Big Rocks if they're set. Float at most one gentle heads-up about a likely pattern, only if the data supports it.
 
 Context:
 ${bigRocksInfo}
@@ -583,17 +584,46 @@ ${yesterdaySummary}
 ${outcomesLine}
 ${reflection}
 Today's log so far: ${JSON.stringify({
-          sleep: context.sleepHours,
-          daylight: context.daylightMinutes,
-          mood: context.output,
-        })}
+            sleep: context.sleepHours,
+            daylight: context.daylightMinutes,
+            mood: context.output,
+          })}
 
 Format: 2–3 sentences. Speak only from the data above — do NOT mention integrations (Spotify, HealthKit, Calendar) we don't have. No headers, no markdown, no preamble like "Here's your briefing." Just speak as Aspera.`,
-      },
-    ],
-  });
+        },
+      ],
+    });
 
-  return (message.content[0] as { type: string; text: string }).text.trim();
+    return (message.content[0] as { type: string; text: string }).text.trim();
+  } catch {
+    // Proxy unreachable (the key/proxy is currently flaky in prod). The
+    // morning must not break — fall back to a local, deterministic briefing
+    // composed from the same local data. Focuses lead the screen regardless;
+    // this just keeps the briefing card sensible instead of an error.
+    return localMorningBriefing(context, recentLogs);
+  }
+}
+
+// Local, no-network briefing used when the Claude proxy is unreachable.
+// Deterministic and grounded in the same local data the prompt would use.
+function localMorningBriefing(
+  context: DailyLog,
+  recentLogs: DailyLog[],
+): string {
+  const rocks = context.bigRocks?.filter((r) => r.trim().length > 0) ?? [];
+  const yesterday = recentLogs.find((l) => l.id !== context.id) ?? null;
+
+  const opener =
+    yesterday && typeof yesterday.sleepHours === "number" && yesterday.sleepHours > 0
+      ? `You logged about ${yesterday.sleepHours}h of sleep.`
+      : "A fresh day to work with.";
+
+  const focusLine =
+    rocks.length > 0
+      ? ` Your focus today: ${rocks.join(" · ")}.`
+      : " Nothing set as today's focus yet — name one or two things that would make today feel worthwhile.";
+
+  return `${opener}${focusLine}`;
 }
 
 // Backward-compat shim. Existing callers can keep using this name; it

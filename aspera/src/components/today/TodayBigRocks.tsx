@@ -62,7 +62,7 @@ export default function TodayBigRocks({
     return (
       <View style={{ marginTop: SPACING.lg }}>
         <View style={styles.headerRow}>
-          <Text style={styles.sectionLabel}>Today's Big Rocks</Text>
+          <Text style={styles.sectionLabel}>Today's Focus</Text>
           <TouchableOpacity onPress={handleStartEditing} hitSlop={8}>
             <Text style={styles.editLink}>Edit</Text>
           </TouchableOpacity>
@@ -86,7 +86,7 @@ export default function TodayBigRocks({
     <View style={{ marginTop: SPACING.lg }}>
       <View style={styles.headerRow}>
         <Text style={styles.sectionLabel}>
-          {hasRocks ? "Edit Big Rocks" : "What's mattering today?"}
+          {hasRocks ? "Edit today's focus" : "What's mattering today?"}
         </Text>
         {hasRocks && (
           <TouchableOpacity onPress={handleDone} hitSlop={8}>
