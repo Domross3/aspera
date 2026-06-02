@@ -76,6 +76,10 @@ export interface DailyLog {
   // evening across meaning/connection/growth (see lib/depthPrompts). Distinct
   // from the hedonic state track (mood/energy); not optimized, lightly trended.
   depth?: DepthRatings;
+  // The user explicitly "closed" the day (the evening bookend). Distinct from
+  // having data — it's an intentional "I'm done with today" marker, reopenable,
+  // never required. Set by the Done button on the Log tab.
+  dayClosed?: boolean;
 }
 
 // Relevance-not-completion: we deliberately do NOT track per-focus done/partial/

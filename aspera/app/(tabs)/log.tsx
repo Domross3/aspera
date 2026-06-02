@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -120,21 +120,22 @@ function todayId(): string {
   return asperaDayId();
 }
 
-// Today's draft — friendly pre-fills so a user opening a fresh app can
-// adjust rather than start from zero. We keep these even though they're
-// somewhat "opinionated" because most users do have caffeine + ambient
-// music + a meal, and adjusting is faster than typing from scratch.
+// Today's draft — HONEST empty defaults. Previously this seeded fake data
+// (espresso 150mg, lofi, 5 tasks, hydration 6) so an untouched day looked
+// "full" of things the user never logged — which both polluted any read of
+// the day and made the log feel untrustworthy. A fresh day now reads as
+// genuinely empty; outputRated stays false until the user explicitly rates.
 function defaultLog(): DailyLog {
   const id = todayId();
   return {
     id,
     date: id,
     createdAt: Date.now(),
-    caffeine: { type: "espresso", amount: 150 },
+    caffeine: { type: "none", amount: 0 },
     workout: { type: "none", intensity: 0 },
-    music: ["lofi"],
-    nutrition: { mealQuality: 3, hydration: 6 },
-    output: { tasksCompleted: 5, focusRating: 3, energyRating: 3 },
+    music: [],
+    nutrition: { mealQuality: 3, hydration: 0 },
+    output: { tasksCompleted: 0, focusRating: 3, energyRating: 3 },
     tags: [],
     bigRocks: [],
     drinks: 0,
@@ -142,6 +143,7 @@ function defaultLog(): DailyLog {
     daylightMinutes: 0,
     customMetrics: [],
     eventEntries: [],
+    outputRated: false,
   };
 }
 
@@ -185,6 +187,11 @@ export default function LogScreen() {
   const [saved, setSaved] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  // Set true by hydration (date-change effect) so the autosave effect can
+  // distinguish "form just loaded from storage" from "user edited a field" and
+  // skip the redundant write-back that would otherwise fire on every open.
+  const justHydrated = useRef(true);
+
   // SchemaBuilder state. `"__new__"` is a sentinel for "creating a new
   // type"; a real EventTypeDef.id puts the builder into edit-mode.
   const [editingTypeId, setEditingTypeId] = useState<string | null>(null);
@@ -199,11 +206,13 @@ export default function LogScreen() {
     let cancelled = false;
     const load = async () => {
       if (isToday) {
+        justHydrated.current = true;
         setForm(todayLog ?? defaultLog());
         return;
       }
       const existing = await getLogFor(selectedDate);
       if (cancelled) return;
+      justHydrated.current = true;
       setForm(existing ?? blankLog(selectedDate));
     };
     void load();
@@ -216,6 +225,44 @@ export default function LogScreen() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  // Output ratings (focus/energy/tasks) are the ONLY signal that promotes a
+  // day to outputRated:true. Autosave must never set it (a passively-saved day
+  // would otherwise pollute trends/averages) — only an explicit rating here.
+  const patchOutput = (next: Partial<DailyLog["output"]>) => {
+    setForm((prev) => ({
+      ...prev,
+      output: { ...prev.output, ...next },
+      outputRated: true,
+    }));
+  };
+
+  // Debounced autosave. Write-through to local + cloud via useLogs.save on any
+  // form change, ~600ms after the user stops. Preserves outputRated as-is
+  // (never forces it). Skips the write triggered purely by hydration.
+  useEffect(() => {
+    if (justHydrated.current) {
+      justHydrated.current = false;
+      return;
+    }
+    const t = setTimeout(() => {
+      void (async () => {
+        await save({ ...form, createdAt: form.createdAt ?? Date.now() });
+        if (isPastDay) await clearInsights();
+        setSaved(true);
+        setTimeout(() => setSaved(false), 1800);
+      })();
+    }, 600);
+    return () => clearTimeout(t);
+  }, [form, save, isPastDay]);
+
+  // "Done" — the evening bookend. Marks the day explicitly closed (persisted,
+  // reopenable, never required). Not a save trigger; autosave already persists.
+  const handleDone = useCallback(async () => {
+    const closed = !form.dayClosed;
+    setForm((prev) => ({ ...prev, dayClosed: closed }));
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  }, [form.dayClosed]);
+
   // The occasional eudaimonic depth prompt (meaning/connection/growth), or null
   // to show none tonight. Only on today's reflection (not past-day backfill).
   // Memoized on recentLogs so the chosen pillar is stable across re-renders;
@@ -224,22 +271,6 @@ export default function LogScreen() {
     () => (isToday ? selectDepthPrompt(recentLogs, form) : null),
     [isToday, recentLogs, form],
   );
-
-  const handleSave = async () => {
-    // Saving from the Log tab means the user has reviewed Performance Output,
-    // so the day's focus/energy/tasks count as a real rating from here on.
-    const log: DailyLog = { ...form, createdAt: Date.now(), outputRated: true };
-    await save(log);
-    // Retroactive edits invalidate the insights cache so the next Insights
-    // view regenerates against the corrected history. Today-day saves
-    // don't need this — insights regenerate naturally on the next call.
-    if (isPastDay) {
-      await clearInsights();
-    }
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
 
   // Compute the visible section list. Memoize because edit-mode operations
   // re-render the list every change.
@@ -564,9 +595,7 @@ export default function LogScreen() {
               <RatingSlider
                 label="Focus Rating"
                 value={form.output.focusRating}
-                onChange={(v) =>
-                  patch("output", { ...form.output, focusRating: v })
-                }
+                onChange={(v) => patchOutput({ focusRating: v })}
                 accentColor={COLORS.accent}
               />,
             )}
@@ -575,9 +604,7 @@ export default function LogScreen() {
               <RatingSlider
                 label="Energy Rating"
                 value={form.output.energyRating}
-                onChange={(v) =>
-                  patch("output", { ...form.output, energyRating: v })
-                }
+                onChange={(v) => patchOutput({ energyRating: v })}
                 accentColor={COLORS.warning}
               />,
             )}
@@ -587,9 +614,7 @@ export default function LogScreen() {
                 label="Tasks Completed"
                 value={form.output.tasksCompleted}
                 max={20}
-                onChange={(v) =>
-                  patch("output", { ...form.output, tasksCompleted: v })
-                }
+                onChange={(v) => patchOutput({ tasksCompleted: v })}
                 accentColor={COLORS.success}
               />,
             )}
@@ -829,31 +854,35 @@ export default function LogScreen() {
             />
           ) : null}
 
-          {/* Save Button */}
-          <TouchableOpacity
-            onPress={handleSave}
-            activeOpacity={0.85}
-            style={{ marginTop: SPACING.lg }}
-          >
-            <LinearGradient
-              colors={
-                saved
-                  ? (COLORS.gradients.success as [string, string])
-                  : (COLORS.gradients.accent as [string, string])
-              }
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.saveButton}
+          {/* Autosave indicator — changes persist as you go; no manual save. */}
+          <Text style={styles.autosaveHint}>
+            {saved ? "✓ Saved" : "Changes save automatically"}
+          </Text>
+
+          {/* Done — the evening bookend (close my day). Reopenable, never
+              required; autosave already persisted everything. Today only. */}
+          {isToday && (
+            <TouchableOpacity
+              onPress={handleDone}
+              activeOpacity={0.85}
+              style={{ marginTop: SPACING.sm }}
             >
-              <Text style={styles.saveButtonText}>
-                {saved
-                  ? "✓ Saved"
-                  : isPastDay
-                    ? "Save backfilled log"
-                    : "Save Today's Log"}
-              </Text>
-            </LinearGradient>
-          </TouchableOpacity>
+              <LinearGradient
+                colors={
+                  form.dayClosed
+                    ? (COLORS.gradients.success as [string, string])
+                    : (COLORS.gradients.accent as [string, string])
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.saveButton}
+              >
+                <Text style={styles.saveButtonText}>
+                  {form.dayClosed ? "✓ Day closed · reopen" : "Done for today"}
+                </Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -1022,6 +1051,12 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
     fontSize: 12,
+  } as object,
+  autosaveHint: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    textAlign: "center",
+    marginTop: SPACING.lg,
   } as object,
   saveButton: {
     borderRadius: RADIUS.lg,
