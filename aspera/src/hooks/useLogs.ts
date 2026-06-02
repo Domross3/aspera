@@ -12,9 +12,13 @@ import {
   upsertDailyLog,
 } from "../lib/cloudStore";
 import { useAuth } from "./useAuth";
+import { asperaDayId } from "../lib/day";
 
+// Canonical local 4am-cutoff day id (see src/lib/day.ts). Was previously a
+// UTC `toISOString().split("T")[0]`, which rolled the day over before local
+// midnight and could produce duplicate ids for one wall-clock day.
 function todayId(): string {
-  return new Date().toISOString().split("T")[0];
+  return asperaDayId();
 }
 
 /**

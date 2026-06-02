@@ -30,13 +30,14 @@ import TrendLineCard, {
   TrendPoint,
 } from "../../src/components/common/TrendLineCard";
 import { DailyLog } from "../../src/types";
+import { asperaDayId, asperaDayIdForTs } from "../../src/lib/day";
 
 function todayId() {
-  return new Date().toISOString().split("T")[0];
+  return asperaDayId();
 }
 
 function defaultLogShell(): DailyLog {
-  const id = new Date().toISOString().split("T")[0];
+  const id = asperaDayId();
   return {
     id,
     date: id,
@@ -193,7 +194,7 @@ export default function TodayScreen() {
   for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
     const d = new Date(trendAnchor);
     d.setDate(d.getDate() - daysAgo);
-    const dateStr = d.toISOString().split("T")[0];
+    const dateStr = asperaDayIdForTs(d.getTime());
     const label = d
       .toLocaleDateString("en-US", { weekday: "short" })
       .slice(0, 2);

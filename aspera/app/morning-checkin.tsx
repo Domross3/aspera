@@ -42,9 +42,12 @@ import {
 import { useAuth } from "../src/hooks/useAuth";
 import { MoodCheckIn, DailyLog } from "../src/types";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../src/constants/theme";
+import { asperaDayId } from "../src/lib/day";
 
+// Canonical local 4am-cutoff day id (see src/lib/day.ts) — must match the Log
+// tab so a morning check-in and the evening log land on the same DailyLog.
 function todayId(): string {
-  return new Date().toISOString().split("T")[0];
+  return asperaDayId();
 }
 
 // Minimal unrated shell — used only if the user has no log for today yet.

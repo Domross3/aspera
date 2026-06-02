@@ -12,6 +12,7 @@ import {
   DailyIntegrationSummary,
 } from "../types";
 import { getDefaultIntegrationConnections } from "../lib/integrations";
+import { asperaDayIdForTs } from "../lib/day";
 import {
   migrateAppSettings,
   migrateDailyLog,
@@ -198,7 +199,7 @@ export async function getTodayRec(date: string): Promise<string | null> {
 // ─── Mood Check-ins ───────────────────────────────────────────────────────
 
 export async function saveMoodCheckIn(checkIn: MoodCheckIn): Promise<void> {
-  const date = new Date(checkIn.timestamp).toISOString().split("T")[0];
+  const date = asperaDayIdForTs(checkIn.timestamp);
   const key = `${STORAGE_KEYS.MOOD_PREFIX}${date}`;
   const existing = await getMoodCheckIns(date);
   existing.push(checkIn);
@@ -244,7 +245,7 @@ export async function replaceCachedMoodCheckIns(
 ): Promise<void> {
   const byDay = new Map<string, MoodCheckIn[]>();
   for (const c of checkIns) {
-    const date = new Date(c.timestamp).toISOString().split("T")[0];
+    const date = asperaDayIdForTs(c.timestamp);
     const bucket = byDay.get(date) ?? [];
     bucket.push(c);
     byDay.set(date, bucket);
@@ -264,7 +265,7 @@ export async function replaceCachedMoodCheckIns(
 // keyed by `aspera_moment_<YYYY-MM-DD>`, value = JSON Moment[].
 
 export async function saveMoment(moment: Moment): Promise<void> {
-  const date = new Date(moment.timestamp).toISOString().split("T")[0];
+  const date = asperaDayIdForTs(moment.timestamp);
   const key = `${STORAGE_KEYS.MOMENT_PREFIX}${date}`;
   const existing = await getMoments(date);
   existing.push(moment);
@@ -301,7 +302,7 @@ export async function getRecentMoments(days = 14): Promise<Moment[]> {
 export async function replaceCachedMoments(moments: Moment[]): Promise<void> {
   const byDay = new Map<string, Moment[]>();
   for (const m of moments) {
-    const date = new Date(m.timestamp).toISOString().split("T")[0];
+    const date = asperaDayIdForTs(m.timestamp);
     const bucket = byDay.get(date) ?? [];
     bucket.push(m);
     byDay.set(date, bucket);
@@ -533,7 +534,7 @@ export async function seedMockMoodData(): Promise<void> {
   // Check if we already have multi-day mood data (not just today's captures)
   const allMood = await getRecentMoodCheckIns(7);
   const uniqueDates = new Set(
-    allMood.map((c) => new Date(c.timestamp).toISOString().split("T")[0]),
+    allMood.map((c) => asperaDayIdForTs(c.timestamp)),
   );
   if (uniqueDates.size >= 3) return; // already have enough spread
 

@@ -31,6 +31,7 @@ import {
   fetchRecentMoments,
   insertMoment,
 } from "../../src/lib/cloudStore";
+import { asperaDayId, asperaDayIdForTs } from "../../src/lib/day";
 import MomentCapture from "../../src/components/mood/MomentCapture";
 import { useAuth } from "../../src/hooks/useAuth";
 import { useSettings } from "../../src/hooks/useSettings";
@@ -58,7 +59,7 @@ interface DailyMoodSnapshot {
 }
 
 function todayId(): string {
-  return new Date().toISOString().split("T")[0];
+  return asperaDayId();
 }
 
 function average(values: number[]): number {
@@ -94,7 +95,7 @@ function aggregateDailySnapshots(checkins: MoodCheckIn[]): DailyMoodSnapshot[] {
   const byDate: Record<string, MoodCheckIn[]> = {};
 
   for (const checkin of checkins) {
-    const date = new Date(checkin.timestamp).toISOString().split("T")[0];
+    const date = asperaDayIdForTs(checkin.timestamp);
     if (!byDate[date]) byDate[date] = [];
     byDate[date].push(checkin);
   }
@@ -133,7 +134,7 @@ function buildTrend(
   for (let daysAgo = windowDays - 1; daysAgo >= 0; daysAgo--) {
     const d = new Date(anchor);
     d.setDate(d.getDate() - daysAgo);
-    const dateStr = d.toISOString().split("T")[0];
+    const dateStr = asperaDayIdForTs(d.getTime());
     const label = d
       .toLocaleDateString("en-US", { weekday: "short" })
       .slice(0, 2);
@@ -245,7 +246,7 @@ export default function MoodScreen() {
     () =>
       recentCheckins.filter(
         (checkin) =>
-          new Date(checkin.timestamp).toISOString().split("T")[0] === todayId(),
+          asperaDayIdForTs(checkin.timestamp) === todayId(),
       ).length,
     [recentCheckins],
   );

@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
+import { asperaDayIdForTs } from "../../lib/day";
 
 interface Props {
   selectedDate: string; // "YYYY-MM-DD"
@@ -31,13 +32,13 @@ interface DayTile {
 function buildDays(windowDays: number): DayTile[] {
   const today = new Date();
   today.setHours(12, 0, 0, 0);
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = asperaDayIdForTs(today.getTime());
 
   const tiles: DayTile[] = [];
   for (let daysAgo = windowDays - 1; daysAgo >= 0; daysAgo--) {
     const d = new Date(today);
     d.setDate(d.getDate() - daysAgo);
-    const dateStr = d.toISOString().split("T")[0];
+    const dateStr = asperaDayIdForTs(d.getTime());
     tiles.push({
       date: dateStr,
       dayLabel: d.toLocaleDateString("en-US", { weekday: "short" }).slice(0, 2),

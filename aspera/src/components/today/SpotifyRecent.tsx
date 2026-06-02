@@ -4,6 +4,7 @@ import GradientCard from "../common/GradientCard";
 import SectionLabel from "../common/SectionLabel";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../../constants/theme";
 import { SPOTIFY_TRACKS, SpotifyTrack } from "../../lib/mockData";
+import { asperaDayId, asperaDayIdForTs } from "../../lib/day";
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -43,8 +44,8 @@ function TrackRow({ track }: { track: SpotifyTrack }) {
 
 export default function SpotifyRecent() {
   const todayTracks = SPOTIFY_TRACKS.filter((t) => {
-    const played = new Date(t.played_at).toISOString().split("T")[0];
-    const today = new Date().toISOString().split("T")[0];
+    const played = asperaDayIdForTs(new Date(t.played_at).getTime());
+    const today = asperaDayId();
     return played === today;
   });
 

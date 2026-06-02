@@ -26,9 +26,10 @@ import { useLogs } from "../../hooks/useLogs";
 import { useSettings } from "../../hooks/useSettings";
 import { defaultValueFor } from "../log/fields";
 import type { DailyLog, EventEntry, EventTypeDef, FieldDef } from "../../types";
+import { asperaDayId } from "../../lib/day";
 
 function todayId(): string {
-  return new Date().toISOString().split("T")[0];
+  return asperaDayId();
 }
 
 function buildSeedFieldValues(fields: FieldDef[]): Record<string, unknown> {

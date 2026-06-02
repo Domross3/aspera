@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { WeeklyTrend } from "../../types";
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import TrendBar from "./TrendBar";
+import { asperaDayIdForTs } from "../../lib/day";
 
 interface Props {
   trends: WeeklyTrend[];
@@ -32,7 +33,7 @@ function padToWeek(
   for (let daysAgo = 6; daysAgo >= 0; daysAgo--) {
     const d = new Date(anchor);
     d.setDate(d.getDate() - daysAgo);
-    const dateStr = d.toISOString().split("T")[0];
+    const dateStr = asperaDayIdForTs(d.getTime());
     const label = d
       .toLocaleDateString("en-US", { weekday: "short" })
       .slice(0, 2);

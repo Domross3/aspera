@@ -18,6 +18,7 @@ import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import GradientCard from "../common/GradientCard";
 import BigRocksInput from "../log/BigRocksInput";
 import { DailyLog } from "../../types";
+import { asperaDayId } from "../../lib/day";
 
 interface Props {
   todayRocks: string[];
@@ -35,7 +36,7 @@ export default function TodayBigRocks({
 
   // Yesterday's rocks (recentLogs[0] is today if logged; else most recent prior day).
   // Walk until we find a different date with non-empty rocks, capping at 7.
-  const todayId = new Date().toISOString().split("T")[0];
+  const todayId = asperaDayId();
   const previousRocks =
     recentLogs.find((l) => l.id !== todayId && l.bigRocks?.length > 0)
       ?.bigRocks ?? [];

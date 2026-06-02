@@ -43,6 +43,7 @@ import EventTypeRenderer from "../../src/components/log/EventTypeRenderer";
 import SchemaBuilder from "../../src/components/log/SchemaBuilder";
 import WeekStrip from "../../src/components/log/WeekStrip";
 import { reorderSection, toggleSection } from "../../src/lib/logSections";
+import { asperaDayId } from "../../src/lib/day";
 import { clearInsights } from "../../src/storage/storage";
 
 // ── Section descriptors + ordering ───────────────────────────────────────
@@ -115,7 +116,7 @@ function buildSections(
 // ── Default values + helpers ─────────────────────────────────────────────
 
 function todayId(): string {
-  return new Date().toISOString().split("T")[0];
+  return asperaDayId();
 }
 
 // Today's draft — friendly pre-fills so a user opening a fresh app can
