@@ -214,8 +214,9 @@ export default function RestrictionEditor({
               <View style={styles.activeCopy}>
                 <Text style={styles.activeTitle}>Active</Text>
                 <Text style={styles.helperText}>
-                  Off keeps this as a draft. On starts native enforcement after
-                  save.
+                  {draft.spec.kind === "delay"
+                    ? "Off keeps this as a draft. Delay is currently a manual Aspera pause; inline app-open delay needs one more native shield extension."
+                    : "Off keeps this as a draft. On starts native enforcement after save."}
                 </Text>
               </View>
               <Switch
@@ -291,8 +292,9 @@ export default function RestrictionEditor({
                   }
                 />
                 <Text style={styles.helperText}>
-                  Each time you open these apps, take a calm pause first. Always
-                  available — the wait is the friction.
+                  Open Aspera and tap Take a pause when you want intentional
+                  access. The selected apps stay reachable until native
+                  in-shield delay support is added.
                 </Text>
               </View>
             )}

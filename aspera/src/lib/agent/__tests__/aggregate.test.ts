@@ -1,5 +1,6 @@
 import type { DailyLog, MoodCheckIn } from "../../../types";
-import { dailyFocus, dailyMoodEnergy, localDateKey } from "../aggregate";
+import { dailyFocus, dailyMoodEnergy, dailyScreenTime, localDateKey } from "../aggregate";
+import type { ScreenTimeDayTotals } from "../../screenTime/types";
 
 function noon(date: string): number {
   return new Date(`${date}T12:00:00`).getTime();
@@ -53,6 +54,76 @@ describe("dailyMoodEnergy", () => {
 
   it("returns empty series for no check-ins", () => {
     expect(dailyMoodEnergy([])).toEqual({ mood: [], energy: [] });
+  });
+});
+
+describe("dailyScreenTime", () => {
+  function makeTotals(
+    date: string,
+    totalMinutes: number,
+    social = 0,
+  ): ScreenTimeDayTotals {
+    return {
+      date,
+      totalMinutes,
+      byCategory: {
+        social,
+        entertainment: 0,
+        productivity: 0,
+        communication: 0,
+        other: 0,
+      },
+    };
+  }
+
+  it("drops days where totalMinutes === 0", () => {
+    const totals = [
+      makeTotals("2026-01-01", 0),
+      makeTotals("2026-01-02", 60),
+    ];
+    const { total } = dailyScreenTime(totals);
+    expect(total).toEqual([{ date: "2026-01-02", value: 60 }]);
+  });
+
+  it("sorts ascending by date regardless of input order", () => {
+    const totals = [
+      makeTotals("2026-01-03", 30),
+      makeTotals("2026-01-01", 90),
+      makeTotals("2026-01-02", 60),
+    ];
+    const { total } = dailyScreenTime(totals);
+    expect(total.map((d) => d.date)).toEqual([
+      "2026-01-01",
+      "2026-01-02",
+      "2026-01-03",
+    ]);
+  });
+
+  it("maps totalMinutes to total series and byCategory[cat] to each category series", () => {
+    const totals = [
+      makeTotals("2026-01-01", 120, 45),
+      makeTotals("2026-01-02", 80, 20),
+    ];
+    const { total, byCategory } = dailyScreenTime(totals);
+    expect(total).toEqual([
+      { date: "2026-01-01", value: 120 },
+      { date: "2026-01-02", value: 80 },
+    ]);
+    expect(byCategory.social).toEqual([
+      { date: "2026-01-01", value: 45 },
+      { date: "2026-01-02", value: 20 },
+    ]);
+    // Categories not supplied in the totals default to 0.
+    expect(byCategory.entertainment).toEqual([
+      { date: "2026-01-01", value: 0 },
+      { date: "2026-01-02", value: 0 },
+    ]);
+  });
+
+  it("returns empty series for an empty input", () => {
+    const { total, byCategory } = dailyScreenTime([]);
+    expect(total).toEqual([]);
+    expect(byCategory.social).toEqual([]);
   });
 });
 

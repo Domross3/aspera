@@ -10,6 +10,7 @@ import {
   pickRestrictionSelection,
   type RestrictionNativeBridge,
   saveRestrictionWithNative,
+  syncRestrictionNative,
 } from "../lib/restrictionBridge";
 import {
   applyShield,
@@ -20,6 +21,7 @@ import {
   stopMonitoring,
 } from "../../modules/screen-time/src";
 import { useAuth } from "./useAuth";
+import { logActiveRestrictions } from "../lib/screenTime/restrictionLog";
 
 interface UseRestrictionsResult {
   restrictions: Restriction[];
@@ -64,6 +66,21 @@ export function useRestrictions(): UseRestrictionsResult {
     setError(null);
     try {
       const rows = await fetchRestrictions(userId);
+      await Promise.all(
+        rows
+          .filter(
+            (restriction) =>
+              restriction.active && restriction.spec.kind === "delay",
+          )
+          .map((restriction) =>
+            syncRestrictionNative(restriction, nativeBridge).catch(() => {}),
+          ),
+      );
+      // Fire-and-forget: record which restrictions are active today so Engine A
+      // can build the "restriction-active" observational lever.
+      logActiveRestrictions(
+        rows.filter((r) => r.active).map((r) => r.id),
+      ).catch(() => {});
       setRestrictions(rows);
     } catch (err) {
       setError(errorMessage(err));

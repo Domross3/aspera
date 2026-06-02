@@ -12,6 +12,12 @@ This phase enables:
 - A deliberate-friction cheat-code bypass.
 - Native cleanup when restrictions are disabled or deleted.
 
+It does **not** yet enable true in-shield gratification delay for native iOS
+apps. Calling `ManagedSettingsStore.shield` directly makes the selected app
+hit Apple's default hard shield, and that shield cannot render Aspera's React
+Native `BreathPauseSheet`. Delay mode is therefore a manual Aspera pause until
+a native `ManagedSettingsUI` Shield Action extension exists.
+
 Screen Time data ingestion/reporting is present only as a guarded
 DeviceActivityReport spike. Enforcement is the preserved value path; report
 totals must be proven on device before they power user-visible insights.
@@ -93,6 +99,20 @@ Flow:
 5. Only an exact valid paste calls `grantCheat(id, 30)`.
 
 The 30-minute lift is OS-driven through DeviceActivity, not a JS timer.
+
+## Delay Flow
+
+Delay mode must not call `applyShield(id)` in v1. Without a Shield Action
+extension that turns the feature into a hard lockout: the user opens Instagram,
+sees Apple's shield, and cannot reach the React Native pause UI. The current
+safe behavior is:
+
+1. Keep selected apps reachable.
+2. Surface a `Take a pause` action inside Aspera.
+3. Clear any stale native shield/schedule state when active delay restrictions
+   load or save.
+4. Treat true "pause appears when opening the blocked app" as a future native
+   Shield Action extension build.
 
 ## Test Plan
 

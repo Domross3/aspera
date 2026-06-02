@@ -19,6 +19,14 @@ No new native scope was added. The next EAS build should only happen after local
 - Cheat unlock clears the hit restriction and re-arms only when the restriction still applies.
 - DeviceActivityReport remains a guarded spike; if it destabilizes the build, disable only report ingestion and preserve monitor/enforcement.
 
+## Delay Caveat
+
+Native iOS gratification delay is not implemented by applying a
+ManagedSettings shield. Direct shielding creates a hard Apple lockout and
+cannot show the React Native `BreathPauseSheet`. The current safe behavior is a
+manual Aspera pause that clears stale native shield state; true app-open delay
+requires a future `ManagedSettingsUI` Shield Action extension.
+
 ## Review focus
 
 Claude should review these areas first:

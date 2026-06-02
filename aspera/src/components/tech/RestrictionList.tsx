@@ -158,6 +158,12 @@ export default function RestrictionList({
             />
           </View>
 
+          {restriction.active && restriction.spec.kind === "delay" ? (
+            <Text style={styles.delayNote}>
+              Manual pause only: these apps are not shielded by iOS yet.
+            </Text>
+          ) : null}
+
           {restriction.active && onCheat ? (
             <TouchableOpacity
               activeOpacity={0.8}
@@ -338,6 +344,11 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     gap: SPACING.xs,
   },
+  delayNote: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    marginTop: SPACING.xs,
+  } as object,
   detailPill: {
     minHeight: 32,
     flexDirection: "row",

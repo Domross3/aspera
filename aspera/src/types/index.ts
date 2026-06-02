@@ -183,9 +183,11 @@ export interface NotificationSettings {
 // sees app names or tokens. `categories` is only a coarse optional summary for
 // analytics/experiments, not the source of truth for shielding.
 //
-// Two restriction `kind`s in v1:
+// Restriction `kind`s in v1:
 //   - "time_window" → shield selected apps/categories between windowStart/end
 //   - "daily_limit" → shield each selected app after dailyLimitMin/day
+//   - "delay" → manual Aspera pause; true in-shield delay needs a
+//     ManagedSettingsUI Shield Action extension
 // The native bridge in `src/lib/screenTime/` applies the shield; these types are
 // metadata persisted in Supabase `restrictions` and `experiments` tables.
 
@@ -196,9 +198,9 @@ export type RestrictionSpec =
       windowEnd: string;
     }
   | { kind: "daily_limit"; dailyLimitMin: number }
-  // Gratification delay: apps stay reachable but each open requires a calm
-  // pause of `delaySeconds` (10–60) before a fixed access window. No schedule —
-  // the shield is persistent and lifted briefly via the pause + grantCheat.
+  // Gratification delay: a manual Aspera pause of `delaySeconds` (10–60).
+  // Do not implement this by directly applying a ManagedSettings shield; the
+  // default Apple shield cannot host our pause UI and becomes a hard lockout.
   | { kind: "delay"; delaySeconds: number };
 
 export interface Restriction {

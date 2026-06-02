@@ -1,10 +1,10 @@
 // Logic for the "delay" restriction mode — a gratification delay.
 //
-// The app stays reachable, but each open requires sitting through a short calm
-// pause (10–60s) before a fixed access window, after which it re-arms. This
-// module is pure logic: the breath-pause UI and native enforcement live
-// elsewhere. The commitment-device gating mirrors the weekly-cap pattern in
-// cheats.ts (strengthening is immediate; weakening is deferred).
+// The app stays reachable, and Aspera can ask for a short calm pause (10–60s)
+// before intentional use. On iOS this is currently a manual in-app pause:
+// Apple's default ManagedSettings shield is a hard block and cannot show this
+// React Native UI. A true "delay inside the shield" requires a native
+// ManagedSettingsUI Shield Action extension.
 
 export const DELAY_MIN_SECONDS = 10;
 export const DELAY_MAX_SECONDS = 60;

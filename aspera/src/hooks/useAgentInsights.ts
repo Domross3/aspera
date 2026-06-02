@@ -11,6 +11,8 @@ import {
 } from "../storage/storage";
 import { computeAgentFindings } from "../lib/agent/insights";
 import type { SweepFinding } from "../lib/agent/runSweep";
+import { readScreenTimeTotals } from "../lib/screenTime/bridge";
+import { readActiveRestrictionDates } from "../lib/screenTime/restrictionLog";
 
 // Look back ~6 months — enough history for the sweep without scanning forever.
 const HISTORY_DAYS = 180;
@@ -23,18 +25,23 @@ export function useAgentInsights() {
   const analyze = useCallback(async () => {
     setLoading(true);
     try {
-      const [logs, moodCheckIns, moments, settings] = await Promise.all([
-        getRecentLogs(HISTORY_DAYS),
-        getRecentMoodCheckIns(HISTORY_DAYS),
-        getRecentMoments(HISTORY_DAYS),
-        getSettings(),
-      ]);
+      const [logs, moodCheckIns, moments, settings, screenTime, restrictionActiveDates] =
+        await Promise.all([
+          getRecentLogs(HISTORY_DAYS),
+          getRecentMoodCheckIns(HISTORY_DAYS),
+          getRecentMoments(HISTORY_DAYS),
+          getSettings(),
+          readScreenTimeTotals().catch(() => []),
+          readActiveRestrictionDates().catch(() => []),
+        ]);
       setFindings(
         computeAgentFindings({
           logs,
           moodCheckIns,
           moments,
           eventTypes: settings.eventTypes ?? [],
+          screenTime,
+          restrictionActiveDates,
         }),
       );
     } finally {

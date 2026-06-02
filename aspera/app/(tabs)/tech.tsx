@@ -33,7 +33,6 @@ import { useRestrictions } from "../../src/hooks/useRestrictions";
 import { useScreenTime } from "../../src/hooks/useScreenTime";
 import { useSettings } from "../../src/hooks/useSettings";
 import { grantCheat } from "../../modules/screen-time/src";
-import { DELAY_ACCESS_WINDOW_MINUTES } from "../../src/lib/gratificationDelay";
 import type { CheatPolicy, Restriction } from "../../src/types";
 
 export default function TechScreen() {
@@ -95,8 +94,11 @@ export default function TechScreen() {
     await settingsState.update({ cheatPolicy: nextPolicy });
   };
 
-  const handleDelayUnlock = async (restriction: Restriction) => {
-    await grantCheat(restriction.id, DELAY_ACCESS_WINDOW_MINUTES);
+  const handleDelayUnlock = async (_restriction: Restriction) => {
+    // Delay mode is currently an Aspera-mediated pause, not an in-shield
+    // unlock. Applying Apple's native shield would hard-lock the selected app
+    // unless we add a ManagedSettingsUI Shield Action extension.
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setPauseRestriction(null);
   };
 

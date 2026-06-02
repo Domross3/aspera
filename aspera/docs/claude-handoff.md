@@ -15,6 +15,8 @@ The no-cloud-build pass also moved the app toward the current product identity:
 - passive agent sweeps use the moving-block bootstrap by default
 - weekly recap notifications are scheduled locally and route to Today
 - Chrome extension friction has configurable pause length + breath-first copy
+- mobile delay mode is a manual Aspera pause for now; do not hard-shield apps
+  for delay without adding a native `ManagedSettingsUI` Shield Action extension
 
 Review details for this pass live in
 `aspera/docs/claude-review-2026-05-29.md`.
