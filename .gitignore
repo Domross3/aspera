@@ -41,3 +41,7 @@ aspera-extension/generate-icons.html
 
 # Claude project memory
 .claude/
+
+# Stray nested worktree mirrors (must never be committed — they break `git worktree add`)
+.claire/
+.clone/
