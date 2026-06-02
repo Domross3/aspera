@@ -143,6 +143,10 @@ export default function MorningCheckinModal() {
     } else {
       log = await getLog(today);
     }
+    // Merge (not replace) so an evening-first logger doesn't lose their other
+    // fields. `today` is the canonical asperaDayId (local, 4am cutoff) — the
+    // SAME key the Log tab hydrates from — so sleep entered here shows
+    // pre-filled + editable in the evening Log with no divergence.
     const merged: DailyLog = {
       ...(log ?? blankShell(today)),
       sleepHours,

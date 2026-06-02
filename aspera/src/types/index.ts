@@ -372,15 +372,19 @@ export type LogSectionId =
   | "output"
   | "tags";
 
+// Order matters: it's the default top-to-bottom order in the Log tab. Sleep
+// leads the trackable fields (the highest-evidence well-being metric and the
+// anchor the morning check-in pre-fills), followed by the other evidence-core
+// fields, then the opt-in extras. The two reflection anchors come first.
 export const LOG_SECTIONS: { id: LogSectionId; label: string }[] = [
   { id: "eveningReflection", label: "Evening Reflection" },
-  { id: "bigRocks", label: "Big Rocks" },
+  { id: "bigRocks", label: "Today's Focus" },
   { id: "sleep", label: "Sleep" },
+  { id: "workout", label: "Workout" },
+  { id: "nutrition", label: "Nutrition" },
   { id: "daylight", label: "Daylight" },
   { id: "caffeine", label: "Caffeine" },
-  { id: "workout", label: "Workout" },
   { id: "music", label: "Music" },
-  { id: "nutrition", label: "Nutrition" },
   { id: "drinks", label: "Alcohol" },
   { id: "output", label: "Performance Output" },
   { id: "tags", label: "Tags" },
