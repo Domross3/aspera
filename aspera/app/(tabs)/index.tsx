@@ -25,6 +25,7 @@ import SectionLabel from "../../src/components/common/SectionLabel";
 import TodayBigRocks from "../../src/components/today/TodayBigRocks";
 import PatternsSection from "../../src/components/today/PatternsSection";
 import QuickLogTiles from "../../src/components/today/QuickLogTiles";
+import WeeklyRecapCard from "../../src/components/today/WeeklyRecapCard";
 import { DailyLog } from "../../src/types";
 import { asperaDayId } from "../../src/lib/day";
 
@@ -218,6 +219,11 @@ export default function TodayScreen() {
             isLoading={recLoading}
             onRefresh={fetchRecommendation}
           />
+
+          {/* Weekly recap — once-a-week synthesis in the slot Peak Day
+              vacated. Renders only when there's a real, unseen recap for the
+              week; quiet weeks show nothing. */}
+          <WeeklyRecapCard />
 
           {/* Quick Log — one-tap loggers for the user's recurrent event
               types. Surfaced here so multiply-occurring things ("had

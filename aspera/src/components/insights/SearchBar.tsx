@@ -63,7 +63,11 @@ export default function SearchBar(_props: Props) {
         setResult(response);
       }
     } catch {
-      setError("Something went wrong. Please try again.");
+      // Search runs through the Claude proxy, which can be unreachable. Be
+      // honest about connectivity rather than a generic failure.
+      setError(
+        "I couldn't reach the analysis service just now — check your connection and try again.",
+      );
     } finally {
       setLoading(false);
     }

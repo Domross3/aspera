@@ -57,14 +57,16 @@ export default function PatternsSection() {
 
   return (
     <Animated.View style={{ opacity: fadeAnim }}>
-      <SectionLabel label="Patterns" style={{ marginTop: SPACING.xl }} />
-
-      {/* Natural-language search — works without generated insights. */}
+      {/* Ask Aspera — the user-initiated "pull" entry. Its own labelled
+          surface (not buried under Patterns) so the agency is visible: ask a
+          question about your own data and get an honest, confound-aware answer.
+          Works without generated insights. */}
+      <SectionLabel label="Ask Aspera" style={{ marginTop: SPACING.xl }} />
       <SearchBar />
 
       {/* Passive confidence-gated agent — surfaces glaring patterns from the
-          user's own data, on-device, no AI call. Shown above the manual AI
-          insights because it's the calm, automatic layer. */}
+          user's own data, on-device, no AI call. The calm, automatic layer;
+          renders nothing until a finding is earned. */}
       <AgentFindingsCard />
 
       {/* Generate button */}

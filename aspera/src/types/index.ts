@@ -573,6 +573,10 @@ export const STORAGE_KEYS = {
   RESERVES: "aspera_emergency_reserves",
   INTEGRATION_CONNECTIONS: "aspera_integration_connections",
   INTEGRATION_SUMMARIES: "aspera_integration_summaries",
+  // weekStart (YYYY-MM-DD) of the most recent weekly recap the user has seen
+  // on the Today surface — so a non-quiet recap shows once per week, not on
+  // every open.
+  RECAP_LAST_SHOWN_WEEK: "aspera_recap_last_shown_week",
 } as const;
 
 // ── Emergency Reserves ──────────────────────────────────────────────────
