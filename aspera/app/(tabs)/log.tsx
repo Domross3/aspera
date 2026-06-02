@@ -44,6 +44,7 @@ import SchemaBuilder from "../../src/components/log/SchemaBuilder";
 import WeekStrip from "../../src/components/log/WeekStrip";
 import { reorderSection, toggleSection } from "../../src/lib/logSections";
 import { asperaDayId } from "../../src/lib/day";
+import { selectDepthPrompt } from "../../src/lib/depthPrompts";
 import { clearInsights } from "../../src/storage/storage";
 
 // ── Section descriptors + ordering ───────────────────────────────────────
@@ -173,7 +174,7 @@ function blankLog(date: string): DailyLog {
 export default function LogScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { todayLog, save, getLogFor } = useLogs();
+  const { todayLog, recentLogs, save, getLogFor } = useLogs();
   const { settings, update: updateSettings } = useSettings();
 
   const [selectedDate, setSelectedDate] = useState<string>(todayId());
@@ -214,6 +215,15 @@ export default function LogScreen() {
   const patch = <K extends keyof DailyLog>(key: K, value: DailyLog[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
+
+  // The occasional eudaimonic depth prompt (meaning/connection/growth), or null
+  // to show none tonight. Only on today's reflection (not past-day backfill).
+  // Memoized on recentLogs so the chosen pillar is stable across re-renders;
+  // an already-answered pillar today makes selectDepthPrompt return null.
+  const depthPrompt = useMemo(
+    () => (isToday ? selectDepthPrompt(recentLogs, form) : null),
+    [isToday, recentLogs, form],
+  );
 
   const handleSave = async () => {
     // Saving from the Log tab means the user has reviewed Performance Output,
@@ -365,13 +375,17 @@ export default function LogScreen() {
         return (
           <EveningReflection
             bigRocks={form.bigRocks ?? []}
-            outcomes={form.bigRockOutcomes}
             reflectionNote={form.reflectionNote}
-            onChange={({ outcomes, reflectionNote }) =>
+            depthPrompt={depthPrompt}
+            depthValue={depthPrompt ? form.depth?.[depthPrompt] : undefined}
+            onChange={({ reflectionNote, depthPillar, depthValue }) =>
               setForm((prev) => ({
                 ...prev,
-                bigRockOutcomes: outcomes,
                 reflectionNote,
+                depth:
+                  depthPillar && depthValue
+                    ? { ...prev.depth, [depthPillar]: depthValue }
+                    : prev.depth,
               }))
             }
           />

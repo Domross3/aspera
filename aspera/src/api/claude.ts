@@ -556,17 +556,9 @@ export async function getMorningBriefing(
     ? `Yesterday's wrap note: "${reflectionNote}"`
     : "";
 
-  const bigRockOutcomes = (
-    yesterday as
-      | (DailyLog & { bigRockOutcomes?: ("done" | "partial" | "missed")[] })
-      | null
-  )?.bigRockOutcomes;
-  const outcomesLine =
-    yesterday && bigRockOutcomes && bigRockOutcomes.length > 0
-      ? `Yesterday's Big Rock outcomes: ${yesterday.bigRocks
-          .map((r, i) => `${r} (${bigRockOutcomes[i] ?? "unmarked"})`)
-          .join(", ")}.`
-      : "";
+  // Completion tracking (bigRockOutcomes) was removed in the Log redesign —
+  // relevance, not completion. The briefing no longer references per-focus
+  // done/partial/missed.
 
   try {
     const message = await callClaudeViaProxy({
@@ -581,7 +573,6 @@ export async function getMorningBriefing(
 Context:
 ${bigRocksInfo}
 ${yesterdaySummary}
-${outcomesLine}
 ${reflection}
 Today's log so far: ${JSON.stringify({
             sleep: context.sleepHours,

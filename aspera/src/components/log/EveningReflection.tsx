@@ -1,171 +1,89 @@
 // Evening Reflection — the second anchor of the Bookended Day.
 //
-// Renders at the top of the Log tab so the user closes the loop on what
-// they committed to in the morning before they fill in the rest of their
-// log. Three-button outcome per Big Rock (done/partial/missed) plus a
-// one-line note that seeds tomorrow's briefing.
+// Renders at the top of the Log tab so the user closes the loop on what they
+// set as today's focus before filling in the rest of their log.
 //
-// Always visible in v1 (not time-gated). If there are no Big Rocks set
-// for today, the component shows a gentle prompt without blocking.
+// Relevance, not completion: we deliberately do NOT grade each focus
+// done/partial/missed (that scoreboard was removed in the Log redesign). The
+// focus is shown read-only as the thing to reflect against. The reflection is
+// a one-line note plus — occasionally — a single eudaimonic depth tap
+// (meaning / connection / growth), chosen by selectDepthPrompt. Some evenings
+// show no depth prompt at all, by design.
 
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import * as Haptics from "expo-haptics";
+import { View, Text, TextInput, StyleSheet } from "react-native";
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from "../../constants/theme";
 import GradientCard from "../common/GradientCard";
 import SectionLabel from "../common/SectionLabel";
-import { BigRockOutcome } from "../../types";
+import DepthTap from "./DepthTap";
+import { DEPTH_PROMPTS } from "../../lib/depthPrompts";
+import type { DepthPillar, DepthValue } from "../../types";
 
 interface Props {
   bigRocks: string[];
-  outcomes: BigRockOutcome[] | undefined;
   reflectionNote: string | undefined;
+  // The single depth pillar to ask tonight, or null to ask none. Chosen by
+  // selectDepthPrompt in the parent.
+  depthPrompt: DepthPillar | null;
+  depthValue: DepthValue | undefined;
   onChange: (next: {
-    outcomes: BigRockOutcome[];
     reflectionNote: string;
+    depthPillar?: DepthPillar;
+    depthValue?: DepthValue;
   }) => void;
 }
 
-const OUTCOME_BUTTONS: {
-  value: BigRockOutcome;
-  label: string;
-  color: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}[] = [
-  {
-    value: "done",
-    label: "Done",
-    color: COLORS.success,
-    icon: "checkmark-circle",
-  },
-  {
-    value: "partial",
-    label: "Partial",
-    color: COLORS.warning,
-    icon: "ellipse-outline",
-  },
-  {
-    value: "missed",
-    label: "Missed",
-    color: COLORS.textMuted,
-    icon: "close-circle",
-  },
-];
-
 export default function EveningReflection({
   bigRocks,
-  outcomes,
   reflectionNote,
+  depthPrompt,
+  depthValue,
   onChange,
 }: Props) {
-  // Local mirror of the parent state so the inputs feel instant. We push
-  // changes upward on every interaction so the parent's form state stays
-  // in sync (and Save persists everything in one shot).
-  const [localOutcomes, setLocalOutcomes] = useState<BigRockOutcome[]>(
-    outcomes ?? bigRocks.map(() => "missed"),
-  );
   const [localNote, setLocalNote] = useState(reflectionNote ?? "");
 
-  // If parent re-hydrates from cloud, mirror those values in.
-  useEffect(() => {
-    if (outcomes) setLocalOutcomes(outcomes);
-  }, [outcomes]);
   useEffect(() => {
     if (reflectionNote !== undefined) setLocalNote(reflectionNote);
   }, [reflectionNote]);
 
-  const setOutcome = (index: number, value: BigRockOutcome) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const next = [...localOutcomes];
-    // Pad in case outcomes was shorter than rocks
-    while (next.length < bigRocks.length) next.push("missed");
-    next[index] = value;
-    setLocalOutcomes(next);
-    onChange({ outcomes: next, reflectionNote: localNote });
-  };
-
   const updateNote = (text: string) => {
     setLocalNote(text);
-    onChange({ outcomes: localOutcomes, reflectionNote: text });
+    onChange({ reflectionNote: text });
   };
 
-  if (bigRocks.length === 0) {
-    return (
-      <View style={{ marginBottom: SPACING.lg }}>
-        <SectionLabel label="Wrap up today" style={{ marginTop: SPACING.sm }} />
-        <GradientCard>
-          <Text style={styles.gentlePrompt}>
-            Tomorrow, try setting one Big Rock in the morning on the Today tab.
-            It makes the wrap-up feel meaningful.
-          </Text>
-        </GradientCard>
-      </View>
-    );
-  }
+  const setDepth = (value: DepthValue) => {
+    if (!depthPrompt) return;
+    onChange({
+      reflectionNote: localNote,
+      depthPillar: depthPrompt,
+      depthValue: value,
+    });
+  };
+
+  const hasRocks = bigRocks.length > 0;
 
   return (
     <View style={{ marginBottom: SPACING.lg }}>
       <SectionLabel label="Wrap up today" style={{ marginTop: SPACING.sm }} />
       <GradientCard>
-        <Text style={styles.hint}>
-          How did today's Big Rocks land? No judgement — honest data helps.
-        </Text>
-
-        {bigRocks.map((rock, i) => {
-          const current = localOutcomes[i] ?? "missed";
-          return (
-            <View key={i} style={styles.rockBlock}>
-              <Text style={styles.rockText} numberOfLines={2}>
+        {hasRocks ? (
+          <>
+            <Text style={styles.hint}>Today&apos;s focus</Text>
+            {bigRocks.map((rock, i) => (
+              <Text key={i} style={styles.rockText} numberOfLines={2}>
                 {i + 1}. {rock}
               </Text>
-              <View style={styles.outcomeRow}>
-                {OUTCOME_BUTTONS.map((btn) => {
-                  const active = current === btn.value;
-                  return (
-                    <TouchableOpacity
-                      key={btn.value}
-                      onPress={() => setOutcome(i, btn.value)}
-                      style={[
-                        styles.outcomeBtn,
-                        active && {
-                          backgroundColor: btn.color,
-                          borderColor: btn.color,
-                        },
-                      ]}
-                      activeOpacity={0.75}
-                    >
-                      <Ionicons
-                        name={btn.icon}
-                        size={14}
-                        color={active ? COLORS.background : btn.color}
-                      />
-                      <Text
-                        style={[
-                          styles.outcomeLabel,
-                          active && { color: COLORS.background },
-                        ]}
-                      >
-                        {btn.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </View>
-          );
-        })}
+            ))}
+          </>
+        ) : (
+          <Text style={styles.gentlePrompt}>
+            Tomorrow, try naming one focus in the morning on the Today tab. It
+            makes the wrap-up feel meaningful.
+          </Text>
+        )}
 
         <View style={styles.noteWrap}>
-          <Text style={styles.noteLabel}>
-            Anything for tomorrow? (optional)
-          </Text>
+          <Text style={styles.noteLabel}>Anything for tomorrow? (optional)</Text>
           <TextInput
             style={styles.noteInput}
             value={localNote}
@@ -176,6 +94,14 @@ export default function EveningReflection({
             multiline
           />
         </View>
+
+        {depthPrompt && (
+          <DepthTap
+            prompt={DEPTH_PROMPTS[depthPrompt]}
+            value={depthValue}
+            onChange={setDepth}
+          />
+        )}
       </GradientCard>
     </View>
   );
@@ -185,44 +111,19 @@ const styles = StyleSheet.create({
   hint: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   } as object,
   gentlePrompt: {
     ...TYPOGRAPHY.body,
     color: COLORS.textSecondary,
     lineHeight: 22,
   } as object,
-  rockBlock: {
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-  },
   rockText: {
     ...TYPOGRAPHY.body,
     color: COLORS.text,
-    marginBottom: SPACING.sm,
-  } as object,
-  outcomeRow: {
-    flexDirection: "row",
-    gap: SPACING.xs,
-  },
-  outcomeBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    paddingVertical: SPACING.xs + 2,
-    paddingHorizontal: SPACING.xs,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.surfaceElevated,
-  },
-  outcomeLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.text,
-    fontWeight: "600",
+    marginBottom: SPACING.xs,
   } as object,
   noteWrap: {
     marginTop: SPACING.md,

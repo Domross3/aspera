@@ -69,13 +69,22 @@ export interface DailyLog {
   // as rated, so existing real data is never hidden.
   outputRated?: boolean;
   tags: string[];
-  bigRocks: string[]; // 1–3 most important tasks for the day
-  // Evening reflection — captured at end of day when wrapping up
-  bigRockOutcomes?: BigRockOutcome[]; // parallel array to bigRocks (same length)
+  bigRocks: string[]; // 1–3 focuses for the day (UI: "Today's Focus")
+  // Evening reflection — captured at end of day when wrapping up.
   reflectionNote?: string; // one-line free text for tomorrow's briefing context
+  // Eudaimonic depth track — occasional, never daily. A single 3-way tap per
+  // evening across meaning/connection/growth (see lib/depthPrompts). Distinct
+  // from the hedonic state track (mood/energy); not optimized, lightly trended.
+  depth?: DepthRatings;
 }
 
-export type BigRockOutcome = "done" | "partial" | "missed";
+// Relevance-not-completion: we deliberately do NOT track per-focus done/partial/
+// missed. (The legacy `bigRockOutcomes` field was removed in the Log redesign;
+// old logs may still carry it on disk — it is ignored.)
+
+export type DepthValue = "yes" | "somewhat" | "no";
+export type DepthPillar = "meaning" | "connection" | "growth";
+export type DepthRatings = Partial<Record<DepthPillar, DepthValue>>;
 
 export interface Correlation {
   id: string;
