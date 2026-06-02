@@ -10,6 +10,10 @@ interface Props {
   hydration: number;
   onChangeMeal: (q: MealQuality) => void;
   onChangeHydration: (h: number) => void;
+  // Meal quality and hydration are independently hideable (a user who drinks
+  // plenty can drop Hydration while keeping Meal Quality). Default both on.
+  showMeal?: boolean;
+  showHydration?: boolean;
 }
 
 const MEAL_COLORS: Record<number, string> = {
@@ -25,6 +29,8 @@ export default function NutritionInput({
   hydration,
   onChangeMeal,
   onChangeHydration,
+  showMeal = true,
+  showHydration = true,
 }: Props) {
   const adjustHydration = (delta: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -34,6 +40,8 @@ export default function NutritionInput({
   return (
     <View>
       {/* Meal Quality */}
+      {showMeal && (
+        <>
       <Text style={styles.subLabel}>Meal Quality</Text>
       <View style={styles.mealRow}>
         {([1, 2, 3, 4, 5] as MealQuality[]).map((q) => (
@@ -71,9 +79,15 @@ export default function NutritionInput({
           </TouchableOpacity>
         ))}
       </View>
+        </>
+      )}
 
       {/* Hydration */}
-      <Text style={[styles.subLabel, { marginTop: SPACING.md }]}>
+      {showHydration && (
+        <>
+      <Text
+        style={[styles.subLabel, showMeal ? { marginTop: SPACING.md } : null]}
+      >
         Hydration
       </Text>
       <View style={styles.hydroRow}>
@@ -109,6 +123,8 @@ export default function NutritionInput({
           </TouchableOpacity>
         ))}
       </View>
+        </>
+      )}
     </View>
   );
 }

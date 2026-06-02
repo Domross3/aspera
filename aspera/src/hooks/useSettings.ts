@@ -17,7 +17,20 @@ const DEFAULT_SETTINGS: AppSettings = {
   schemaVersion: APP_SETTINGS_SCHEMA_VERSION,
   onboardingComplete: false,
   moodNotificationsEnabled: false,
-  hiddenLogSections: [],
+  // Evidence-core default: a fresh user sees only the highest-leverage,
+  // easy-to-self-report well-being fields (sleep, movement/workout, nutrition)
+  // plus the always-present focus + evening reflection. Everything else starts
+  // hidden and is one tap to enable — no anxiety-theater wall of metrics.
+  // Daylight is hidden until HealthKit lands: it's not realistically
+  // self-reportable without tech, which is exactly why users kept removing it.
+  hiddenLogSections: [
+    "caffeine",
+    "music",
+    "drinks",
+    "output",
+    "tags",
+    "daylight",
+  ],
   customMetrics: [],
   notificationSettings: {
     morningEnabled: true,

@@ -310,6 +310,41 @@ export default function LogScreen() {
     void updateSettings({ hiddenSystemFields: next });
   };
 
+  // Wrap a single sub-field in the hide affordance. Outside edit mode a hidden
+  // field renders nothing; inside edit mode it stays visible (dimmed) with a
+  // toggle to bring it back. Generalized from the output-only version so any
+  // multi-field section (output, nutrition, …) can drop individual fields —
+  // e.g. hide Hydration while keeping Meal Quality. Hiding never deletes
+  // history; it just stops prompting.
+  const renderHideableField = (
+    key: string,
+    node: React.ReactElement,
+  ): React.ReactElement | null => {
+    const hidden = isFieldHidden(key);
+    if (hidden && !editMode) return null;
+    return (
+      <View key={key} style={hidden ? { opacity: 0.4 } : undefined}>
+        {editMode ? (
+          <TouchableOpacity
+            onPress={() => toggleFieldHidden(key)}
+            hitSlop={6}
+            style={styles.fieldHideToggle}
+          >
+            <Ionicons
+              name={hidden ? "eye-off" : "remove-circle"}
+              size={14}
+              color={hidden ? COLORS.textMuted : COLORS.danger}
+            />
+            <Text style={styles.fieldHideText}>
+              {hidden ? "Hidden — tap to show" : "Hide this field"}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+        {node}
+      </View>
+    );
+  };
+
   const moveSection = (index: number, direction: -1 | 1) => {
     // Build the ordering as the user currently sees it, including the
     // implicit fall-through for sections not yet in `logSectionOrder`.
@@ -532,21 +567,49 @@ export default function LogScreen() {
             />
           </GradientCard>
         );
-      case "nutrition":
+      case "nutrition": {
+        // Meal Quality and Hydration are independently hideable (the user
+        // wanted to drop Hydration without losing Meal Quality). Each gets the
+        // shared hide affordance; if both are hidden outside edit mode the
+        // whole card collapses to null.
+        const mealHidden = isFieldHidden("nutrition.mealQuality");
+        const hydrationHidden = isFieldHidden("nutrition.hydration");
+        if (mealHidden && hydrationHidden && !editMode) return null;
         return (
           <GradientCard style={{ marginBottom: 0 }}>
-            <NutritionInput
-              mealQuality={form.nutrition.mealQuality}
-              hydration={form.nutrition.hydration}
-              onChangeMeal={(q) =>
-                patch("nutrition", { ...form.nutrition, mealQuality: q })
-              }
-              onChangeHydration={(h) =>
-                patch("nutrition", { ...form.nutrition, hydration: h })
-              }
-            />
+            {renderHideableField(
+              "nutrition.mealQuality",
+              <NutritionInput
+                mealQuality={form.nutrition.mealQuality}
+                hydration={form.nutrition.hydration}
+                showMeal
+                showHydration={false}
+                onChangeMeal={(q) =>
+                  patch("nutrition", { ...form.nutrition, mealQuality: q })
+                }
+                onChangeHydration={(h) =>
+                  patch("nutrition", { ...form.nutrition, hydration: h })
+                }
+              />,
+            )}
+            {renderHideableField(
+              "nutrition.hydration",
+              <NutritionInput
+                mealQuality={form.nutrition.mealQuality}
+                hydration={form.nutrition.hydration}
+                showMeal={false}
+                showHydration
+                onChangeMeal={(q) =>
+                  patch("nutrition", { ...form.nutrition, mealQuality: q })
+                }
+                onChangeHydration={(h) =>
+                  patch("nutrition", { ...form.nutrition, hydration: h })
+                }
+              />,
+            )}
           </GradientCard>
         );
+      }
       case "drinks":
         return (
           <GradientCard style={{ marginBottom: 0 }}>
@@ -557,40 +620,9 @@ export default function LogScreen() {
           </GradientCard>
         );
       case "output": {
-        // Each sub-field can be hidden via edit mode. Outside edit mode a
-        // hidden field renders nothing; inside edit mode it stays visible
-        // (dimmed) with a toggle so the user can bring it back.
-        const renderOutputField = (
-          key: string,
-          node: React.ReactElement,
-        ): React.ReactElement | null => {
-          const hidden = isFieldHidden(key);
-          if (hidden && !editMode) return null;
-          return (
-            <View key={key} style={hidden ? { opacity: 0.4 } : undefined}>
-              {editMode ? (
-                <TouchableOpacity
-                  onPress={() => toggleFieldHidden(key)}
-                  hitSlop={6}
-                  style={styles.fieldHideToggle}
-                >
-                  <Ionicons
-                    name={hidden ? "eye-off" : "remove-circle"}
-                    size={14}
-                    color={hidden ? COLORS.textMuted : COLORS.danger}
-                  />
-                  <Text style={styles.fieldHideText}>
-                    {hidden ? "Hidden — tap to show" : "Hide this field"}
-                  </Text>
-                </TouchableOpacity>
-              ) : null}
-              {node}
-            </View>
-          );
-        };
         return (
           <GradientCard style={{ marginBottom: 0, gap: SPACING.lg }}>
-            {renderOutputField(
+            {renderHideableField(
               "output.focusRating",
               <RatingSlider
                 label="Focus Rating"
@@ -599,7 +631,7 @@ export default function LogScreen() {
                 accentColor={COLORS.accent}
               />,
             )}
-            {renderOutputField(
+            {renderHideableField(
               "output.energyRating",
               <RatingSlider
                 label="Energy Rating"
@@ -608,7 +640,7 @@ export default function LogScreen() {
                 accentColor={COLORS.warning}
               />,
             )}
-            {renderOutputField(
+            {renderHideableField(
               "output.tasksCompleted",
               <RatingSlider
                 label="Tasks Completed"
