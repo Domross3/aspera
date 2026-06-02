@@ -861,7 +861,10 @@ export default function LogScreen() {
             );
           })}
 
-          {editMode ? (
+          {/* Custom-metric builder is gated off by default (protect the
+              burnout user). The builder ships but the entry point only appears
+              when the user has opted into customMetricsEnabled. */}
+          {editMode && settings.customMetricsEnabled ? (
             <TouchableOpacity
               onPress={() => setEditingTypeId("__new__")}
               activeOpacity={0.7}

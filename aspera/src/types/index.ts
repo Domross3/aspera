@@ -341,6 +341,11 @@ export interface AppSettings {
   customMetrics: CustomMetricDef[];
   // Phase 2 schema — user-defined event types (multi-field schemas).
   eventTypes?: EventTypeDef[];
+  // Gate for the custom-metric builder ("New metric" / SchemaBuilder). Off by
+  // default to protect the burnout-refugee user from rebuilding the anxiety-
+  // tracker they fled — the full builder ships but stays hidden until the user
+  // opts in. Existing user-defined eventTypes still render regardless.
+  customMetricsEnabled?: boolean;
   // Ordered list of section identifiers as they appear in the Log tab.
   // Strings that are LogSectionId render the corresponding system section;
   // strings that are an EventTypeDef.id render that user-defined type.

@@ -541,8 +541,8 @@ export async function getMorningBriefing(
 
   const bigRocksInfo =
     context.bigRocks && context.bigRocks.length > 0
-      ? `Today's Big Rocks: ${context.bigRocks.join(" · ")}`
-      : "No Big Rocks set today yet.";
+      ? `Today's focus: ${context.bigRocks.join(" · ")}`
+      : "No focus set today yet.";
 
   const yesterday = recentLogs.find((l) => l.id !== context.id) ?? null;
   const yesterdaySummary = yesterday
