@@ -144,6 +144,96 @@ export default function TodayScreen() {
 
   const log = todayLog;
 
+  // "Today's Inputs" — only show a pill for a field the user has ACTUALLY
+  // entered today, and only if its section/field isn't hidden in the Log
+  // settings. (Previously every pill rendered unconditionally whenever a log
+  // existed — so a fresh day showed fake "None/Rest" pills, and hidden fields
+  // like Nutrition still appeared.) If nothing qualifies, the whole section is
+  // omitted below.
+  const hiddenSections = settings.hiddenLogSections ?? [];
+  const hiddenFields = settings.hiddenSystemFields ?? [];
+  const sectionVisible = (id: string) => !hiddenSections.includes(id);
+  const fieldVisible = (path: string) => !hiddenFields.includes(path);
+
+  type InputPill = { icon: string; label: string; value: string; color: string };
+  const summaryPills: InputPill[] = [];
+  if (log) {
+    if (sectionVisible("caffeine") && log.caffeine.type !== "none") {
+      summaryPills.push({
+        icon: "cafe-outline",
+        label: "Caffeine",
+        value: `${log.caffeine.type} · ${log.caffeine.amount}mg`,
+        color: COLORS.warning,
+      });
+    }
+    if (sectionVisible("workout") && log.workout.type !== "none") {
+      summaryPills.push({
+        icon: "barbell-outline",
+        label: "Workout",
+        value: `${log.workout.type} · ${log.workout.intensity}/10`,
+        color: COLORS.accent,
+      });
+    }
+    if (sectionVisible("music") && log.music.length > 0) {
+      summaryPills.push({
+        icon: "musical-notes-outline",
+        label: "Music",
+        value: log.music.join(", "),
+        color: COLORS.accentAlt,
+      });
+    }
+    if (
+      sectionVisible("nutrition") &&
+      fieldVisible("nutrition.hydration") &&
+      (log.nutrition.hydration ?? 0) > 0
+    ) {
+      summaryPills.push({
+        icon: "water-outline",
+        label: "Hydration",
+        value: `${log.nutrition.hydration} glasses`,
+        color: COLORS.accentAlt,
+      });
+    }
+    // Meal quality has no "empty" sentinel (1–5), so only surface it once the
+    // user has actually opened/saved a rated day, and only if not hidden.
+    if (
+      sectionVisible("nutrition") &&
+      fieldVisible("nutrition.mealQuality") &&
+      log.outputRated
+    ) {
+      summaryPills.push({
+        icon: "restaurant-outline",
+        label: "Nutrition",
+        value: `Meal quality ${log.nutrition.mealQuality}/5`,
+        color: COLORS.success,
+      });
+    }
+    if (sectionVisible("sleep") && (log.sleepHours ?? 0) > 0) {
+      summaryPills.push({
+        icon: "moon-outline",
+        label: "Sleep",
+        value: `${log.sleepHours}h`,
+        color: COLORS.accentAlt,
+      });
+    }
+    if (sectionVisible("daylight") && (log.daylightMinutes ?? 0) > 0) {
+      summaryPills.push({
+        icon: "sunny-outline",
+        label: "Daylight",
+        value: `${log.daylightMinutes}m`,
+        color: COLORS.warning,
+      });
+    }
+    if (sectionVisible("drinks") && (log.drinks ?? 0) > 0) {
+      summaryPills.push({
+        icon: "wine-outline",
+        label: "Drinks",
+        value: `${log.drinks}`,
+        color: COLORS.danger,
+      });
+    }
+  }
+
   return (
     <LinearGradient
       colors={COLORS.gradients.background as [string, string]}
@@ -241,79 +331,24 @@ export default function TodayScreen() {
               mock data. Removed so the Today surface reflects only real
               data; the cards return once a real Spotify integration lands. */}
 
-          {/* Inputs go lower in the layout */}
-          {log && (
+          {/* Today's Inputs — only what's actually been entered (and not
+              hidden in Log settings). Absent entirely on a fresh day. */}
+          {summaryPills.length > 0 && (
             <>
               <SectionLabel
                 label="Today's Inputs"
                 style={{ marginTop: SPACING.xl }}
               />
               <View style={styles.pillsWrap}>
-                <SummaryPill
-                  icon="cafe-outline"
-                  label="Caffeine"
-                  value={
-                    log.caffeine.type === "none"
-                      ? "None"
-                      : `${log.caffeine.type} · ${log.caffeine.amount}mg`
-                  }
-                  color={COLORS.warning}
-                />
-                <SummaryPill
-                  icon="barbell-outline"
-                  label="Workout"
-                  value={
-                    log.workout.type === "none"
-                      ? "Rest"
-                      : `${log.workout.type} · ${log.workout.intensity}/10`
-                  }
-                  color={COLORS.accent}
-                />
-                <SummaryPill
-                  icon="musical-notes-outline"
-                  label="Music"
-                  value={log.music.join(", ")}
-                  color={COLORS.accentAlt}
-                />
-              </View>
-
-              <View style={styles.pillsWrap}>
-                <SummaryPill
-                  icon="water-outline"
-                  label="Hydration"
-                  value={`${log.nutrition.hydration} glasses`}
-                  color={COLORS.accentAlt}
-                />
-                <SummaryPill
-                  icon="restaurant-outline"
-                  label="Nutrition"
-                  value={`Meal quality ${log.nutrition.mealQuality}/5`}
-                  color={COLORS.success}
-                />
-                {(log.sleepHours ?? 0) > 0 && (
+                {summaryPills.map((p) => (
                   <SummaryPill
-                    icon="moon-outline"
-                    label="Sleep"
-                    value={`${log.sleepHours}h`}
-                    color={COLORS.accentAlt}
+                    key={p.label}
+                    icon={p.icon}
+                    label={p.label}
+                    value={p.value}
+                    color={p.color}
                   />
-                )}
-                {(log.daylightMinutes ?? 0) > 0 && (
-                  <SummaryPill
-                    icon="sunny-outline"
-                    label="Daylight"
-                    value={`${log.daylightMinutes}m`}
-                    color={COLORS.warning}
-                  />
-                )}
-                {(log.drinks ?? 0) > 0 && (
-                  <SummaryPill
-                    icon="wine-outline"
-                    label="Drinks"
-                    value={`${log.drinks}`}
-                    color={COLORS.danger}
-                  />
-                )}
+                ))}
               </View>
             </>
           )}

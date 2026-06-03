@@ -127,7 +127,7 @@ export default function TodayBigRocks({
     <View style={{ marginTop: SPACING.lg }}>
       <View style={styles.headerRow}>
         <Text style={styles.sectionLabel}>
-          {hasRocks ? "Edit today's focus" : "What's mattering today?"}
+          {hasRocks ? "Edit today's focus" : "Today's Focus"}
         </Text>
         {hasRocks && (
           <TouchableOpacity onPress={handleDone} hitSlop={8}>
@@ -135,6 +135,9 @@ export default function TodayBigRocks({
           </TouchableOpacity>
         )}
       </View>
+      {!hasRocks && (
+        <Text style={styles.focusPrompt}>What would make today worthwhile?</Text>
+      )}
       <GradientCard>
         <BigRocksInput rocks={todayRocks} onChange={onChange} />
       </GradientCard>
@@ -152,6 +155,11 @@ const styles = StyleSheet.create({
   sectionLabel: {
     ...TYPOGRAPHY.subtitle,
     color: COLORS.textSecondary,
+  } as object,
+  focusPrompt: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    marginBottom: SPACING.sm,
   } as object,
   editLink: {
     ...TYPOGRAPHY.caption,
