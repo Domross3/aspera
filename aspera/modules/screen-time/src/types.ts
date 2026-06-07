@@ -57,4 +57,8 @@ export interface ScreenTimeNativeModule {
   // while this view is visible and writes aggregate totals to the App Group.
   refreshDailyTotals(): Promise<ScreenTimeDayTotals[]>;
   readDailyTotals(): Promise<ScreenTimeDayTotals[]>;
+  // True only on a binary that bundles the ManagedSettingsUI shield extension
+  // (turns a delay into "pause → timed unlock" instead of a hard block). Absent
+  // on builds without that extension, so the JS layer keeps delay non-blocking.
+  supportsDelayShield?: boolean;
 }

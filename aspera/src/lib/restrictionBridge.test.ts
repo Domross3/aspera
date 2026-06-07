@@ -19,6 +19,7 @@ function createNativeMock(): RestrictionNativeBridge {
     applyShield: jest.fn(async () => {}),
     clearShield: jest.fn(async () => {}),
     clearRestrictionState: jest.fn(async () => {}),
+    supportsDelayShield: false,
   };
 }
 
@@ -85,8 +86,12 @@ describe("restriction bridge", () => {
     );
   });
 
-  it("does not hard-shield active delay restrictions", async () => {
-    const native = createNativeMock();
+  it("does not hard-shield a delay when the shield extension is absent", async () => {
+    // Merged behavior: with supportsDelayShield false (every current build),
+    // a delay is NOT shielded — instead stale state is flushed via an inactive
+    // monitor, then the shield is cleared. The old bug was applyShield() here
+    // (Apple's default shield = permanent lockout).
+    const native = createNativeMock(); // supportsDelayShield: false
     const calls: string[] = [];
     native.startMonitoring = jest.fn(async () => {
       calls.push("native:neutralize");
@@ -129,6 +134,36 @@ describe("restriction bridge", () => {
     expect(persistence.upsertRestriction).toHaveBeenCalledWith(
       "user-a",
       expect.objectContaining({ id: restriction.id, active: true }),
+    );
+  });
+
+  it("shields a delay through the monitor once the shield extension is present", async () => {
+    const native = { ...createNativeMock(), supportsDelayShield: true };
+    const calls: string[] = [];
+    native.startMonitoring = jest.fn(async () => {
+      calls.push("native:monitor");
+    });
+    native.applyShield = jest.fn(async () => {
+      calls.push("native:shield");
+    });
+    const persistence = {
+      upsertRestriction: jest.fn(async () => {}),
+      deleteRestriction: jest.fn(async () => {}),
+    };
+    const restriction: Restriction = {
+      ...createDefaultRestriction("delay", 1000),
+      active: true,
+      selectedAppCount: 1,
+      spec: { kind: "delay", delaySeconds: 30 },
+    };
+
+    await saveRestrictionWithNative("user-a", restriction, persistence, native);
+
+    // Config is persisted (so the extension can read delaySeconds) before the
+    // custom shield is applied.
+    expect(calls).toEqual(["native:monitor", "native:shield"]);
+    expect(native.startMonitoring).toHaveBeenCalledWith(
+      expect.objectContaining({ id: restriction.id, mode: "delay" }),
     );
   });
 

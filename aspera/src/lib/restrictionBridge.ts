@@ -15,6 +15,11 @@ export interface RestrictionNativeBridge {
   applyShield: (restrictionId: string) => Promise<void>;
   clearShield: (restrictionId: string) => Promise<void>;
   clearRestrictionState: (restrictionId: string) => Promise<void>;
+  // True only when the native ManagedSettingsUI shield extension is present, so
+  // a delay can render the Aspera pause + grant a timed unlock. When false, a
+  // delay must NOT be hard-shielded (Apple's default shield is a permanent
+  // lockout with no "wait then continue" path).
+  supportsDelayShield: boolean;
 }
 
 export interface RestrictionPersistenceBridge {
@@ -49,20 +54,28 @@ export async function syncRestrictionNative(
   native: RestrictionNativeBridge,
 ): Promise<void> {
   if (restriction.active) {
-    // Delay mode cannot be implemented by directly applying a ManagedSettings
-    // shield: Apple's default shield is a hard block and cannot host our React
-    // Native breath-pause sheet. True in-shield delay needs a native
-    // ManagedSettingsUI Shield Action extension. Until that exists, keep delay
-    // as a manual Aspera pause and aggressively clear any stale shield state.
     if (restriction.spec.kind === "delay") {
-      const inactiveNativeConfig = {
-        ...toNativeRestrictionConfig(restriction),
-        active: false,
-      };
-      await native.startMonitoring(inactiveNativeConfig).catch(async () => {
-        await native.stopMonitoring(restriction.id);
-      });
-      await native.clearShield(restriction.id);
+      // A gratification delay must add FRICTION and then allow access — never a
+      // permanent lockout. Apple's default ManagedSettings shield is a hard
+      // block with no "wait then continue" path, so we only shield a delay when
+      // the native ManagedSettingsUI shield extension is present: it renders the
+      // Aspera pause and grants a timed unlock once the delay elapses. Until
+      // that extension ships, persisting the bare shield would wall the app off
+      // forever — so we explicitly DO NOT shield, and we aggressively clear any
+      // stale shield/monitor state (flush via an inactive monitor, then clear).
+      if (native.supportsDelayShield) {
+        await native.startMonitoring(toNativeRestrictionConfig(restriction));
+        await native.applyShield(restriction.id);
+      } else {
+        const inactiveNativeConfig = {
+          ...toNativeRestrictionConfig(restriction),
+          active: false,
+        };
+        await native.startMonitoring(inactiveNativeConfig).catch(async () => {
+          await native.stopMonitoring(restriction.id);
+        });
+        await native.clearShield(restriction.id);
+      }
       return;
     }
     await native.startMonitoring(toNativeRestrictionConfig(restriction));
