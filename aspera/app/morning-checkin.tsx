@@ -40,7 +40,8 @@ import {
   upsertDailyLog,
 } from "../src/lib/cloudStore";
 import { useAuth } from "../src/hooks/useAuth";
-import { MoodCheckIn, DailyLog } from "../src/types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { MoodCheckIn, DailyLog, STORAGE_KEYS } from "../src/types";
 import { COLORS, SPACING, TYPOGRAPHY, RADIUS } from "../src/constants/theme";
 
 function todayId(): string {
@@ -151,6 +152,13 @@ export default function MorningCheckinModal() {
         console.warn("[morning] sleep cloud sync failed; cached locally", err);
       });
     }
+
+    // Record when the morning log happened so the random quick-mood window can
+    // start ~1h later (instead of spamming pulses right after the morning log).
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.LAST_MORNING_LOG_AT,
+      String(Date.now()),
+    );
 
     dismiss();
   };

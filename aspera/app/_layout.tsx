@@ -13,7 +13,9 @@ import { COLORS } from "../src/constants/theme";
 import {
   QUICK_MOOD_NOTIFICATION_KIND,
   ensureQuickMoodSchedule,
+  pruneUnansweredQuickMood,
 } from "../src/lib/quickMoodNotifications";
+import { handleQuickMoodAction } from "../src/lib/quickMoodActions";
 import {
   USER_REMINDER_NOTIFICATION_KIND,
   ensureUserReminderSchedule,
@@ -54,6 +56,9 @@ function AppLayout() {
   useEffect(() => {
     if (settingsLoading) return;
     void ensureQuickMoodSchedule(settings.notificationSettings);
+    // Clear any stale backlog so opening the app never greets the user with a
+    // wall of unanswered check-ins.
+    void pruneUnansweredQuickMood();
   }, [settingsLoading, settings.notificationSettings]);
 
   // Same for user-defined reminders. The scheduler always re-rolls the
@@ -88,6 +93,7 @@ function AppLayout() {
     const sub = AppState.addEventListener("change", (next) => {
       if (next !== "active") return;
       void ensureQuickMoodSchedule(settings.notificationSettings);
+      void pruneUnansweredQuickMood();
       void ensureUserReminderSchedule(settings.userReminders ?? []);
       void ensureDailyLogSchedule(settings.notificationSettings);
       void ensureWeeklyRecapSchedule();
@@ -162,9 +168,20 @@ function AppLayout() {
     const subscription = Notifications.addNotificationResponseReceivedListener(
       (response) => {
         const data = response.notification.request.content.data as
-          | { kind?: string; type?: string; linkedEventTypeId?: string }
+          | {
+              kind?: string;
+              type?: string;
+              linkedEventTypeId?: string;
+              checkInId?: string;
+            }
           | undefined;
-        handleNotificationKind(data);
+        // First: did the user tap a mood/energy ACTION button (lock-screen
+        // capture)? If so, log in the background and don't route into the app.
+        void handleQuickMoodAction(response.actionIdentifier, data).then(
+          (handled) => {
+            if (!handled) handleNotificationKind(data);
+          },
+        );
       },
     );
     return () => subscription.remove();
@@ -186,12 +203,23 @@ function AppLayout() {
     void Notifications.getLastNotificationResponseAsync().then((response) => {
       if (!response) return;
       const data = response.notification.request.content.data as
-        | { kind?: string; type?: string; linkedEventTypeId?: string }
+        | {
+            kind?: string;
+            type?: string;
+            linkedEventTypeId?: string;
+            checkInId?: string;
+          }
         | undefined;
-      // Defer a tick so the Stack has mounted (tabs) before we push.
-      setTimeout(() => {
-        handleNotificationKind(data);
-      }, 50);
+      // If launched by a mood/energy action tap, log it and don't route.
+      void handleQuickMoodAction(response.actionIdentifier, data).then(
+        (handled) => {
+          if (handled) return;
+          // Defer a tick so the Stack has mounted (tabs) before we push.
+          setTimeout(() => {
+            handleNotificationKind(data);
+          }, 50);
+        },
+      );
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authLoading, session, router]);

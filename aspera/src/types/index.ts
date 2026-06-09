@@ -573,6 +573,10 @@ export const STORAGE_KEYS = {
   RESERVES: "aspera_emergency_reserves",
   INTEGRATION_CONNECTIONS: "aspera_integration_connections",
   INTEGRATION_SUMMARIES: "aspera_integration_summaries",
+  // ms-epoch of the user's most recent morning check-in. Used to anchor the
+  // random quick-mood window so pulses don't start until ~1h after the morning
+  // log (see quickMoodLimits).
+  LAST_MORNING_LOG_AT: "aspera_last_morning_log_at",
 } as const;
 
 // ── Emergency Reserves ──────────────────────────────────────────────────
