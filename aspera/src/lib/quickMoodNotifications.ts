@@ -17,13 +17,20 @@
 // everything tagged for quick-mood and re-schedules a fresh week.
 
 import * as Notifications from "expo-notifications";
-import { NotificationSettings } from "../types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { NotificationSettings, STORAGE_KEYS } from "../types";
 import {
   buildDailyTriggerDates,
   minutesInWindow,
   parseWindow,
   type ParsedWindow,
 } from "./notificationHelpers";
+import {
+  morningLogMinuteOfDay,
+  windowStartMinuteOfDay,
+  selectStaleToDismiss,
+} from "./quickMoodLimits";
+import { MOOD_CATEGORY } from "./quickMoodActions";
 
 const NOTIFICATION_KIND = "quick_mood_check";
 const SCHEDULE_DAYS = 7;
@@ -49,6 +56,47 @@ const COPY_OPTIONS: { title: string; body: string }[] = [
 
 function pickCopy(): { title: string; body: string } {
   return COPY_OPTIONS[Math.floor(Math.random() * COPY_OPTIONS.length)];
+}
+
+function isToday(d: Date): boolean {
+  const now = new Date();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
+}
+
+/**
+ * Backlog cap: dismiss delivered-but-unanswered quick-mood notifications beyond
+ * the MAX_UNANSWERED most recent, so the user never opens the app to a wall of
+ * 6 stale check-ins. Call on app foreground. No-op if the tray API or
+ * permission is unavailable. Only touches quick-mood notifications.
+ */
+export async function pruneUnansweredQuickMood(): Promise<void> {
+  let presented: Notifications.Notification[];
+  try {
+    presented = await Notifications.getPresentedNotificationsAsync();
+  } catch {
+    return; // platform without a queryable tray — nothing to prune
+  }
+  const ours = presented
+    .filter(
+      (n) =>
+        (n.request.content.data as { kind?: string })?.kind ===
+        NOTIFICATION_KIND,
+    )
+    .map((n) => ({
+      id: n.request.identifier,
+      // `date` is seconds on iOS / ms on Android depending on platform; only
+      // relative order matters here, so use it as-is for sorting.
+      when: typeof n.date === "number" ? n.date : 0,
+    }));
+
+  const toDismiss = selectStaleToDismiss(ours);
+  await Promise.all(
+    toDismiss.map((id) => Notifications.dismissNotificationAsync(id)),
+  );
 }
 
 /**
@@ -119,12 +167,42 @@ export async function ensureQuickMoodSchedule(
     Math.min(MIN_HOURS_BETWEEN * 60, fitGap),
   );
 
-  const dates = buildDailyTriggerDates(
+  // TODAY's window may start later than wake-time: if the user logged this
+  // morning, hold the first pulse until ~1h after that log (capped so a late
+  // log doesn't shove the whole window into the evening). Future days have no
+  // log yet, so they use the plain wake-time window.
+  const lastMorningRaw = await AsyncStorage.getItem(
+    STORAGE_KEYS.LAST_MORNING_LOG_AT,
+  );
+  const lastMorningMs = lastMorningRaw ? Number(lastMorningRaw) : null;
+  const logMinute = morningLogMinuteOfDay(
+    Number.isFinite(lastMorningMs) ? lastMorningMs : null,
+  );
+  const todayStartMin = windowStartMinuteOfDay(window, logMinute);
+  const todayWindow: ParsedWindow = {
+    startHour: Math.floor(todayStartMin / 60),
+    startMinute: todayStartMin % 60,
+    endHour: window.endHour,
+    endMinute: window.endMinute,
+  };
+
+  const dates: Date[] = [];
+  // Today only, with the (possibly shifted) morning-anchored window — but only
+  // if the shifted window still has room for a pulse.
+  if (minutesInWindow(todayWindow) >= MIN_GAP_FLOOR_MIN) {
+    dates.push(...buildDailyTriggerDates(1, frequency, todayWindow, gapMin));
+  }
+  // Days 1..SCHEDULE_DAYS-1 with the normal window. buildDailyTriggerDates
+  // starts at "today + offset"; we shift the day base forward by 1 by trimming
+  // today's slice — so build the full range on the default window and drop the
+  // entries that fall on today (already covered above).
+  const future = buildDailyTriggerDates(
     SCHEDULE_DAYS,
     frequency,
     window,
     gapMin,
-  );
+  ).filter((d) => !isToday(d));
+  dates.push(...future);
 
   for (const date of dates) {
     const copy = pickCopy();
@@ -133,6 +211,9 @@ export async function ensureQuickMoodSchedule(
         title: copy.title,
         body: copy.body,
         data: { kind: NOTIFICATION_KIND },
+        // Long-press exposes the mood action buttons (log from the lock screen
+        // without opening the app — see quickMoodActions).
+        categoryIdentifier: MOOD_CATEGORY,
         sound: true,
       },
       trigger: {

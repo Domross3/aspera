@@ -3,6 +3,7 @@ import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
+import { registerQuickMoodCategories } from "../lib/quickMoodActions";
 
 const PUSH_TOKEN_KEY = "aspera_push_token";
 
@@ -27,6 +28,9 @@ export function useNotifications() {
 
   useEffect(() => {
     void registerForPushNotificationsAsync();
+    // Register the mood/energy action categories so long-pressing a pulse shows
+    // the lock-screen buttons. Idempotent.
+    void registerQuickMoodCategories();
 
     notificationListener.current =
       Notifications.addNotificationReceivedListener(() => {

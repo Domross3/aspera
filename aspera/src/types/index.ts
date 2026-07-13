@@ -599,6 +599,10 @@ export const STORAGE_KEYS = {
   // on the Today surface — so a non-quiet recap shows once per week, not on
   // every open.
   RECAP_LAST_SHOWN_WEEK: "aspera_recap_last_shown_week",
+  // ms-epoch of the user's most recent morning check-in. Used to anchor the
+  // random quick-mood window so pulses don't start until ~1h after the morning
+  // log (see quickMoodLimits).
+  LAST_MORNING_LOG_AT: "aspera_last_morning_log_at",
 } as const;
 
 // ── Emergency Reserves ──────────────────────────────────────────────────
