@@ -130,7 +130,9 @@ export default function SettingsScreen() {
         }
       }
       await update({ notificationSettings: nextSettings });
-      await ensureQuickMoodSchedule(nextSettings);
+      // force: explicit user toggle should reschedule today even if we already
+      // scheduled earlier (bypasses the once-per-day flood guard).
+      await ensureQuickMoodSchedule(nextSettings, true);
     } else {
       await update({ notificationSettings: nextSettings });
       await cancelAllQuickMoodNotifications();
@@ -148,7 +150,8 @@ export default function SettingsScreen() {
     await update({ notificationSettings: nextSettings });
     if (nextSettings.quickMoodEnabled) {
       await cancelAllQuickMoodNotifications();
-      await ensureQuickMoodSchedule(nextSettings);
+      // force: explicit frequency change should re-roll today's schedule now.
+      await ensureQuickMoodSchedule(nextSettings, true);
     }
   };
 
@@ -239,7 +242,8 @@ export default function SettingsScreen() {
       nextSettings.quickMoodEnabled
     ) {
       await cancelAllQuickMoodNotifications();
-      await ensureQuickMoodSchedule(nextSettings);
+      // force: wake/sleep window change should re-roll today immediately.
+      await ensureQuickMoodSchedule(nextSettings, true);
     }
     // Morning/evening times reschedule the daily-log notifications.
     if (key === "morningTime" || key === "eveningTime") {
@@ -377,7 +381,8 @@ export default function SettingsScreen() {
     ).length;
 
     await cancelAllQuickMoodNotifications();
-    await ensureQuickMoodSchedule(settings.notificationSettings);
+    // force: this is the explicit "rebuild from scratch" diagnostic button.
+    await ensureQuickMoodSchedule(settings.notificationSettings, true);
     await cancelAllDailyLogNotifications();
     await ensureDailyLogSchedule(settings.notificationSettings);
 

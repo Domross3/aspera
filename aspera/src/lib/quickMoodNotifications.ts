@@ -36,6 +36,20 @@ const NOTIFICATION_KIND = "quick_mood_check";
 const SCHEDULE_DAYS = 7;
 const MIN_HOURS_BETWEEN = 2;
 const RESCHEDULE_THRESHOLD = SCHEDULE_DAYS * 2; // re-schedule when below this many
+// Local calendar day (YYYY-MM-DD) of the last full reschedule. The reschedule
+// REBUILDS today's pulses, but already-DELIVERED pulses can't be recalled — so
+// re-rolling more than once a day stacks extra pulses onto today (the cause of
+// the 16-notifications-a-day flood). This guard ensures at most one reschedule
+// per calendar day, regardless of how the scheduled count fluctuates as pulses
+// fire and the app foregrounds repeatedly.
+const LAST_SCHEDULED_DAY_KEY = "aspera_quickmood_last_scheduled_day";
+
+function localDayString(d = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 // If the user's wake→sleep window is inverted or too small to hold even a
 // single pulse, fall back to a sane daytime window so pulses never silently
 // drop to zero (a real failure mode when wake/sleep got mis-set).
@@ -133,6 +147,11 @@ async function countQuickMoodNotifications(): Promise<number> {
  */
 export async function ensureQuickMoodSchedule(
   settings: NotificationSettings,
+  // `force` bypasses the once-per-day guard for EXPLICIT user actions (toggling
+  // quick-mood on, changing frequency) so the new setting takes effect today.
+  // Launch/foreground callers omit it → guarded, so passive re-opens never
+  // rebuild today's pulses.
+  force = false,
 ): Promise<void> {
   if (!settings.quickMoodEnabled) {
     await cancelAllQuickMoodNotifications();
@@ -144,6 +163,17 @@ export async function ensureQuickMoodSchedule(
 
   const existing = await countQuickMoodNotifications();
   if (existing >= RESCHEDULE_THRESHOLD) return;
+
+  // Once-per-day guard (the flood fix): if we've already rescheduled today, do
+  // NOT rebuild — rebuilding regenerates today's pulses on top of any that
+  // already fired, which is exactly how the day's count snowballed to 16+. A
+  // fresh reschedule happens only on a new calendar day, or when `force` is set
+  // by an explicit settings change.
+  const todayStr = localDayString();
+  if (!force) {
+    const lastScheduledDay = await AsyncStorage.getItem(LAST_SCHEDULED_DAY_KEY);
+    if (lastScheduledDay === todayStr) return;
+  }
 
   await cancelAllQuickMoodNotifications();
 
@@ -222,6 +252,10 @@ export async function ensureQuickMoodSchedule(
       },
     });
   }
+
+  // Record that we've scheduled for today so passive re-opens don't rebuild
+  // (and re-stack) today's pulses. The once-per-day guard above reads this.
+  await AsyncStorage.setItem(LAST_SCHEDULED_DAY_KEY, todayStr);
 }
 
 export { NOTIFICATION_KIND as QUICK_MOOD_NOTIFICATION_KIND };
