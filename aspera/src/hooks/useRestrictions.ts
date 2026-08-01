@@ -73,7 +73,17 @@ export function useRestrictions(): UseRestrictionsResult {
               restriction.active && restriction.spec.kind === "delay",
           )
           .map((restriction) =>
-            syncRestrictionNative(restriction, nativeBridge).catch(() => {}),
+            // Non-fatal: a failed re-sync shouldn't block the list from
+            // rendering. But swallowing it silently hid real native failures,
+            // so log rather than discard — this is the only trace a device
+            // console gets when the Screen Time bridge misbehaves.
+            syncRestrictionNative(restriction, nativeBridge).catch(
+              (err: unknown) =>
+                console.warn(
+                  `[useRestrictions] native re-sync failed for ${restriction.id}:`,
+                  err,
+                ),
+            ),
           ),
       );
       // Fire-and-forget: record which restrictions are active today so Engine A

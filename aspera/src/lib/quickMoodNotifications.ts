@@ -29,13 +29,23 @@ import {
   morningLogMinuteOfDay,
   windowStartMinuteOfDay,
   selectStaleToDismiss,
+  scheduleDaysFor,
+  rescheduleThresholdFor,
 } from "./quickMoodLimits";
 import { MOOD_CATEGORY } from "./quickMoodActions";
 
 const NOTIFICATION_KIND = "quick_mood_check";
-const SCHEDULE_DAYS = 7;
 const MIN_HOURS_BETWEEN = 2;
-const RESCHEDULE_THRESHOLD = SCHEDULE_DAYS * 2; // re-schedule when below this many
+
+// Weekly-repeating "floor" pulses. Everything else in this module is a one-shot
+// DATE trigger that expires; these do not. They guarantee the app can never go
+// permanently silent, because tapping one opens the app, which replenishes the
+// random schedule. Same NOTIFICATION_KIND and copy pool, so they're
+// indistinguishable from a normal pulse to the user.
+const FLOOR_PULSES: { weekday: number; label: string }[] = [
+  { weekday: 1, label: "sun" }, // expo weekday: 1 = Sunday
+  { weekday: 4, label: "wed" },
+];
 // Local calendar day (YYYY-MM-DD) of the last full reschedule. The reschedule
 // REBUILDS today's pulses, but already-DELIVERED pulses can't be recalled — so
 // re-rolling more than once a day stacks extra pulses onto today (the cause of
@@ -161,8 +171,11 @@ export async function ensureQuickMoodSchedule(
   const { status } = await Notifications.getPermissionsAsync();
   if (status !== "granted") return;
 
+  const frequency = Math.max(1, Math.min(8, settings.quickMoodFrequency));
+  const scheduleDays = scheduleDaysFor(frequency);
+
   const existing = await countQuickMoodNotifications();
-  if (existing >= RESCHEDULE_THRESHOLD) return;
+  if (existing >= rescheduleThresholdFor(frequency)) return;
 
   // Once-per-day guard (the flood fix): if we've already rescheduled today, do
   // NOT rebuild — rebuilding regenerates today's pulses on top of any that
@@ -176,8 +189,6 @@ export async function ensureQuickMoodSchedule(
   }
 
   await cancelAllQuickMoodNotifications();
-
-  const frequency = Math.max(1, Math.min(8, settings.quickMoodFrequency));
 
   // Guard a degenerate window: if wake→sleep is inverted, zero, or too tight
   // to hold a single pulse, fall back to a daytime window. Otherwise a
@@ -222,12 +233,12 @@ export async function ensureQuickMoodSchedule(
   if (minutesInWindow(todayWindow) >= MIN_GAP_FLOOR_MIN) {
     dates.push(...buildDailyTriggerDates(1, frequency, todayWindow, gapMin));
   }
-  // Days 1..SCHEDULE_DAYS-1 with the normal window. buildDailyTriggerDates
+  // Days 1..scheduleDays-1 with the normal window. buildDailyTriggerDates
   // starts at "today + offset"; we shift the day base forward by 1 by trimming
   // today's slice — so build the full range on the default window and drop the
   // entries that fall on today (already covered above).
   const future = buildDailyTriggerDates(
-    SCHEDULE_DAYS,
+    scheduleDays,
     frequency,
     window,
     gapMin,
@@ -249,6 +260,33 @@ export async function ensureQuickMoodSchedule(
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.DATE,
         date,
+      },
+    });
+  }
+
+  // Weekly-repeating floor. Every pulse above is a one-shot DATE trigger that
+  // expires; these don't. Without them, a user who stops opening the app runs
+  // the schedule dry and never hears from Aspera again — and since the pulses
+  // are what prompt opening the app, that state is permanent. Placed mid-window
+  // so they land in waking hours.
+  const floorMinute = Math.round(
+    window.startHour * 60 + window.startMinute + minutesInWindow(window) / 2,
+  );
+  for (const floor of FLOOR_PULSES) {
+    const copy = pickCopy();
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: copy.title,
+        body: copy.body,
+        data: { kind: NOTIFICATION_KIND, floor: floor.label },
+        categoryIdentifier: MOOD_CATEGORY,
+        sound: true,
+      },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
+        weekday: floor.weekday,
+        hour: Math.floor(floorMinute / 60) % 24,
+        minute: floorMinute % 60,
       },
     });
   }
