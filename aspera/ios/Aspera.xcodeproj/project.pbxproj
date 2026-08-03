@@ -17,6 +17,10 @@
 		E8DB00000000000000000002 /* DeviceActivityMonitorExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E8DB00000000000000000003 /* DeviceActivityMonitorExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E8DC00000000000000000001 /* DeviceActivityReportExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DC00000000000000000004 /* DeviceActivityReportExtension.swift */; };
 		E8DC00000000000000000002 /* DeviceActivityReportExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E8DC00000000000000000003 /* DeviceActivityReportExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E8DD00000000000000000001 /* ShieldConfigurationExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DD00000000000000000004 /* ShieldConfigurationExtension.swift */; };
+		E8DD00000000000000000002 /* ShieldConfigurationExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E8DD00000000000000000003 /* ShieldConfigurationExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E8DE00000000000000000001 /* ShieldActionExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DE00000000000000000004 /* ShieldActionExtension.swift */; };
+		E8DE00000000000000000002 /* ShieldActionExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E8DE00000000000000000003 /* ShieldActionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -35,6 +39,20 @@
 			remoteGlobalIDString = E8DC00000000000000000009;
 			remoteInfo = DeviceActivityReportExtension;
 		};
+		E8DD0000000000000000000E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E8DD00000000000000000009;
+			remoteInfo = ShieldConfigurationExtension;
+		};
+		E8DE0000000000000000000E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E8DE00000000000000000009;
+			remoteInfo = ShieldActionExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -46,6 +64,8 @@
 			files = (
 				E8DB00000000000000000002 /* DeviceActivityMonitorExtension.appex in Embed App Extensions */,
 				E8DC00000000000000000002 /* DeviceActivityReportExtension.appex in Embed App Extensions */,
+				E8DD00000000000000000002 /* ShieldConfigurationExtension.appex in Embed App Extensions */,
+				E8DE00000000000000000002 /* ShieldActionExtension.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -71,6 +91,14 @@
 		E8DC00000000000000000004 /* DeviceActivityReportExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceActivityReportExtension.swift; sourceTree = "<group>"; };
 		E8DC00000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E8DC00000000000000000006 /* DeviceActivityReportExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DeviceActivityReportExtension.entitlements; sourceTree = "<group>"; };
+		E8DD00000000000000000003 /* ShieldConfigurationExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShieldConfigurationExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E8DD00000000000000000004 /* ShieldConfigurationExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldConfigurationExtension.swift; sourceTree = "<group>"; };
+		E8DD00000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E8DD00000000000000000006 /* ShieldConfigurationExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShieldConfigurationExtension.entitlements; sourceTree = "<group>"; };
+		E8DE00000000000000000003 /* ShieldActionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ShieldActionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E8DE00000000000000000004 /* ShieldActionExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShieldActionExtension.swift; sourceTree = "<group>"; };
+		E8DE00000000000000000005 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		E8DE00000000000000000006 /* ShieldActionExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ShieldActionExtension.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Aspera/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Aspera-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Aspera-Bridging-Header.h"; path = "Aspera/Aspera-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -93,6 +121,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E8DC00000000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E8DD00000000000000000007 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E8DE00000000000000000007 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -138,6 +180,8 @@
 				13B07FAE1A68108700A75B9A /* Aspera */,
 				E8DB00000000000000000008 /* DeviceActivityMonitorExtension */,
 				E8DC00000000000000000008 /* DeviceActivityReportExtension */,
+				E8DD00000000000000000008 /* ShieldConfigurationExtension */,
+				E8DE00000000000000000008 /* ShieldActionExtension */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -155,6 +199,8 @@
 				13B07F961A680F5B00A75B9A /* Aspera.app */,
 				E8DB00000000000000000003 /* DeviceActivityMonitorExtension.appex */,
 				E8DC00000000000000000003 /* DeviceActivityReportExtension.appex */,
+				E8DD00000000000000000003 /* ShieldConfigurationExtension.appex */,
+				E8DE00000000000000000003 /* ShieldActionExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -214,6 +260,26 @@
 			path = DeviceActivityReportExtension;
 			sourceTree = "<group>";
 		};
+		E8DD00000000000000000008 /* ShieldConfigurationExtension */ = {
+			isa = PBXGroup;
+			children = (
+				E8DD00000000000000000004 /* ShieldConfigurationExtension.swift */,
+				E8DD00000000000000000005 /* Info.plist */,
+				E8DD00000000000000000006 /* ShieldConfigurationExtension.entitlements */,
+			);
+			path = ShieldConfigurationExtension;
+			sourceTree = "<group>";
+		};
+		E8DE00000000000000000008 /* ShieldActionExtension */ = {
+			isa = PBXGroup;
+			children = (
+				E8DE00000000000000000004 /* ShieldActionExtension.swift */,
+				E8DE00000000000000000005 /* Info.plist */,
+				E8DE00000000000000000006 /* ShieldActionExtension.entitlements */,
+			);
+			path = ShieldActionExtension;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -236,6 +302,8 @@
 			dependencies = (
 				E8DB0000000000000000000D /* PBXTargetDependency */,
 				E8DC0000000000000000000D /* PBXTargetDependency */,
+				E8DD0000000000000000000D /* PBXTargetDependency */,
+				E8DE0000000000000000000D /* PBXTargetDependency */,
 			);
 			name = Aspera;
 			productName = Aspera;
@@ -276,6 +344,40 @@
 			productReference = E8DC00000000000000000003 /* DeviceActivityReportExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		E8DD00000000000000000009 /* ShieldConfigurationExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E8DD00000000000000000011 /* Build configuration list for PBXNativeTarget "ShieldConfigurationExtension" */;
+			buildPhases = (
+				E8DD0000000000000000000C /* Sources */,
+				E8DD00000000000000000007 /* Frameworks */,
+				E8DD0000000000000000000B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ShieldConfigurationExtension;
+			productName = ShieldConfigurationExtension;
+			productReference = E8DD00000000000000000003 /* ShieldConfigurationExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		E8DE00000000000000000009 /* ShieldActionExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E8DE00000000000000000011 /* Build configuration list for PBXNativeTarget "ShieldActionExtension" */;
+			buildPhases = (
+				E8DE0000000000000000000C /* Sources */,
+				E8DE00000000000000000007 /* Frameworks */,
+				E8DE0000000000000000000B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ShieldActionExtension;
+			productName = ShieldActionExtension;
+			productReference = E8DE00000000000000000003 /* ShieldActionExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -291,6 +393,12 @@
 						LastSwiftMigration = 1250;
 					};
 					E8DC00000000000000000009 = {
+						LastSwiftMigration = 1250;
+					};
+					E8DD00000000000000000009 = {
+						LastSwiftMigration = 1250;
+					};
+					E8DE00000000000000000009 = {
 						LastSwiftMigration = 1250;
 					};
 				};
@@ -311,6 +419,8 @@
 				13B07F861A680F5B00A75B9A /* Aspera */,
 				E8DB00000000000000000009 /* DeviceActivityMonitorExtension */,
 				E8DC00000000000000000009 /* DeviceActivityReportExtension */,
+				E8DD00000000000000000009 /* ShieldConfigurationExtension */,
+				E8DE00000000000000000009 /* ShieldActionExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -335,6 +445,20 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		E8DC0000000000000000000B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E8DD0000000000000000000B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E8DE0000000000000000000B /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -497,6 +621,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E8DD0000000000000000000C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E8DD00000000000000000001 /* ShieldConfigurationExtension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E8DE0000000000000000000C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E8DE00000000000000000001 /* ShieldActionExtension.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -509,6 +649,16 @@
 			isa = PBXTargetDependency;
 			target = E8DC00000000000000000009 /* DeviceActivityReportExtension */;
 			targetProxy = E8DC0000000000000000000E /* PBXContainerItemProxy */;
+		};
+		E8DD0000000000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E8DD00000000000000000009 /* ShieldConfigurationExtension */;
+			targetProxy = E8DD0000000000000000000E /* PBXContainerItemProxy */;
+		};
+		E8DE0000000000000000000D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E8DE00000000000000000009 /* ShieldActionExtension */;
+			targetProxy = E8DE0000000000000000000E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -815,6 +965,124 @@
 			};
 			name = Release;
 		};
+		E8DD0000000000000000000F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = ShieldConfigurationExtension/ShieldConfigurationExtension.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShieldConfigurationExtension/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/PlugIns";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.dominicross.aspera.ShieldConfigurationExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		E8DD00000000000000000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = ShieldConfigurationExtension/ShieldConfigurationExtension.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShieldConfigurationExtension/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/PlugIns";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.dominicross.aspera.ShieldConfigurationExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		E8DE0000000000000000000F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = ShieldActionExtension/ShieldActionExtension.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShieldActionExtension/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/PlugIns";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
+				PRODUCT_BUNDLE_IDENTIFIER = com.dominicross.aspera.ShieldActionExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		E8DE00000000000000000010 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = ShieldActionExtension/ShieldActionExtension.entitlements;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = ShieldActionExtension/Info.plist;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/PlugIns";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.2.0;
+				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
+				PRODUCT_BUNDLE_IDENTIFIER = com.dominicross.aspera.ShieldActionExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -841,6 +1109,24 @@
 			buildConfigurations = (
 				E8DB0000000000000000000F /* Debug */,
 				E8DB00000000000000000010 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E8DD00000000000000000011 /* Build configuration list for PBXNativeTarget "ShieldConfigurationExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E8DD0000000000000000000F /* Debug */,
+				E8DD00000000000000000010 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E8DE00000000000000000011 /* Build configuration list for PBXNativeTarget "ShieldActionExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E8DE0000000000000000000F /* Debug */,
+				E8DE00000000000000000010 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

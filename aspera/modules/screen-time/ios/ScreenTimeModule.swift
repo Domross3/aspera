@@ -342,6 +342,24 @@ private func startRestrictionMonitoring(config: [String: Any]) throws {
     return
   }
 
+  if mode == "delay" {
+    // Gratification delay. Unlike the other modes there's no DeviceActivity
+    // schedule — the shield goes up immediately and stays until the user sits
+    // through the pause on the custom shield (see ShieldActionExtension, which
+    // is what actually lifts it).
+    //
+    // The keys below are read by BOTH shield extensions; they can't import this
+    // module, so the literals are duplicated there. Keep them in sync.
+    let seconds = max(1, config["delaySeconds"] as? Int ?? ScreenTimeConstants.delayDefaultSeconds)
+    defaults?.set(restrictionId, forKey: ScreenTimeConstants.delayActiveIdKey)
+    defaults?.set(seconds, forKey: ScreenTimeConstants.delaySecondsKey)
+    // A newly-armed delay always starts from a clean countdown.
+    defaults?.removeObject(forKey: ScreenTimeConstants.delayStartedAtKey)
+    defaults?.removeObject(forKey: ScreenTimeConstants.delayGrantedAtKey)
+    try applySelectionShield(restrictionId: restrictionId, reason: "delay")
+    return
+  }
+
   guard mode == "daily_limit" else {
     throw ScreenTimeException("Unknown restriction mode.")
   }

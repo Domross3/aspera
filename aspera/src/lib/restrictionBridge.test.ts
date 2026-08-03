@@ -85,11 +85,15 @@ describe("restriction bridge", () => {
     );
   });
 
-  it("does not hard-shield active delay restrictions", async () => {
+  // Behavior change: delay restrictions used to be deliberately neutralized —
+  // the shield was cleared because Apple's default shield is a hard block that
+  // couldn't host a pause. Now that ShieldConfiguration/ShieldAction extensions
+  // exist, the shield IS the pause, so an active delay must actually arm.
+  it("arms active delay restrictions instead of clearing the shield", async () => {
     const native = createNativeMock();
     const calls: string[] = [];
     native.startMonitoring = jest.fn(async () => {
-      calls.push("native:neutralize");
+      calls.push("native:arm");
     });
     native.clearShield = jest.fn(async () => {
       calls.push("native:clear");
@@ -112,16 +116,14 @@ describe("restriction bridge", () => {
 
     await saveRestrictionWithNative("user-a", restriction, persistence, native);
 
-    expect(calls).toEqual([
-      "native:neutralize",
-      "native:clear",
-      "supabase:upsert",
-    ]);
-    expect(native.applyShield).not.toHaveBeenCalled();
+    expect(calls).toEqual(["native:arm", "supabase:upsert"]);
+    // The shield must NOT be cleared on save — that was the bug that made
+    // gratification delay do nothing outside the app.
+    expect(native.clearShield).not.toHaveBeenCalled();
     expect(native.startMonitoring).toHaveBeenCalledWith(
       expect.objectContaining({
         id: restriction.id,
-        active: false,
+        active: true,
         mode: "delay",
         delaySeconds: 30,
       }),

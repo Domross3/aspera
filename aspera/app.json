@@ -99,6 +99,26 @@
                       "group.com.dominicross.aspera"
                     ]
                   }
+                },
+                {
+                  "targetName": "ShieldConfigurationExtension",
+                  "bundleIdentifier": "com.dominicross.aspera.ShieldConfigurationExtension",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": [
+                      "group.com.dominicross.aspera"
+                    ]
+                  }
+                },
+                {
+                  "targetName": "ShieldActionExtension",
+                  "bundleIdentifier": "com.dominicross.aspera.ShieldActionExtension",
+                  "entitlements": {
+                    "com.apple.developer.family-controls": true,
+                    "com.apple.security.application-groups": [
+                      "group.com.dominicross.aspera"
+                    ]
+                  }
                 }
               ]
             }

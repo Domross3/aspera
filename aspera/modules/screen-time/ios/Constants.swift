@@ -30,6 +30,16 @@ enum ScreenTimeConstants {
 
   static func shieldStoreName(_ id: String) -> String { "restriction-\(id)" }
 
+  // ── Gratification delay ──────────────────────────────────────────────────
+  // Shared with ShieldConfigurationExtension + ShieldActionExtension. Those
+  // targets can't import this enum, so the raw strings are duplicated there —
+  // drift silently breaks the pause.
+  static let delayActiveIdKey = "delay:activeId"
+  static let delaySecondsKey = "delay:seconds"
+  static let delayStartedAtKey = "delay:startedAt"
+  static let delayGrantedAtKey = "delay:grantedAt"
+  static let delayDefaultSeconds = 30
+
   static var sharedDefaults: UserDefaults? {
     UserDefaults(suiteName: appGroupId)
   }
